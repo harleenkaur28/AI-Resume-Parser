@@ -15,7 +15,7 @@ nltk.download('punkt')
 nltk.download('stopwords')
 stop_words = set(stopwords.words('english'))
 
-clf = pickle.load(open('clf.pkl', 'rb'))
+clf = pickle.load(open('best_model.pkl', 'rb'))
 tfidf_vectorizer = pickle.load(open('tfidf.pkl', 'rb'))
 
 def clean_resume(txt):
