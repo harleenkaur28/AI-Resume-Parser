@@ -13,7 +13,5 @@ def home():
 def test():
     return jsonify({"message": "API is working"})
 
-
-
 if __name__ == '__main__':
     app.run(debug=True)
