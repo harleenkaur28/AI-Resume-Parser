@@ -17,7 +17,7 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<html lang="en" className={inter.className}>
+		<html lang="en" className={inter.className} suppressHydrationWarning>
 			<body className="bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831]">
 				<Navbar />
 				<main className="pt-16">{children}</main>
