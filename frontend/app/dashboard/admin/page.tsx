@@ -1,29 +1,10 @@
-"use client";
-
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
+import { Users, FileText, Briefcase, TrendingUp } from "lucide-react";
 import {
-	ArrowLeft,
-	Users,
-	FileText,
-	Briefcase,
-	TrendingUp,
-} from "lucide-react";
-import Link from "next/link";
-import {
-	AreaChart,
-	Area,
-	XAxis,
-	YAxis,
-	CartesianGrid,
-	Tooltip,
-	ResponsiveContainer,
-	BarChart,
-	Bar,
-} from "recharts";
-import { AnimatedBackButton, AnimatedContent } from "@/components/dashboard/animated-section";
+	AnimatedBackButton,
+	AnimatedContent,
+} from "@/components/dashboard/animated-section";
+import { DashboardCharts } from "@/components/dashboard/charts";
 
 const mockData = {
 	weeklyUploads: [
@@ -76,7 +57,7 @@ export default function AdminDashboard() {
 		<div className="min-h-screen bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831]">
 			<div className="container mx-auto px-4 py-8">
 				<AnimatedBackButton />
-				
+
 				<AnimatedContent>
 					<h1 className="text-4xl font-bold text-[#EEEEEE] mb-8">
 						Admin Dashboard
@@ -103,114 +84,8 @@ export default function AdminDashboard() {
 						))}
 					</div>
 
-					<div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-						<Card className="backdrop-blur-lg bg-white/5 border-white/10">
-							<CardHeader>
-								<CardTitle className="text-[#EEEEEE]">
-									Weekly Resume Uploads
-								</CardTitle>
-							</CardHeader>
-							<CardContent>
-								<div className="h-[300px]">
-									<ResponsiveContainer width="100%" height="100%">
-										<AreaChart
-											data={mockData.weeklyUploads}
-											margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-										>
-											<defs>
-												<linearGradient
-													id="colorUploads"
-													x1="0"
-													y1="0"
-													x2="0"
-													y2="1"
-												>
-													<stop
-														offset="5%"
-														stopColor="#76ABAE"
-														stopOpacity={0.8}
-													/>
-													<stop
-														offset="95%"
-														stopColor="#76ABAE"
-														stopOpacity={0}
-													/>
-												</linearGradient>
-											</defs>
-											<CartesianGrid strokeDasharray="3 3" stroke="#EEEEEE20" />
-											<XAxis dataKey="name" stroke="#EEEEEE60" />
-											<YAxis
-												stroke="#EEEEEE60"
-												label={{
-													value: "Uploads",
-													angle: -90,
-													position: "insideLeft",
-													fill: "#EEEEEE60",
-												}}
-											/>
-											<Tooltip
-												contentStyle={{
-													backgroundColor: "#31363F",
-													border: "1px solid #EEEEEE20",
-													borderRadius: "8px",
-												}}
-											/>
-											<Area
-												type="monotone"
-												dataKey="value"
-												stroke="#76ABAE"
-												fillOpacity={1}
-												fill="url(#colorUploads)"
-											/>
-										</AreaChart>
-									</ResponsiveContainer>
-								</div>
-							</CardContent>
-						</Card>
-
-						<Card className="backdrop-blur-lg bg-white/5 border-white/10">
-							<CardHeader>
-								<CardTitle className="text-[#EEEEEE]">Top Roles</CardTitle>
-							</CardHeader>
-							<CardContent>
-								<div className="h-[300px]">
-									<ResponsiveContainer width="100%" height="100%">
-										<BarChart
-											data={mockData.topRoles}
-											margin={{ top: 10, right: 30, left: 20, bottom: 60 }}
-										>
-											<CartesianGrid strokeDasharray="3 3" stroke="#EEEEEE20" />
-											<XAxis
-												dataKey="name"
-												stroke="#EEEEEE60"
-												angle={-45}
-												textAnchor="end"
-												height={100}
-											/>
-											<YAxis
-												stroke="#EEEEEE60"
-												label={{
-													value: "Count",
-													angle: -90,
-													position: "insideLeft",
-													fill: "#EEEEEE60",
-												}}
-											/>
-											<Tooltip
-												contentStyle={{
-													backgroundColor: "#31363F",
-													border: "1px solid #EEEEEE20",
-													borderRadius: "8px",
-												}}
-											/>
-											<Bar dataKey="value" fill="#76ABAE" />
-										</BarChart>
-									</ResponsiveContainer>
-								</div>
-							</CardContent>
-						</Card>
-					</div>
-					</AnimatedContent>
+					<DashboardCharts data={mockData} />
+				</AnimatedContent>
 			</div>
 		</div>
 	);
