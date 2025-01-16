@@ -32,6 +32,17 @@ MONGO_URL = "mongodb://localhost:27017"
 client = AsyncIOMotorClient(MONGO_URL)
 db = client.resume_db
 resume_collection = db.resumes
+skills_collection = db.skills
+
+# Initialize skills in MongoDB (run this once)
+async def init_skills():
+    if await skills_collection.count_documents({}) == 0:
+        await skills_collection.insert_one({"skills": skills_list})
+
+# Update the skills list retrieval
+async def get_skills_list():
+    skills_doc = await skills_collection.find_one({})
+    return skills_doc["skills"] if skills_doc else []
 
 nlp = spacy.load('en_core_web_sm')
 nltk.download('punkt')
@@ -183,10 +194,6 @@ def extract_files_from_zip(zip_file_path):
         print(f"Unexpected error: {e}")
 
     return extracted_files
-connection = mysql.connector.connect(
-   host='localhost', user='root', password='', port=3307, database='SRA'
-)
-cursor = connection.cursor()
 
 skills_list = [
     "Java", "Spring Boot", "J2EE", "Hibernate", "Microservices", "RESTful APIs", "Git", "Maven", "JUnit",
@@ -243,6 +250,10 @@ def clean_resume(txt):
 @app.post("/analyze-resume/")
 async def analyze_resume(file: UploadFile = File(...)):
     try:
+        # Ensure skills are initialized
+        await init_skills()
+        skills_list = await get_skills_list()
+        
         # Create temporary file
         temp_file = f"temp_{file.filename}"
         with open(temp_file, "wb") as buffer:
