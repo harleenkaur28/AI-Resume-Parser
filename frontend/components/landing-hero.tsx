@@ -12,7 +12,7 @@ function calMobile() {
 	return window.innerWidth < 640;
 }
 
-export function LandingHero() {
+function LandingHero() {
 	const [isMobile, setIsMobile] = useState(calMobile());
 
 	useEffect(() => {
@@ -90,3 +90,5 @@ export function LandingHero() {
 		</div>
 	);
 }
+
+export { calMobile, LandingHero };

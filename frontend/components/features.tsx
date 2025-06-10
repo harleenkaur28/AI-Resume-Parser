@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { FileSearch, Brain, Zap, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const features = [
 	{
@@ -26,7 +27,7 @@ const features = [
 	},
 ];
 
-export function Features() {
+function Features() {
 	return (
 		<section className="py-20 relative">
 			<div className="container mx-auto px-4">
@@ -53,3 +54,18 @@ export function Features() {
 		</section>
 	);
 }
+
+function MobileFeatures() {
+	const [isMobile, setIsMobile] = useState(false);
+	useEffect(() => {
+		const handleResize = () => {
+			setIsMobile(window.innerWidth < 640);
+		};
+		handleResize();
+		window.addEventListener("resize", handleResize);
+		return () => window.removeEventListener("resize", handleResize);
+	}, []);
+	return isMobile ? <Features /> : <div className="hidden md:block"></div>;
+}
+
+export { Features, MobileFeatures };
