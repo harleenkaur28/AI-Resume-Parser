@@ -4,8 +4,25 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { FileText, Users, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { Features } from "./features";
+import { useEffect, useState } from "react";
+
+function calMobile() {
+	if (typeof window === "undefined") return false;
+	return window.innerWidth < 640;
+}
 
 export function LandingHero() {
+	const [isMobile, setIsMobile] = useState(calMobile());
+
+	useEffect(() => {
+		function handleResize() {
+			setIsMobile(calMobile());
+		}
+		window.addEventListener("resize", handleResize);
+		return () => window.removeEventListener("resize", handleResize);
+	}, []);
+
 	return (
 		<div className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 py-20 sm:py-32">
 			{/* Glassmorphic background elements */}
@@ -50,6 +67,8 @@ export function LandingHero() {
 							</Button>
 						</Link>
 					</div>
+
+					{!isMobile && <Features />}
 
 					<motion.div
 						initial={{ opacity: 0 }}
