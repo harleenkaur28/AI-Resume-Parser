@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,7 @@ import {
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import banner from "@/public/banner-dark.svg";
 
 const navItems = [
 	{
@@ -53,10 +55,11 @@ export function Navbar() {
 				<div className="container mx-auto px-4 sm:px-6">
 					<div className="flex items-center justify-between h-16 sm:h-20">
 						<Link href="/" className="flex items-center space-x-3">
-							<FileText className="h-6 w-6 sm:h-7 sm:w-7 text-[#76ABAE]" />
+							{/* <FileText className="h-6 w-6 sm:h-7 sm:w-7 text-[#76ABAE]" />
 							<span className="text-[#EEEEEE] font-bold text-xl sm:text-2xl tracking-tight">
 								ResumeAI
-							</span>
+							</span> */}
+							<Image src={banner} alt="TalemtSync AI" width={200} />
 						</Link>
 
 						<nav className="hidden md:flex items-center space-x-2">
