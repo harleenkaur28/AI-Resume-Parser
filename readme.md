@@ -82,16 +82,17 @@ Make sure you have the following installed on your system:
 
 - [Git](https://git-scm.com/)
 - [Python 3.9+](https://www.python.org/downloads/)
-- [Node.js (v18.x or later)](https://nodejs.org/)
+- [bun.sh](https://bun.sh/)
 - [PostgreSQL](https://www.postgresql.org/download/)
+- [Docker Desktop (adviced for better DX)]()
 
 ### Installation & Setup
 
 1.  **Clone the repository:**
 
     ```sh
-    git clone https://github.com/your-username/your-repo-name.git
-    cd your-repo-name
+    git clone https://github.com/harleenkaur28/AI-Resume-Parser.git
+    cd AI-Resume-Parser
     ```
 
 2.  **Setup the Backend (FastAPI):**
@@ -105,7 +106,7 @@ Make sure you have the following installed on your system:
     source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
 
     # Install dependencies
-    pip install -r requirements.txt
+    pip install .
 
     # Create a .env file from the example
     cp .env.example .env
