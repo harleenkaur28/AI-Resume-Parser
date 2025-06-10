@@ -1,0 +1,20 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "datetime>=5.5",
+    "fastapi>=0.115.12",
+    "motor>=3.7.1",
+    "nltk>=3.9.1",
+    "pypdf2>=3.0.1",
+    "python-multipart>=0.0.20",
+    "spacy>=3.8.7",
+]
+
+[dependency-groups]
+dev = [
+    "uvicorn>=0.34.3",
+]
