@@ -54,7 +54,7 @@ tfidf_vectorizer = pickle.load(open('tfidf.pkl', 'rb'))
 
 def clean_resume(txt):
     """Clean the resume text by removing unwanted characters and lemmatizing."""
-    cleantxt = re.sub('https\S+', '', txt)
+    cleantxt = re.sub(r'https\S+', '', txt)
     cleantxt = re.sub(r'@\S+|#\S+', '', cleantxt)
     cleantxt = re.sub(r'[^\w\s]', '', cleantxt)
 
