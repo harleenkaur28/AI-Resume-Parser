@@ -4,7 +4,15 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { FileText, Users, LayoutDashboard, LogIn, Menu, X } from "lucide-react";
+import {
+	FileText,
+	Users,
+	LayoutDashboard,
+	LogIn,
+	Menu,
+	X,
+	Info,
+} from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
@@ -13,6 +21,11 @@ const navItems = [
 		label: "Home",
 		href: "/",
 		icon: LayoutDashboard,
+	},
+	{
+		label: "About",
+		href: "/about",
+		icon: Info,
 	},
 	{
 		label: "Job Seekers",
