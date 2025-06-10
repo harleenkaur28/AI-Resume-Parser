@@ -1,7 +1,7 @@
 # AI Resume Analyzer & Job Matching Platform
 
 <div align="center">
-  <img src="./frontend/logo.svg" alt="Project Logo" width="150"/>
+  <img src="./frontend/public/banner-dark.svg" alt="Project Logo" width="150"/>
 </div>
 
 <p align="center">
@@ -41,22 +41,20 @@ This project is an AI-powered, dual-sided platform designed to solve this proble
 
 ## Live Demo
 
-<!--
-  TODO: Add a link to your live deployed application.
-  For example:
-  [Check out the live platform here!](https://your-app-url.com)
--->
+[Check out the live platform here!](https://ai-resume-parser.vercel.app/)
 
+<!--  will add a ss here
 <a href="#" target="_blank">
   <img src=".github/screenshot-dashboard.png" alt="Application Screenshot" />
 </a>
+-->
 
 ## Technical Architecture
 
 Our platform is built on a modern, scalable microservices architecture to ensure high performance, security, and maintainability.
 
 <div align="center">
-  <img src=".github/architecture-diagram.png" alt="Architecture Diagram" width="800"/>
+  <img src="./frontend/public/flowchat.svg" alt="Architecture Diagram" width="800"/>
 </div>
 
 - **Frontend:** A responsive and interactive web application built with **Next.js** and **Tailwind CSS**, providing a seamless user experience.
@@ -102,8 +100,8 @@ Make sure you have the following installed on your system:
     cd backend
 
     # Create and activate a virtual environment
-    python -m venv venv
-    source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+    python -m venv .venv
+    source .venv/bin/activate  # On Windows, use `venv\Scripts\activate`
 
     # Install dependencies
     pip install .
