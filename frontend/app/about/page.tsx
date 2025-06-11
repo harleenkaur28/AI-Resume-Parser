@@ -655,20 +655,6 @@ export default function AboutPage() {
 												Advanced machine learning pipeline with 8-stage
 												processing
 											</p>
-											<div className="flex justify-center items-center space-x-4 text-xs text-purple-200/60">
-												<div className="flex items-center space-x-1">
-													<div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-													<span>Real-time Processing</span>
-												</div>
-												<div className="flex items-center space-x-1">
-													<div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-													<span>Multi-model Architecture</span>
-												</div>
-												<div className="flex items-center space-x-1">
-													<div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-													<span>Continuous Learning</span>
-												</div>
-											</div>
 										</div>
 
 										<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
