@@ -426,7 +426,6 @@ skills_list = [
     "Six Sigma",
     "Process Improvement",
     "Leadership",
-    "R",
     "Data Visualization",
     "Scikit-Learn",
     "Statistics",
@@ -513,14 +512,45 @@ skills_list = [
 class ResumeAnalysis(BaseModel):
     name: str
     email: str
-    contact: Optional[str] = None  # Made Optional to match DB schema better
+    contact: Optional[str] = None  
     predicted_field: str
-    college: Optional[str] = None  # Made Optional
-    work_experience: Optional[str] = None  # Made Optional
+    college: Optional[str] = None  
+    work_experience: Optional[str] = None  
     skills: List[str] = []
     upload_date: datetime = Field(
         default_factory=datetime.utcnow
-    )  # Use Field for default_factory
+    ) 
+
+
+class ResumeUploadResponse(BaseModel):
+    """Response model for resume analysis"""
+    success: bool = True
+    message: str = "Resume analyzed successfully"
+    data: ResumeAnalysis
+
+
+class ResumeListResponse(BaseModel):
+    """Response model for getting list of resumes"""
+    success: bool = True
+    message: str = "Resumes retrieved successfully"
+    data: List[ResumeAnalysis]
+    count: int
+
+
+class ResumeCategoryResponse(BaseModel):
+    """Response model for getting resumes by category"""
+    success: bool = True
+    message: str = "Resumes retrieved successfully"
+    data: List[ResumeAnalysis]
+    count: int
+    category: str
+
+
+class ErrorResponse(BaseModel):
+    """Error response model"""
+    success: bool = False
+    message: str
+    error_detail: Optional[str] = None
 
 
 # Helper functions (reuse your existing functions)
@@ -536,7 +566,7 @@ def clean_resume(txt):
 
 
 # routes
-@app.post("/analyze-resume/")
+@app.post("/analyze-resume/", response_model=ResumeUploadResponse)
 async def analyze_resume(file: UploadFile = File(...)):
     # global pool
     try:
@@ -604,7 +634,7 @@ async def analyze_resume(file: UploadFile = File(...)):
         #         analysis_data.upload_date,
         #     )
 
-        return analysis_data
+        return ResumeUploadResponse(data=analysis_data)
 
     except Exception as e:
         # Log the exception for debugging
@@ -612,21 +642,28 @@ async def analyze_resume(file: UploadFile = File(...)):
         import traceback
 
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(
+            status_code=500, 
+            detail=ErrorResponse(
+                message="Failed to analyze resume",
+                error_detail=str(e)
+            ).dict()
+        )
 
 
-@app.get("/resumes/")
+@app.get("/resumes/", response_model=ResumeListResponse)
 async def get_resumes():
     global pool
     async with pool.acquire() as connection:
         rows = await connection.fetch(
             "SELECT id, name, email, contact, predicted_field, college, work_experience, skills, upload_date FROM resumes;"
         )
-        # Convert rows to list of dicts or Pydantic models
-        return [dict(row) for row in rows]
+        # Convert rows to list of ResumeAnalysis models
+        resumes = [ResumeAnalysis(**dict(row)) for row in rows]
+        return ResumeListResponse(data=resumes, count=len(resumes))
 
 
-@app.get("/resumes/{category}")
+@app.get("/resumes/{category}", response_model=ResumeCategoryResponse)
 async def get_resumes_by_category(category: str):
     global pool
     async with pool.acquire() as connection:
@@ -634,7 +671,9 @@ async def get_resumes_by_category(category: str):
             "SELECT id, name, email, contact, predicted_field, college, work_experience, skills, upload_date FROM resumes WHERE predicted_field = $1;",
             category,
         )
-        return [dict(row) for row in rows]
+        # Convert rows to list of ResumeAnalysis models
+        resumes = [ResumeAnalysis(**dict(row)) for row in rows]
+        return ResumeCategoryResponse(data=resumes, count=len(resumes), category=category)
 
 
 if __name__ == "__main__":
