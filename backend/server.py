@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 import asyncpg
 import json
@@ -11,7 +11,7 @@ import nltk
 from nltk.corpus import stopwords
 from PyPDF2 import PdfReader
 import os
-from typing import List, Optional
+from typing import List, Optional, Dict
 import shutil
 from datetime import datetime, timezone 
 import uvicorn
@@ -136,6 +136,171 @@ langchain_prompt = PromptTemplate(
 # llm_chain = None
 # if llm:
 #     llm_chain = LLMChain(llm=llm, prompt=langchain_prompt)
+
+
+# Pydantic models for comprehensive UI analysis
+class SkillProficiency(BaseModel):
+    skill_name: str
+    percentage: int # e.g., 90 for 90%
+
+class UIDetailedWorkExperienceEntry(BaseModel):
+    role: str
+    company_and_duration: str # e.g., "Tech Corp | 2020 - Present"
+    bullet_points: List[str]
+
+class LanguageEntry(BaseModel):
+    language: str # e.g., "English (Native)"
+
+class EducationEntry(BaseModel):
+    education_detail: str # e.g., "Master's in Computer Science"
+
+class ComprehensiveAnalysisData(BaseModel):
+    skills_analysis: List[SkillProficiency] = Field(default_factory=list)
+    recommended_roles: List[str] = Field(default_factory=list)
+    languages: List[LanguageEntry] = Field(default_factory=list)
+    education: List[EducationEntry] = Field(default_factory=list)
+    work_experience: List[UIDetailedWorkExperienceEntry] = Field(default_factory=list)
+    name: Optional[str] = None
+    email: Optional[str] = None
+    contact: Optional[str] = None
+    predicted_field: Optional[str] = None
+
+class ComprehensiveAnalysisResponse(BaseModel):
+    success: bool = True
+    message: str = "Comprehensive analysis successful"
+    data: ComprehensiveAnalysisData
+
+# Pydantic models for tips
+class Tip(BaseModel):
+    category: str 
+    advice: str
+
+class TipsData(BaseModel):
+    resume_tips: List[Tip] = Field(default_factory=list)
+    interview_tips: List[Tip] = Field(default_factory=list)
+
+class TipsResponse(BaseModel):
+    success: bool = True
+    message: str = "Tips retrieved successfully"
+    data: TipsData
+
+
+comprehensive_analysis_prompt_template_str = """
+You are an expert resume analyzer. Your task is to extract and structure information from the provided resume text to populate a JSON object conforming to the Pydantic models below.
+The goal is to generate data that can be used to render a UI similar to the provided example.
+
+Pydantic Models:
+```python
+from typing import List, Optional
+from pydantic import BaseModel, Field
+
+class SkillProficiency(BaseModel):
+    skill_name: str
+    percentage: int # e.g., 90 for 90%. Infer this based on experience, project mentions, and skill prominence. Max 5-7 skills.
+
+class UIDetailedWorkExperienceEntry(BaseModel):
+    role: str
+    company_and_duration: str # Format as "Company Name | Start Year - End Year" or "Company Name | Start Year - Present"
+    bullet_points: List[str] # Each bullet point as a separate string
+
+class LanguageEntry(BaseModel):
+    language: str # e.g., "English (Native)", "Spanish (Professional)"
+
+class EducationEntry(BaseModel):
+    education_detail: str # e.g., "Master's in Computer Science", "B.Tech in ECE - XYZ University"
+
+class ComprehensiveAnalysisData(BaseModel):
+    skills_analysis: List[SkillProficiency] = Field(default_factory=list)
+    recommended_roles: List[str] = Field(default_factory=list) # Suggest 3-4 relevant roles based on skills and experience.
+    languages: List[LanguageEntry] = Field(default_factory=list)
+    education: List[EducationEntry] = Field(default_factory=list) # List all distinct education entries.
+    work_experience: List[UIDetailedWorkExperienceEntry] = Field(default_factory=list) # List all significant work experiences.
+    name: Optional[str] = None
+    email: Optional[str] = None
+    contact: Optional[str] = None
+    predicted_field: Optional[str] = None
+```
+
+Input:
+- Raw Resume Text:
+```text
+{extracted_resume_text}
+```
+- Predicted Job Category (from previous analysis, if available, otherwise derive one):
+```text
+{predicted_category}
+```
+- Basic Extracted Info (Name, Email, Contact - use these if provided, otherwise extract):
+```json
+{basic_info_json}
+```
+
+Instructions:
+1.  **Name, Email, Contact, Predicted Field**: Populate these from `basic_info_json` and `predicted_category`. If `basic_info_json` is minimal, extract name and email from `extracted_resume_text`. `predicted_field` should be derived if not provided.
+2.  **Skills Analysis**:
+    *   Identify the top 5-7 key technical and soft skills from the resume.
+    *   For each skill, assign a proficiency `percentage` (0-100). Base this on frequency, context, project descriptions, and associated experience.
+    *   If the resume is very sparse in skills, infer 1-2 common skills for the `predicted_category` using industry statistical averages (e.g., average top skills), and append `'(inferred)'` to the `skill_name`.
+3.  **Recommended Roles**:
+    *   Based on the overall resume content, skills, and experience, suggest 3-4 suitable job titles.
+4.  **Languages**:
+    *   Extract languages spoken and their proficiency levels.
+    *   If no languages are mentioned, infer the most common language for the role based on statistical prevalence (e.g., "English (Professional)"), appending `'(inferred)'`.
+5.  **Education**:
+    *   List educational qualifications.
+    *   If education details are missing, infer a generic qualification based on typical requirements and statistical averages for the `predicted_category` (e.g., average degree level), appending `'(inferred)'`.
+6.  **Work Experience**:
+    *   For each significant work experience:
+        *   Extract `role`.
+        *   Combine `company` and `duration` into `company_and_duration`.
+        *   List key responsibilities/achievements as `bullet_points`.
+
+7.  **General Inference Rule**: Prioritize direct extraction. When inferring missing fields, use statistical averages for the `predicted_category` and clearly mark all inferred values by appending `"(inferred)"`.
+
+Output:
+Return ONLY a single JSON object that would successfully instantiate `ComprehensiveAnalysisData(...)`. Ensure all fields are populated as accurately as possible. If a section is not present, use an empty list for list-based fields or null for optional fields.
+"""
+
+comprehensive_analysis_prompt = PromptTemplate(
+    input_variables=["extracted_resume_text", "predicted_category", "basic_info_json"],
+    template=comprehensive_analysis_prompt_template_str,
+)
+
+tips_generator_prompt_template_str = """
+You are a helpful career advisor. Generate practical and actionable tips for resume improvement and interview preparation.
+
+Context (Optional):
+- Job Category: {job_category}
+- Key Skills: {skills_list_str}
+
+Instructions:
+1.  **Resume Tips**: Provide 3-5 distinct tips for improving a resume. These can cover content, formatting, tailoring, and common mistakes to avoid. If `job_category` or `skills_list_str` are provided, try to make 1-2 tips relevant to them.
+    - Each tip should have a `category` (e.g., "Content", "Keywords", "Impact") and `advice` (the tip itself).
+2.  **Interview Tips**: Provide 3-5 distinct tips for interview preparation. These can cover research, common questions (STAR method), behavioral aspects, and post-interview follow-up. If `job_category` is provided, try to make 1-2 tips relevant to common interview focuses for that category.
+    - Each tip should have a `category` (e.g., "Preparation", "Answering Questions", "Behavioral") and `advice`.
+
+Pydantic Models for Output Structure:
+```python
+from typing import List
+from pydantic import BaseModel, Field
+
+class Tip(BaseModel):
+    category: str
+    advice: str
+
+class TipsData(BaseModel):
+    resume_tips: List[Tip] = Field(default_factory=list)
+    interview_tips: List[Tip] = Field(default_factory=list)
+```
+
+Output:
+Return ONLY a single JSON object that would successfully instantiate `TipsData(...)`.
+"""
+
+tips_generator_prompt = PromptTemplate(
+    input_variables=["job_category", "skills_list_str"],
+    template=tips_generator_prompt_template_str,
+)
 
 
 # DATABASE_URL = os.getenv(
@@ -932,6 +1097,161 @@ async def get_resumes_by_category(category: str):
 
         resumes = [ResumeAnalysis(**dict(row)) for row in rows]
         return ResumeCategoryResponse(data=resumes, count=len(resumes), category=category)
+
+
+@app.post("/comprehensive-analysis/", response_model=ComprehensiveAnalysisResponse)
+async def comprehensive_resume_analysis(file: UploadFile = File(...)):
+    if not llm:
+        raise HTTPException(status_code=503, detail="LLM service is not available.")
+
+    try:
+        uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+        os.makedirs(uploads_dir, exist_ok=True)
+        temp_file = os.path.join(uploads_dir, f"temp_comp_{file.filename}")
+        with open(temp_file, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        resume_text = ""
+        if file.filename.endswith(".pdf"):
+            resume_text = extract_text_from_pdf(temp_file)
+        else:
+            with open(temp_file, "r", encoding="utf-8", errors="ignore") as f:
+                resume_text = f.read()
+        os.remove(temp_file)
+
+        if not is_valid_resume(resume_text):
+            raise HTTPException(status_code=400, detail="Invalid resume format or content.")
+
+        # Basic info extraction
+        name, email = extract_name_and_email(resume_text)
+        contact = extract_contact_number_from_resume(resume_text)
+        cleaned_resume_for_prediction = clean_resume(resume_text)
+        predicted_category = predict_category(cleaned_resume_for_prediction)
+        
+        basic_info = {
+            "name": name,
+            "email": email,
+            "contact": contact,
+        }
+        basic_info_json_str = json.dumps(basic_info)
+
+        formatted_prompt = comprehensive_analysis_prompt.format_prompt(
+            extracted_resume_text=resume_text,
+            predicted_category=predicted_category,
+            basic_info_json=basic_info_json_str
+        ).to_string()
+
+        llm_response_content = ""
+        try:
+            response = llm.invoke(formatted_prompt)
+            llm_response_content = response.content
+        except Exception as e:
+            print(f"Error during LLM invocation for comprehensive analysis: {e}")
+            raise HTTPException(status_code=500, detail=ErrorResponse(message="LLM invocation failed", error_detail=str(e)).model_dump())
+
+        try:
+            if llm_response_content.strip().startswith("```json"):
+                llm_response_content = llm_response_content.strip()[7:]
+            if llm_response_content.strip().endswith("```"):
+                llm_response_content = llm_response_content.strip()[:-3]
+            
+            analysis_dict = json.loads(llm_response_content)
+            
+            # Ensure predicted_field is correctly passed or set
+            if 'predicted_field' not in analysis_dict or not analysis_dict['predicted_field']:
+                analysis_dict['predicted_field'] = predicted_category
+            if 'name' not in analysis_dict or not analysis_dict['name']:
+                 analysis_dict['name'] = name
+            if 'email' not in analysis_dict or not analysis_dict['email']:
+                 analysis_dict['email'] = email
+            if 'contact' not in analysis_dict and contact: # only add if contact was found
+                 analysis_dict['contact'] = contact
+
+
+            comprehensive_data = ComprehensiveAnalysisData(**analysis_dict)
+            return ComprehensiveAnalysisResponse(data=comprehensive_data)
+
+        except json.JSONDecodeError:
+            print(f"LLM output (comprehensive) was not valid JSON: {llm_response_content}")
+            raise HTTPException(status_code=500, detail=ErrorResponse(message="Failed to parse LLM response as JSON", error_detail="LLM did not return valid JSON.").model_dump())
+        except ValidationError as e:
+            print(f"Pydantic validation error (comprehensive): {e.errors()}")
+            raise HTTPException(status_code=400, detail=ErrorResponse(message="Validation error for LLM comprehensive data", error_detail=str(e.errors())).model_dump())
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in /comprehensive-analysis/: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=ErrorResponse(message="Failed to perform comprehensive analysis", error_detail=str(e)).model_dump())
+
+
+class TipsRequest(BaseModel):
+    job_category: Optional[str] = None
+    skills: Optional[str] = None
+
+@app.get("/tips/", response_model=TipsResponse)
+async def get_career_tips(
+    job_category: Optional[str] = Query(None, description="Job category for tailored tips"),
+    skills: Optional[str] = Query(None, description="Comma-separated skills for tailored tips"),
+):
+    if not llm:
+        raise HTTPException(status_code=503, detail="LLM service is not available.")
+
+    if job_category:
+        job_category = job_category.strip().lower()
+        if not job_category:
+            job_category = "general"
+    else:
+        job_category = "general"
+    if skills:
+        skills = [skill.strip() for skill in skills.split(",") if skill.strip()]
+    else:
+        skills = []
+
+
+    skills_list_str = skills if skills else ""
+    category_str = job_category if job_category else "general"
+
+    try:
+        formatted_prompt = tips_generator_prompt.format_prompt(
+            job_category=category_str,
+            skills_list_str=skills_list_str
+        ).to_string()
+
+        llm_response_content = ""
+        try:
+            response = llm.invoke(formatted_prompt)
+            llm_response_content = response.content
+        except Exception as e:
+            print(f"Error during LLM invocation for tips: {e}")
+            raise HTTPException(status_code=500, detail=ErrorResponse(message="LLM invocation for tips failed", error_detail=str(e)).model_dump())
+
+        try:
+            if llm_response_content.strip().startswith("```json"):
+                llm_response_content = llm_response_content.strip()[7:]
+            if llm_response_content.strip().endswith("```"):
+                llm_response_content = llm_response_content.strip()[:-3]
+            
+            tips_dict = json.loads(llm_response_content)
+            tips_data = TipsData(**tips_dict)
+            return TipsResponse(data=tips_data)
+
+        except json.JSONDecodeError:
+            print(f"LLM output (tips) was not valid JSON: {llm_response_content}")
+            raise HTTPException(status_code=500, detail=ErrorResponse(message="Failed to parse LLM tips response as JSON", error_detail="LLM did not return valid JSON for tips.").model_dump())
+        except ValidationError as e:
+            print(f"Pydantic validation error (tips): {e.errors()}")
+            raise HTTPException(status_code=400, detail=ErrorResponse(message="Validation error for LLM tips data", error_detail=str(e.errors())).model_dump())
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in /tips/: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=ErrorResponse(message="Failed to retrieve tips", error_detail=str(e)).model_dump())
 
 
 if __name__ == "__main__":
