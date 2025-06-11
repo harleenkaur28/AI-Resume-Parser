@@ -13,7 +13,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Lock, Mail } from "lucide-react";
+import { ArrowLeft, Lock, Mail, User } from "lucide-react"; // Added User icon
 import Link from "next/link";
 
 export default function AuthPage() {
@@ -78,27 +78,38 @@ export default function AuthPage() {
 									<form onSubmit={handleSubmit} className="space-y-4">
 										<div className="space-y-2">
 											<Label htmlFor="email" className="text-[#EEEEEE]">
-												Email
+												Email Address
 											</Label>
 											<div className="relative">
-												<Mail className="absolute left-3 top-3 h-4 w-4 text-[#76ABAE]" />
+												<Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#76ABAE]" />
 												<Input
 													id="email"
 													type="email"
-													placeholder="name@example.com"
+													placeholder="you@example.com"
+													required
 													className="pl-10 bg-white/10 border-white/20 text-[#EEEEEE] placeholder:text-[#EEEEEE]/50 focus:bg-white/15 transition-all duration-300"
 												/>
 											</div>
 										</div>
 										<div className="space-y-2">
-											<Label htmlFor="password" className="text-[#EEEEEE]">
-												Password
-											</Label>
+											<div className="flex items-center justify-between">
+												<Label htmlFor="password" className="text-[#EEEEEE]">
+													Password
+												</Label>
+												<Link
+													href="/forgot-password" // Added Forgot Password link
+													className="text-xs text-[#76ABAE] hover:underline"
+												>
+													Forgot password?
+												</Link>
+											</div>
 											<div className="relative">
-												<Lock className="absolute left-3 top-3 h-4 w-4 text-[#76ABAE]" />
+												<Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#76ABAE]" />
 												<Input
 													id="password"
 													type="password"
+													placeholder="••••••••"
+													required
 													className="pl-10 bg-white/10 border-white/20 text-[#EEEEEE] focus:bg-white/15 transition-all duration-300"
 												/>
 											</div>
@@ -118,27 +129,43 @@ export default function AuthPage() {
 							<Card className="backdrop-blur-xl bg-white/10 border-white/20 shadow-xl">
 								<CardHeader>
 									<CardTitle className="text-[#EEEEEE]">
-										Create an account
+										Create Your Account
 									</CardTitle>
 									<CardDescription className="text-[#EEEEEE]/60">
-										Enter your details to get started
+										Join us and unlock your potential.
 									</CardDescription>
 								</CardHeader>
 								<CardContent>
 									<form onSubmit={handleSubmit} className="space-y-4">
 										<div className="space-y-2">
+											<Label htmlFor="register-name" className="text-[#EEEEEE]">
+												Full Name
+											</Label>
+											<div className="relative">
+												<User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#76ABAE]" />
+												<Input
+													id="register-name"
+													type="text"
+													placeholder="Your Name"
+													required
+													className="pl-10 bg-white/10 border-white/20 text-[#EEEEEE] placeholder:text-[#EEEEEE]/50 focus:bg-white/15 transition-all duration-300"
+												/>
+											</div>
+										</div>
+										<div className="space-y-2">
 											<Label
 												htmlFor="register-email"
 												className="text-[#EEEEEE]"
 											>
-												Email
+												Email Address
 											</Label>
 											<div className="relative">
-												<Mail className="absolute left-3 top-3 h-4 w-4 text-[#76ABAE]" />
+												<Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#76ABAE]" />
 												<Input
 													id="register-email"
 													type="email"
-													placeholder="name@example.com"
+													placeholder="you@example.com"
+													required
 													className="pl-10 bg-white/10 border-white/20 text-[#EEEEEE] placeholder:text-[#EEEEEE]/50 focus:bg-white/15 transition-all duration-300"
 												/>
 											</div>
@@ -151,20 +178,68 @@ export default function AuthPage() {
 												Password
 											</Label>
 											<div className="relative">
-												<Lock className="absolute left-3 top-3 h-4 w-4 text-[#76ABAE]" />
+												<Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#76ABAE]" />
 												<Input
 													id="register-password"
 													type="password"
+													placeholder="••••••••"
+													required
 													className="pl-10 bg-white/10 border-white/20 text-[#EEEEEE] focus:bg-white/15 transition-all duration-300"
 												/>
 											</div>
 										</div>
+										<div className="space-y-2">
+											<Label
+												htmlFor="confirm-password"
+												className="text-[#EEEEEE]"
+											>
+												Confirm Password
+											</Label>
+											<div className="relative">
+												<Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#76ABAE]" />
+												<Input
+													id="confirm-password"
+													type="password"
+													placeholder="••••••••"
+													required
+													className="pl-10 bg-white/10 border-white/20 text-[#EEEEEE] focus:bg-white/15 transition-all duration-300"
+												/>
+											</div>
+										</div>
+										<div className="flex items-center space-x-2 pt-2">
+											<input
+												type="checkbox"
+												id="terms"
+												required
+												className="accent-[#76ABAE]"
+											/>
+											<Label
+												htmlFor="terms"
+												className="text-xs text-[#EEEEEE]/70"
+											>
+												I agree to the{" "}
+												<Link
+													href="/terms"
+													className="underline hover:text-[#76ABAE]"
+												>
+													Terms of Service
+												</Link>{" "}
+												and{" "}
+												<Link
+													href="/privacy"
+													className="underline hover:text-[#76ABAE]"
+												>
+													Privacy Policy
+												</Link>
+												.
+											</Label>
+										</div>
 										<Button
 											type="submit"
-											className="w-full bg-[#76ABAE] hover:bg-[#76ABAE]/90 backdrop-blur-sm shadow-lg transition-all duration-300"
+											className="w-full bg-[#76ABAE] hover:bg-[#76ABAE]/90 backdrop-blur-sm shadow-lg transition-all duration-300 mt-2"
 											disabled={isLoading}
 										>
-											{isLoading ? "Loading..." : "Register"}
+											{isLoading ? "Creating Account..." : "Create Account"}
 										</Button>
 									</form>
 								</CardContent>
