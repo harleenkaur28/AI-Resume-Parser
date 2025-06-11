@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import {
 import { ArrowLeft, MailCheck, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isLoading, setIsLoading] = useState(true);
@@ -154,5 +154,53 @@ export default function VerifyEmailPage() {
 				</Card>
 			</motion.div>
 		</div>
+	);
+}
+
+function LoadingFallback() {
+	return (
+		<div className="min-h-screen bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831] flex flex-col items-center justify-center p-4">
+			<motion.div
+				initial={{ opacity: 0, x: -20 }}
+				animate={{ opacity: 1, x: 0 }}
+				transition={{ duration: 0.5 }}
+				className="absolute top-4 left-4"
+			>
+				<Link href="/auth">
+					<Button
+						variant="ghost"
+						className="text-[#EEEEEE] hover:text-[#76ABAE]"
+					>
+						<ArrowLeft className="mr-2 h-4 w-4" />
+						Back to Login
+					</Button>
+				</Link>
+			</motion.div>
+
+			<motion.div
+				initial={{ opacity: 0, y: 20 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ duration: 0.8, delay: 0.2 }}
+				className="w-full max-w-md"
+			>
+				<Card className="backdrop-blur-xl bg-white/10 border-white/20 shadow-xl">
+					<CardHeader className="text-center">
+						<MailCheck className="mx-auto h-12 w-12 text-[#76ABAE] mb-4" />
+						<CardTitle className="text-[#EEEEEE]">Verify Your Email</CardTitle>
+						<CardDescription className="text-[#EEEEEE]/60 min-h-[40px]">
+							Loading...
+						</CardDescription>
+					</CardHeader>
+				</Card>
+			</motion.div>
+		</div>
+	);
+}
+
+export default function VerifyEmailPage() {
+	return (
+		<Suspense fallback={<LoadingFallback />}>
+			<VerifyEmailContent />
+		</Suspense>
 	);
 }
