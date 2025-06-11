@@ -1400,7 +1400,6 @@ export default function AboutPage() {
 									</div>
 								</motion.div>
 
-								{/* Legend */}
 								<div className="space-y-4">
 									{[
 										{ name: "IT & Telecom", percentage: 25, color: "#3b82f6" },
