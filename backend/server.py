@@ -34,61 +34,61 @@ app.add_middleware(
 )
 
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql://user:password@localhost:5432/resume_db_pg"
-)
-pool: Optional[asyncpg.Pool] = None
+# DATABASE_URL = os.getenv(
+#     "DATABASE_URL", "postgresql://user:password@localhost:5432/resume_db_pg"
+# )
+# pool: Optional[asyncpg.Pool] = None
 
 
-async def connect_to_db():
-    global pool
-    pool = await asyncpg.create_pool(DATABASE_URL)
-    async with pool.acquire() as connection:
-        # Create skills table
-        await connection.execute(
-            """
-            CREATE TABLE IF NOT EXISTS skills (
-                id SERIAL PRIMARY KEY,
-                skills_data JSONB NOT NULL
-            );
-        """
-        )
-        # Create resumes table
-        await connection.execute(
-            """
-            CREATE TABLE IF NOT EXISTS resumes (
-                id SERIAL PRIMARY KEY,
-                name TEXT NOT NULL,
-                email TEXT NOT NULL,
-                contact TEXT,
-                predicted_field TEXT NOT NULL,
-                college TEXT,
-                work_experience TEXT,
-                skills TEXT[],
-                upload_date TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc')
-            );
-        """
-        )
+# async def connect_to_db():
+#     global pool
+#     pool = await asyncpg.create_pool(DATABASE_URL)
+#     async with pool.acquire() as connection:
+#         # Create skills table
+#         await connection.execute(
+#             """
+#             CREATE TABLE IF NOT EXISTS skills (
+#                 id SERIAL PRIMARY KEY,
+#                 skills_data JSONB NOT NULL
+#             );
+#         """
+#         )
+#         # Create resumes table
+#         await connection.execute(
+#             """
+#             CREATE TABLE IF NOT EXISTS resumes (
+#                 id SERIAL PRIMARY KEY,
+#                 name TEXT NOT NULL,
+#                 email TEXT NOT NULL,
+#                 contact TEXT,
+#                 predicted_field TEXT NOT NULL,
+#                 college TEXT,
+#                 work_experience TEXT,
+#                 skills TEXT[],
+#                 upload_date TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc')
+#             );
+#         """
+#         )
 
 
-async def close_db_connection():
-    global pool
-    if pool:
-        await pool.close()
+# async def close_db_connection():
+#     global pool
+#     if pool:
+#         await pool.close()
 
 
-app.add_event_handler(
-    "startup",
-    connect_to_db,
-)
-app.add_event_handler(
-    "startup",
-    lambda: init_skills_pg(),
-)
-app.add_event_handler(
-    "shutdown",
-    close_db_connection,
-)
+# app.add_event_handler(
+#     "startup",
+#     connect_to_db,
+# )
+# app.add_event_handler(
+#     "startup",
+#     lambda: init_skills_pg(),
+# )
+# app.add_event_handler(
+#     "shutdown",
+#     close_db_connection,
+# )
 
 
 NLTK_DATA_PATH = os.path.join(
@@ -101,33 +101,33 @@ if not os.path.exists(NLTK_DATA_PATH):
 nltk.data.path.append(NLTK_DATA_PATH)
 
 
-async def init_skills_pg():
-    global pool
-    if not pool:
-        # This might happen if called before pool is initialized, ensure connect_to_db runs first
-        # Or handle by acquiring a new connection if pool is not ready, though startup events should manage order.
-        # For simplicity, assuming pool is ready from connect_to_db.
-        await connect_to_db()
+# async def init_skills_pg():
+#     global pool
+#     if not pool:
+#         # This might happen if called before pool is initialized, ensure connect_to_db runs first
+#         # Or handle by acquiring a new connection if pool is not ready, though startup events should manage order.
+#         # For simplicity, assuming pool is ready from connect_to_db.
+#         await connect_to_db()
 
-    async with pool.acquire() as connection:
-        count = await connection.fetchval("SELECT COUNT(*) FROM skills;")
-        if count == 0:
-            # Store skills_list as a JSON array in a single row
-            await connection.execute(
-                "INSERT INTO skills (skills_data) VALUES ($1);",
-                json.dumps(skills_list),
-            )
+#     async with pool.acquire() as connection:
+#         count = await connection.fetchval("SELECT COUNT(*) FROM skills;")
+#         if count == 0:
+#             # Store skills_list as a JSON array in a single row
+#             await connection.execute(
+#                 "INSERT INTO skills (skills_data) VALUES ($1);",
+#                 json.dumps(skills_list),
+#             )
 
 
-async def get_skills_list_pg():
-    global pool
-    async with pool.acquire() as connection:
-        skills_json = await connection.fetchval(
-            "SELECT skills_data FROM skills LIMIT 1;"
-        )
-        if skills_json:
-            return json.loads(skills_json)
-    return []
+# async def get_skills_list_pg():
+#     global pool
+#     async with pool.acquire() as connection:
+#         skills_json = await connection.fetchval(
+#             "SELECT skills_data FROM skills LIMIT 1;"
+#         )
+#         if skills_json:
+#             return json.loads(skills_json)
+#     return []
 
 
 nlp = spacy.load("en_core_web_sm")
@@ -538,13 +538,19 @@ def clean_resume(txt):
 # routes
 @app.post("/analyze-resume/")
 async def analyze_resume(file: UploadFile = File(...)):
-    global pool
+    # global pool
     try:
         # Ensure skills are initialized (handled by startup, but good to get the list)
-        current_skills_list = await get_skills_list_pg()
+        # current_skills_list = await get_skills_list_pg()
+
+        uploads_dir = os.path.join(
+            os.path.dirname(__file__),
+            "uploads",
+        ) 
+        os.makedirs(uploads_dir, exist_ok=True)
 
         # Create temporary file
-        temp_file = f"temp_{file.filename}"
+        temp_file = os.path.join(uploads_dir, f"temp_{file.filename}")
         with open(temp_file, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
@@ -563,7 +569,7 @@ async def analyze_resume(file: UploadFile = File(...)):
         contact = extract_contact_number_from_resume(resume_text)
         work_experience = extract_work_experience(resume_text)
         extracted_skills = extract_skills_from_resume(
-            resume_text, current_skills_list
+            resume_text, skills_list
         )  # Use current_skills_list
         college = extract_college_name(resume_text)
 
@@ -582,21 +588,21 @@ async def analyze_resume(file: UploadFile = File(...)):
         )
 
         # Save to PostgreSQL
-        async with pool.acquire() as connection:
-            await connection.execute(
-                """
-                INSERT INTO resumes (name, email, contact, predicted_field, college, work_experience, skills, upload_date)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                """,
-                analysis_data.name,
-                analysis_data.email,
-                analysis_data.contact,
-                analysis_data.predicted_field,
-                analysis_data.college,
-                analysis_data.work_experience,
-                analysis_data.skills,  # This should be a list of strings, matching TEXT[] in PG
-                analysis_data.upload_date,
-            )
+        # async with pool.acquire() as connection:
+        #     await connection.execute(
+        #         """
+        #         INSERT INTO resumes (name, email, contact, predicted_field, college, work_experience, skills, upload_date)
+        #         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        #         """,
+        #         analysis_data.name,
+        #         analysis_data.email,
+        #         analysis_data.contact,
+        #         analysis_data.predicted_field,
+        #         analysis_data.college,
+        #         analysis_data.work_experience,
+        #         analysis_data.skills,  # This should be a list of strings, matching TEXT[] in PG
+        #         analysis_data.upload_date,
+        #     )
 
         return analysis_data
 
@@ -633,4 +639,10 @@ async def get_resumes_by_category(category: str):
 
 if __name__ == "__main__":
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        "server:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        reload_dirs=[os.path.dirname(__file__)],
+    )

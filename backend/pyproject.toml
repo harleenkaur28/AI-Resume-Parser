@@ -12,6 +12,7 @@ dependencies = [
     "nltk>=3.9.1",
     "psycopg2-binary>=2.9.10",
     "pypdf2>=3.0.1",
+    "python-dotenv>=1.1.0",
     "python-multipart>=0.0.20",
     "spacy>=3.8.7",
 ]
