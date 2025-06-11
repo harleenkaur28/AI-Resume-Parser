@@ -1,7 +1,8 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
-from pydantic import BaseModel
+import asyncpg
+import json
+from pydantic import BaseModel, Field
 import zipfile
 import pickle
 import re
@@ -10,15 +11,20 @@ import nltk
 from nltk.corpus import stopwords
 from PyPDF2 import PdfReader
 import os
-from typing import List
+from typing import List, Optional
 import shutil
 from datetime import datetime
 import uvicorn
 
-# Initialize FastAPI app
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
 app = FastAPI()
 
-# Configure CORS
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -27,39 +33,135 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# MongoDB connection
-MONGO_URL = "mongodb://localhost:27017"
-client = AsyncIOMotorClient(MONGO_URL)
-db = client.resume_db
-resume_collection = db.resumes
-skills_collection = db.skills
 
-# Define a local path for NLTK data
-NLTK_DATA_PATH = os.path.join(os.path.dirname(__file__), "model", "nltk_data")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL", "postgresql://user:password@localhost:5432/resume_db_pg"
+)
+pool: Optional[asyncpg.Pool] = None
+
+
+async def connect_to_db():
+    global pool
+    pool = await asyncpg.create_pool(DATABASE_URL)
+    async with pool.acquire() as connection:
+        # Create skills table
+        await connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS skills (
+                id SERIAL PRIMARY KEY,
+                skills_data JSONB NOT NULL
+            );
+        """
+        )
+        # Create resumes table
+        await connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS resumes (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                email TEXT NOT NULL,
+                contact TEXT,
+                predicted_field TEXT NOT NULL,
+                college TEXT,
+                work_experience TEXT,
+                skills TEXT[],
+                upload_date TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc')
+            );
+        """
+        )
+
+
+async def close_db_connection():
+    global pool
+    if pool:
+        await pool.close()
+
+
+app.add_event_handler(
+    "startup",
+    connect_to_db,
+)
+app.add_event_handler(
+    "startup",
+    lambda: init_skills_pg(),
+)
+app.add_event_handler(
+    "shutdown",
+    close_db_connection,
+)
+
+
+NLTK_DATA_PATH = os.path.join(
+    os.path.dirname(__file__),
+    "model",
+    "nltk_data",
+)
 if not os.path.exists(NLTK_DATA_PATH):
     os.makedirs(NLTK_DATA_PATH)
 nltk.data.path.append(NLTK_DATA_PATH)
 
 
-# Initialize skills in MongoDB (run this once)
-async def init_skills():
-    if await skills_collection.count_documents({}) == 0:
-        await skills_collection.insert_one({"skills": skills_list})
+async def init_skills_pg():
+    global pool
+    if not pool:
+        # This might happen if called before pool is initialized, ensure connect_to_db runs first
+        # Or handle by acquiring a new connection if pool is not ready, though startup events should manage order.
+        # For simplicity, assuming pool is ready from connect_to_db.
+        await connect_to_db()
+
+    async with pool.acquire() as connection:
+        count = await connection.fetchval("SELECT COUNT(*) FROM skills;")
+        if count == 0:
+            # Store skills_list as a JSON array in a single row
+            await connection.execute(
+                "INSERT INTO skills (skills_data) VALUES ($1);",
+                json.dumps(skills_list),
+            )
 
 
-# Update the skills list retrieval
-async def get_skills_list():
-    skills_doc = await skills_collection.find_one({})
-    return skills_doc["skills"] if skills_doc else []
+async def get_skills_list_pg():
+    global pool
+    async with pool.acquire() as connection:
+        skills_json = await connection.fetchval(
+            "SELECT skills_data FROM skills LIMIT 1;"
+        )
+        if skills_json:
+            return json.loads(skills_json)
+    return []
 
 
 nlp = spacy.load("en_core_web_sm")
-nltk.download("punkt", download_dir=NLTK_DATA_PATH)
-nltk.download("stopwords", download_dir=NLTK_DATA_PATH)
+nltk.download(
+    "punkt",
+    download_dir=NLTK_DATA_PATH,
+)
+nltk.download(
+    "stopwords",
+    download_dir=NLTK_DATA_PATH,
+)
 stop_words = set(stopwords.words("english"))
 
-clf = pickle.load(open("model/best_model.pkl", "rb"))
-tfidf_vectorizer = pickle.load(open("model/tfidf.pkl", "rb"))
+
+clf = pickle.load(
+    open(
+        os.path.join(
+            os.path.dirname(__file__),
+            "model",
+            "best_model.pkl",
+        ),
+        "rb",
+    )
+)
+tfidf_vectorizer = pickle.load(
+    open(
+        os.path.join(
+            os.path.dirname(__file__),
+            "model",
+            "tfidf.pkl",
+        ),
+        "rb",
+    )
+)
 
 
 def clean_resume(txt):
@@ -411,12 +513,14 @@ skills_list = [
 class ResumeAnalysis(BaseModel):
     name: str
     email: str
-    contact: str = None
+    contact: Optional[str] = None  # Made Optional to match DB schema better
     predicted_field: str
-    college: str = None
-    work_experience: str = None
+    college: Optional[str] = None  # Made Optional
+    work_experience: Optional[str] = None  # Made Optional
     skills: List[str] = []
-    upload_date: datetime = datetime.now()
+    upload_date: datetime = Field(
+        default_factory=datetime.utcnow
+    )  # Use Field for default_factory
 
 
 # Helper functions (reuse your existing functions)
@@ -431,16 +535,13 @@ def clean_resume(txt):
     return " ".join(tokens)
 
 
-# Include all your other helper functions here (extract_text_from_pdf, is_valid_resume, etc.)
-# Just copy them from your original code
-
-
+# routes
 @app.post("/analyze-resume/")
 async def analyze_resume(file: UploadFile = File(...)):
+    global pool
     try:
-        # Ensure skills are initialized
-        await init_skills()
-        skills_list = await get_skills_list()
+        # Ensure skills are initialized (handled by startup, but good to get the list)
+        current_skills_list = await get_skills_list_pg()
 
         # Create temporary file
         temp_file = f"temp_{file.filename}"
@@ -453,54 +554,83 @@ async def analyze_resume(file: UploadFile = File(...)):
             with open(temp_file, "r", encoding="utf-8", errors="ignore") as f:
                 resume_text = f.read()
 
-        # Remove temporary file
         os.remove(temp_file)
 
         if not is_valid_resume(resume_text):
             raise HTTPException(status_code=400, detail="Invalid resume format")
 
-        # Extract information
         name, email = extract_name_and_email(resume_text)
         contact = extract_contact_number_from_resume(resume_text)
         work_experience = extract_work_experience(resume_text)
-        skills = extract_skills_from_resume(resume_text, skills_list)
+        extracted_skills = extract_skills_from_resume(
+            resume_text, current_skills_list
+        )  # Use current_skills_list
         college = extract_college_name(resume_text)
 
-        # Predict category
         cleaned_resume = clean_resume(resume_text)
         predicted_category = predict_category(cleaned_resume)
 
-        # Create analysis result
-        analysis = ResumeAnalysis(
+        analysis_data = ResumeAnalysis(
             name=name,
             email=email,
             contact=contact,
             predicted_field=predicted_category,
             college=college,
             work_experience=work_experience,
-            skills=skills,
+            skills=extracted_skills,
+            # upload_date is handled by Pydantic model default or DB default
         )
 
-        # Save to MongoDB
-        await resume_collection.insert_one(analysis.dict())
+        # Save to PostgreSQL
+        async with pool.acquire() as connection:
+            await connection.execute(
+                """
+                INSERT INTO resumes (name, email, contact, predicted_field, college, work_experience, skills, upload_date)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                """,
+                analysis_data.name,
+                analysis_data.email,
+                analysis_data.contact,
+                analysis_data.predicted_field,
+                analysis_data.college,
+                analysis_data.work_experience,
+                analysis_data.skills,  # This should be a list of strings, matching TEXT[] in PG
+                analysis_data.upload_date,
+            )
 
-        return analysis
+        return analysis_data
 
     except Exception as e:
+        # Log the exception for debugging
+        print(f"Error in /analyze-resume/: {e}")
+        import traceback
+
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/resumes/")
 async def get_resumes():
-    resumes = await resume_collection.find().to_list(1000)
-    return resumes
+    global pool
+    async with pool.acquire() as connection:
+        rows = await connection.fetch(
+            "SELECT id, name, email, contact, predicted_field, college, work_experience, skills, upload_date FROM resumes;"
+        )
+        # Convert rows to list of dicts or Pydantic models
+        return [dict(row) for row in rows]
 
 
 @app.get("/resumes/{category}")
 async def get_resumes_by_category(category: str):
-    resumes = await resume_collection.find({"predicted_field": category}).to_list(1000)
-    return resumes
+    global pool
+    async with pool.acquire() as connection:
+        rows = await connection.fetch(
+            "SELECT id, name, email, contact, predicted_field, college, work_experience, skills, upload_date FROM resumes WHERE predicted_field = $1;",
+            category,
+        )
+        return [dict(row) for row in rows]
 
 
 if __name__ == "__main__":
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

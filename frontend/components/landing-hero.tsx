@@ -4,8 +4,25 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { FileText, Users, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { Features } from "./features";
+import { useEffect, useState } from "react";
 
-export function LandingHero() {
+function calMobile() {
+	if (typeof window === "undefined") return false;
+	return window.innerWidth < 640;
+}
+
+function LandingHero() {
+	const [isMobile, setIsMobile] = useState(calMobile());
+
+	useEffect(() => {
+		function handleResize() {
+			setIsMobile(calMobile());
+		}
+		window.addEventListener("resize", handleResize);
+		return () => window.removeEventListener("resize", handleResize);
+	}, []);
+
 	return (
 		<div className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 py-20 sm:py-32">
 			{/* Glassmorphic background elements */}
@@ -28,7 +45,6 @@ export function LandingHero() {
 						Upload your resume and let AI match you with your perfect role.
 						Powerful insights for job seekers and recruiters alike.
 					</p>
-
 					<div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center px-4">
 						<Link href="/dashboard/seeker">
 							<Button
@@ -50,7 +66,7 @@ export function LandingHero() {
 							</Button>
 						</Link>
 					</div>
-
+					{!isMobile && <Features />}
 					<motion.div
 						initial={{ opacity: 0 }}
 						animate={{ opacity: 1 }}
@@ -66,8 +82,53 @@ export function LandingHero() {
 						<div className="hidden sm:block">|</div>
 						<p>Bulk processing</p>
 					</motion.div>
+
+					{isMobile && (
+						<motion.div
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							transition={{ delay: 0.5, duration: 0.8 }}
+							className="mt-12 flex flex-col items-center justify-center gap-4 text-[#EEEEEE]/60 text-sm"
+						>
+							{/* Cute scroll down animation */}
+							<div className="relative mt-8 flex flex-col items-center">
+								<div className="backdrop-blur-md bg-white/10 rounded-full p-3 shadow-lg border border-white/20">
+									<svg width="32" height="48" viewBox="0 0 32 48" fill="none">
+										<rect
+											x="4"
+											y="4"
+											width="24"
+											height="40"
+											rx="12"
+											fill="#76ABAE"
+											fillOpacity="0.15"
+											stroke="#76ABAE"
+											strokeWidth="2"
+										/>
+										<motion.circle
+											cx="16"
+											initial={{ cy: 14 }}
+											animate={{ cy: [14, 30, 14] }}
+											transition={{
+												repeat: Infinity,
+												duration: 1.5,
+												ease: "easeInOut",
+											}}
+											r="4"
+											fill="#76ABAE"
+										/>
+									</svg>
+								</div>
+								<span className="mt-2 text-xs text-[#EEEEEE]/70">
+									Scroll down
+								</span>
+							</div>
+						</motion.div>
+					)}
 				</motion.div>
 			</div>
 		</div>
 	);
 }
+
+export { calMobile, LandingHero };

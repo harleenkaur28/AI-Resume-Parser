@@ -5,10 +5,12 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "asyncpg>=0.30.0",
     "datetime>=5.5",
     "fastapi>=0.115.12",
     "motor>=3.7.1",
     "nltk>=3.9.1",
+    "psycopg2-binary>=2.9.10",
     "pypdf2>=3.0.1",
     "python-multipart>=0.0.20",
     "spacy>=3.8.7",
