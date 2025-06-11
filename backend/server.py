@@ -13,9 +13,13 @@ from PyPDF2 import PdfReader
 import os
 from typing import List, Optional
 import shutil
-from datetime import datetime
+from datetime import datetime, timezone 
 import uvicorn
 
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain.prompts import PromptTemplate
+
+from pydantic import BaseModel, Field, ValidationError 
 
 from dotenv import load_dotenv
 
@@ -32,6 +36,81 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+llm = None
+try:
+    google_api_key = os.getenv("GOOGLE_API_KEY")
+    if not google_api_key:
+        print("Warning: GOOGLE_API_KEY not found in .env. LLM functionality will be disabled.")
+    else:
+        llm = ChatGoogleGenerativeAI(
+            model="gemini-2.0-flash-lite", 
+            google_api_key=google_api_key, 
+            temperature=0.1,
+        )
+
+except Exception as e:
+    print(f"Error initializing Google Generative AI: {e}. LLM functionality will be disabled.")
+
+prompt_template_str = """
+You are a JSON‐validation assistant.
+Your job is to read an arbitrary JSON object and transform it so that it conforms exactly to this Pydantic model:
+
+```python
+from typing import List, Optional
+from datetime import datetime
+from pydantic import BaseModel, Field
+
+class ResumeAnalysis(BaseModel):
+    name: str
+    email: str
+    contact: Optional[str] = None
+    predicted_field: str
+    college: Optional[str] = None
+    work_experience: Optional[str] = None
+    skills: List[str] = []
+    upload_date: datetime = Field(default_factory=datetime.utcnow)
+```
+
+1.  Input
+
+- JSON (raw):
+  ```json
+  {resume_json}
+  ```
+- Text Extract (raw):
+  ```text
+  {extracted_resume_text}
+  ```
+
+2.  Transformation & Validation Rules:
+
+    - name: extract the actual person’s name (“TASHIF AHMAD KHAN”), discard tooling tags and contact info.
+    - email: ensure a single valid RFC-5322 address (lowercase, no trailing text).
+    - contact: normalize as a string, digits only or “+<country code><number>”.
+    - predicted_field: keep as is.
+    - college: trim trailing punctuation (no “-”).
+    - work_experience: merge/separate roles with semicolons or new lines; ensure it remains a single string. Also feel free to remove details which you don't belong in this field. Only include the most relevant text and have this section to be detailed.
+    - skills: dedupe, normalize casing (e.g. all title-case), output as a JSON array of strings. Keep all the languages and framworks mensioned in skills only you may refer to the raw data.
+    - upload_date: parse into ISO-8601 / RFC-3339 format.
+
+3.  Output:
+    – Return ONLY a JSON object (no commentary) that would successfully instantiate `ResumeAnalysis(...)`.
+    – If any field fails validation, include an `"errors"` key mapping field names to error messages instead of the cleaned output.
+    - Omit details in the fields and modify those based on the raw text also.
+
+Now, process the raw JSON and emit the cleaned, validated JSON.
+"""
+
+langchain_prompt = PromptTemplate(
+    input_variables=["resume_json", "extracted_resume_text"],
+    template=prompt_template_str,
+)
+
+# llm_chain = None
+# if llm:
+#     llm_chain = LLMChain(llm=llm, prompt=langchain_prompt)
 
 
 # DATABASE_URL = os.getenv(
@@ -190,10 +269,9 @@ def extract_text_from_pdf(uploaded_file):
 def is_valid_resume(text):
     """Check if the PDF is a valid resume based on text content."""
 
-    if not text:  # If no text is extracted, skip
+    if not text:  
         return False
 
-    # Resume-specific keywords
     resume_keywords = [
         "Experience",
         "Education",
@@ -317,22 +395,21 @@ def predict_category(cleaned_resume):
 
 
 def extract_files_from_zip(zip_file_path):
-    # Create a temporary directory for extracted files
-    extract_to_dir = "extracted_files"
+
+    extract_to_dir = os.path.join(__file__, "uploads", "extracted_files",)
     os.makedirs(extract_to_dir, exist_ok=True)
     extracted_files = []
 
     try:
         with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
-            zip_ref.extractall(extract_to_dir)  # Extract to temp directory
+            zip_ref.extractall(extract_to_dir)  
             for file in zip_ref.namelist():
-                # Skip unwanted system files or directories
+
                 if "__MACOSX" in file or file.endswith("/"):
                     continue
 
                 full_path = os.path.join(extract_to_dir, file)
 
-                # Check if it's a valid file
                 if os.path.isfile(full_path):
                     print(f"Processing file: {full_path}")
                     extracted_files.append(full_path)
@@ -512,14 +589,14 @@ skills_list = [
 class ResumeAnalysis(BaseModel):
     name: str
     email: str
-    contact: Optional[str] = None  
+    contact: Optional[str] = None
     predicted_field: str
-    college: Optional[str] = None  
-    work_experience: Optional[str] = None  
+    college: Optional[str] = None
+    work_experience: Optional[str] = None
     skills: List[str] = []
     upload_date: datetime = Field(
-        default_factory=datetime.utcnow
-    ) 
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
 
 
 class ResumeUploadResponse(BaseModel):
@@ -553,7 +630,6 @@ class ErrorResponse(BaseModel):
     error_detail: Optional[str] = None
 
 
-# Helper functions (reuse your existing functions)
 def clean_resume(txt):
     cleantxt = re.sub(r"https\\S+", "", txt)
     cleantxt = re.sub(r"@\\S+|#\\S+", "", cleantxt)
@@ -579,7 +655,6 @@ async def analyze_resume(file: UploadFile = File(...)):
         ) 
         os.makedirs(uploads_dir, exist_ok=True)
 
-        # Create temporary file
         temp_file = os.path.join(uploads_dir, f"temp_{file.filename}")
         with open(temp_file, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
@@ -595,29 +670,104 @@ async def analyze_resume(file: UploadFile = File(...)):
         if not is_valid_resume(resume_text):
             raise HTTPException(status_code=400, detail="Invalid resume format")
 
+
         name, email = extract_name_and_email(resume_text)
         contact = extract_contact_number_from_resume(resume_text)
         work_experience = extract_work_experience(resume_text)
-        extracted_skills = extract_skills_from_resume(
-            resume_text, skills_list
-        )  # Use current_skills_list
+        extracted_skills = extract_skills_from_resume(resume_text, skills_list)
         college = extract_college_name(resume_text)
+        
 
-        cleaned_resume = clean_resume(resume_text)
-        predicted_category = predict_category(cleaned_resume)
+        cleaned_resume_for_prediction = clean_resume(resume_text) 
+        predicted_category = predict_category(cleaned_resume_for_prediction)
 
-        analysis_data = ResumeAnalysis(
-            name=name,
-            email=email,
-            contact=contact,
-            predicted_field=predicted_category,
-            college=college,
-            work_experience=work_experience,
-            skills=extracted_skills,
-            # upload_date is handled by Pydantic model default or DB default
-        )
 
-        # Save to PostgreSQL
+        initial_resume_data = {
+            "name": name,
+            "email": email,
+            "contact": contact,
+            "predicted_field": predicted_category, 
+            "college": college,
+            "work_experience": work_experience,
+            "skills": extracted_skills,
+            "upload_date": datetime.now(timezone.utc).isoformat() 
+        }
+        initial_resume_json_str = json.dumps(initial_resume_data)
+
+        if not llm: 
+            print("Warning: LLM not available, skipping LLM processing step.")
+
+            try:
+                analysis_data = ResumeAnalysis(**initial_resume_data)
+            except ValidationError as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail=ErrorResponse(
+                        message="Validation error for extracted data (LLM unavailable)",
+                        error_detail=str(e.errors())
+                    ).model_dump()
+                )
+        else:
+
+            formatted_prompt = langchain_prompt.format_prompt(
+                resume_json=initial_resume_json_str,
+                extracted_resume_text=resume_text
+            ).to_string()
+            
+            llm_response_content = ""
+            try:
+                response = llm.invoke(formatted_prompt) 
+                llm_response_content = response.content 
+            except Exception as e:
+                print(f"Error during LLM invocation: {e}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=ErrorResponse(
+                        message="LLM invocation failed",
+                        error_detail=str(e)
+                    ).model_dump()
+                )
+
+            try:
+                if llm_response_content.strip().startswith("```json"):
+                    llm_response_content = llm_response_content.strip()[7:]
+                if llm_response_content.strip().endswith("```"):
+                    llm_response_content = llm_response_content.strip()[:-3]
+                
+                cleaned_data_dict = json.loads(llm_response_content)
+
+                if "errors" in cleaned_data_dict:
+                    error_detail_str = json.dumps(cleaned_data_dict["errors"])
+                    raise HTTPException(
+                        status_code=400,
+                        detail=ErrorResponse(
+                            message="LLM reported validation errors",
+                            error_detail=error_detail_str
+                        ).model_dump()
+                    )
+                
+                analysis_data = ResumeAnalysis(**cleaned_data_dict)
+
+            except json.JSONDecodeError:
+                print(f"LLM output was not valid JSON: {llm_response_content}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=ErrorResponse(
+                        message="Failed to parse LLM response as JSON",
+                        error_detail="LLM did not return valid JSON."
+                    ).model_dump()
+                )
+            except ValidationError as e: 
+                print(f"Pydantic validation error after LLM processing: {e.errors()}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=ErrorResponse(
+                        message="Validation error after LLM processing",
+                        error_detail=str(e.errors()) 
+                    ).model_dump()
+                )
+        
+        # Save to PostgreSQL (This part remains commented out as per original)
         # async with pool.acquire() as connection:
         #     await connection.execute(
         #         """
@@ -636,18 +786,20 @@ async def analyze_resume(file: UploadFile = File(...)):
 
         return ResumeUploadResponse(data=analysis_data)
 
+    except HTTPException: 
+        raise
+
     except Exception as e:
-        # Log the exception for debugging
+
         print(f"Error in /analyze-resume/: {e}")
         import traceback
-
         traceback.print_exc()
         raise HTTPException(
-            status_code=500, 
+            status_code=500,
             detail=ErrorResponse(
                 message="Failed to analyze resume",
                 error_detail=str(e)
-            ).dict()
+            ).model_dump() 
         )
 
 
@@ -658,7 +810,7 @@ async def get_resumes():
         rows = await connection.fetch(
             "SELECT id, name, email, contact, predicted_field, college, work_experience, skills, upload_date FROM resumes;"
         )
-        # Convert rows to list of ResumeAnalysis models
+
         resumes = [ResumeAnalysis(**dict(row)) for row in rows]
         return ResumeListResponse(data=resumes, count=len(resumes))
 
@@ -671,7 +823,7 @@ async def get_resumes_by_category(category: str):
             "SELECT id, name, email, contact, predicted_field, college, work_experience, skills, upload_date FROM resumes WHERE predicted_field = $1;",
             category,
         )
-        # Convert rows to list of ResumeAnalysis models
+
         resumes = [ResumeAnalysis(**dict(row)) for row in rows]
         return ResumeCategoryResponse(data=resumes, count=len(resumes), category=category)
 
