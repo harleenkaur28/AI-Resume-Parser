@@ -6,7 +6,7 @@ import { Navbar } from "@/components/navbar";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-	title: "Resume Analyzer - AI-Powered Job Matching",
+	title: "TalentSync - AI-Powered Job Matching",
 	description:
 		"Upload your resume and let AI match you with your perfect role. Powerful insights for job seekers and recruiters alike.",
 };
