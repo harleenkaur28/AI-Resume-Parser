@@ -3,9 +3,10 @@
 import { motion } from "framer-motion";
 import { FileUpload } from "@/components/file-upload";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Upload, BarChart3, Lightbulb } from "lucide-react";
 import Link from "next/link";
 import { KnowButton } from "@/components/know-more-button";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function SeekerDashboard() {
 	return (
@@ -33,9 +34,57 @@ export default function SeekerDashboard() {
 					transition={{ duration: 0.8, delay: 0.2 }}
 					className="max-w-4xl mx-auto mt-12"
 				>
-					<h1 className="text-4xl font-bold text-[#EEEEEE] mb-8 text-center">
-						Upload Your Resume
-					</h1>
+					<div className="text-center mb-12">
+						<h1 className="text-4xl font-bold text-[#EEEEEE] mb-4">
+							Resume Analysis Dashboard
+						</h1>
+						<p className="text-[#EEEEEE]/60 text-lg max-w-2xl mx-auto">
+							Upload your resume to get instant analysis, detailed insights, and
+							personalized career tips
+						</p>
+					</div>
+
+					{/* Features Overview */}
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+						<Card className="backdrop-blur-lg bg-white/5 border-white/10">
+							<CardContent className="p-6 text-center">
+								<Upload className="h-12 w-12 text-[#76ABAE] mx-auto mb-4" />
+								<h3 className="text-lg font-semibold text-[#EEEEEE] mb-2">
+									Quick Analysis
+								</h3>
+								<p className="text-[#EEEEEE]/60 text-sm">
+									Instant resume parsing with key information extraction
+								</p>
+							</CardContent>
+						</Card>
+
+						<Card className="backdrop-blur-lg bg-white/5 border-white/10">
+							<CardContent className="p-6 text-center">
+								<BarChart3 className="h-12 w-12 text-[#76ABAE] mx-auto mb-4" />
+								<h3 className="text-lg font-semibold text-[#EEEEEE] mb-2">
+									Detailed Insights
+								</h3>
+								<p className="text-[#EEEEEE]/60 text-sm">
+									Comprehensive analysis with skills assessment and
+									recommendations
+								</p>
+							</CardContent>
+						</Card>
+
+						<Card className="backdrop-blur-lg bg-white/5 border-white/10">
+							<CardContent className="p-6 text-center">
+								<Lightbulb className="h-12 w-12 text-[#76ABAE] mx-auto mb-4" />
+								<h3 className="text-lg font-semibold text-[#EEEEEE] mb-2">
+									Career Tips
+								</h3>
+								<p className="text-[#EEEEEE]/60 text-sm">
+									Personalized advice for resume improvement and interview prep
+								</p>
+							</CardContent>
+						</Card>
+					</div>
+
+					{/* File Upload Component */}
 					<FileUpload />
 				</motion.div>
 			</div>
