@@ -1,16 +1,18 @@
-# /Users/taf/Projects/Resume Portal/backend/security/auth.py
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer
-from fastapi import Depends, HTTPException, status  # Added status for HTTPException
+from fastapi import Depends, HTTPException, status
 
-from core.config import settings  # Import the settings object
-from schemas.user import TokenData  # Assuming schemas.user contains TokenData
+from core.config import settings
+from schemas.user import TokenData
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto",
+)
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/auth/token"
 )  # Adjust tokenUrl if your router changes
