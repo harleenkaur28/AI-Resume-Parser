@@ -49,3 +49,6 @@ backend/model/nltk_data
 
 test.py
 .env
+
+#postgres
+/backend/data/db
