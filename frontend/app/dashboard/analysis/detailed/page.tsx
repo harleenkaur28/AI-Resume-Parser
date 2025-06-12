@@ -57,7 +57,7 @@ interface AnalysisData {
 	languages: LanguageEntry[];
 	education: EducationEntry[];
 	work_experience: WorkExperience[];
-	projects?: ProjectEntry[];
+	projects: ProjectEntry[];
 }
 
 export default function DetailedAnalysisPage() {
@@ -117,7 +117,7 @@ export default function DetailedAnalysisPage() {
 		return (
 			analysisData?.projects &&
 			analysisData.projects.length > 0 &&
-			analysisData.projects.some((proj) => proj.title || proj.description)
+			analysisData.projects.some((proj) => proj.title && proj.description)
 		);
 	};
 
@@ -343,20 +343,16 @@ export default function DetailedAnalysisPage() {
 													</CardTitle>
 												</CardHeader>
 												<CardContent className="space-y-6">
-													{analysisData
-														.projects!.filter(
-															(project) => project.title || project.description
-														)
+													{analysisData.projects
+														.filter((project) => project.title && project.description)
 														.map((project, index) => (
 															<div
 																key={index}
 																className="border-l-2 border-[#76ABAE] pl-4"
 															>
-																{project.title && (
-																	<h3 className="text-[#EEEEEE] font-semibold mb-2">
-																		{project.title}
-																	</h3>
-																)}
+																<h3 className="text-[#EEEEEE] font-semibold mb-2">
+																	{project.title}
+																</h3>
 																{project.technologies_used &&
 																	project.technologies_used.length > 0 && (
 																		<div className="mb-3">
@@ -374,11 +370,9 @@ export default function DetailedAnalysisPage() {
 																			</div>
 																		</div>
 																	)}
-																{project.description && (
-																	<p className="text-[#EEEEEE]/60 text-sm leading-relaxed">
-																		{project.description}
-																	</p>
-																)}
+																<p className="text-[#EEEEEE]/60 text-sm leading-relaxed">
+																	{project.description}
+																</p>
 															</div>
 														))}
 												</CardContent>
