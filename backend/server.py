@@ -501,7 +501,12 @@ def process_document(file_bytes, file_name):
         return None
     return raw_text
 
-def format_resume_text_with_llm(raw_text, model_provider="Google", model_name="gemini-2.0-flash", api_keys_dict={"Google": google_api_key,},):
+def format_resume_text_with_llm(
+    raw_text,
+    model_provider="Google",
+    model_name="gemini-2.0-flash",
+    api_keys_dict={"Google": google_api_key,},
+):
     """Formats the extracted resume text using an LLM."""
     
     if not raw_text.strip():
@@ -570,8 +575,10 @@ def format_resume_text_with_llm(raw_text, model_provider="Google", model_name="g
             input_variables=["raw_resume_text"],
             template=template,
         )
-        chain = LLMChain(llm=llm, prompt=prompt)
-        formatted_text = chain.run(raw_resume_text=raw_text)
+
+        chain = prompt | llm
+        result = chain.invoke({"raw_resume_text": raw_text})
+        formatted_text = result if isinstance(result, str) else getattr(result, "content", "")
         return formatted_text.strip()
 
     except ValueError as ve:
