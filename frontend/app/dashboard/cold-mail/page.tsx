@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,6 +48,7 @@ export default function ColdMailGenerator() {
 	} | null>(null);
 	const [resumeFile, setResumeFile] = useState<File | null>(null);
 	const [resumeText, setResumeText] = useState("");
+	const [isPreloaded, setIsPreloaded] = useState(false);
 	const { toast } = useToast();
 
 	const [formData, setFormData] = useState({
@@ -61,11 +62,51 @@ export default function ColdMailGenerator() {
 		company_url: "",
 	});
 
-	// Simulate page load
-	useState(() => {
+	// Simulate page load and check for pre-populated data
+	useEffect(() => {
 		const timer = setTimeout(() => setIsPageLoading(false), 100);
+
+		// Check for pre-populated resume file and analysis data
+		const storedResumeFile = localStorage.getItem("resumeFile");
+		const storedAnalysisData = localStorage.getItem("analysisData");
+
+		if (storedResumeFile && storedAnalysisData) {
+			try {
+				const fileData = JSON.parse(storedResumeFile);
+				const analysisData = JSON.parse(storedAnalysisData);
+
+				// Set pre-loaded file info
+				setResumeText(
+					`${fileData.name} (${(fileData.size / 1024).toFixed(
+						1
+					)} KB) - Pre-loaded from analysis`
+				);
+				setIsPreloaded(true);
+
+				// Pre-populate form with analysis data
+				setFormData((prev) => ({
+					...prev,
+					sender_name: analysisData.name || "",
+					key_points_to_include: analysisData.skills?.join(", ") || "",
+					sender_role_or_goal: analysisData.predicted_field || "",
+				}));
+
+				// Clear the stored data after using it
+				localStorage.removeItem("resumeFile");
+				localStorage.removeItem("analysisData");
+
+				toast({
+					title: "Resume Pre-loaded!",
+					description:
+						"Your resume and details have been automatically filled from your recent analysis.",
+				});
+			} catch (error) {
+				console.error("Error loading pre-populated data:", error);
+			}
+		}
+
 		return () => clearTimeout(timer);
-	});
+	}, [toast]);
 
 	const handleInputChange = (field: string, value: string) => {
 		setFormData((prev) => ({ ...prev, [field]: value }));
@@ -75,6 +116,7 @@ export default function ColdMailGenerator() {
 		const file = event.target.files?.[0];
 		if (file) {
 			setResumeFile(file);
+			setIsPreloaded(false); // Clear preloaded state when new file is uploaded
 
 			const fileExtension = file.name.toLowerCase().split(".").pop();
 			if (fileExtension === "txt" || fileExtension === "md") {
@@ -95,10 +137,19 @@ export default function ColdMailGenerator() {
 	};
 
 	const generateColdMail = async () => {
-		if (!resumeFile) {
+		if (!resumeFile && !isPreloaded) {
 			toast({
 				title: "Resume Required",
 				description: "Please upload your resume first.",
+				variant: "destructive",
+			});
+			return;
+		}
+
+		if (isPreloaded && !resumeFile) {
+			toast({
+				title: "Resume File Needed",
+				description: "Please re-upload your resume file to generate the email.",
 				variant: "destructive",
 			});
 			return;
@@ -122,7 +173,7 @@ export default function ColdMailGenerator() {
 
 		try {
 			const formDataToSend = new FormData();
-			formDataToSend.append("file", resumeFile);
+			formDataToSend.append("file", resumeFile!);
 			formDataToSend.append("recipient_name", formData.recipient_name);
 			formDataToSend.append(
 				"recipient_designation",
@@ -358,7 +409,7 @@ export default function ColdMailGenerator() {
 														<div className="absolute inset-0 bg-gradient-to-r from-[#76ABAE]/0 via-[#76ABAE]/5 to-[#76ABAE]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
 														<div className="relative z-10 text-center">
-															{resumeFile ? (
+															{resumeFile || isPreloaded ? (
 																<motion.div
 																	initial={{ opacity: 0, scale: 0.8 }}
 																	animate={{ opacity: 1, scale: 1 }}
@@ -369,11 +420,18 @@ export default function ColdMailGenerator() {
 																		<CheckCircle className="relative h-6 w-6 text-[#76ABAE]" />
 																	</div>
 																	<p className="text-[#EEEEEE] text-sm font-medium mb-1 max-w-44 truncate">
-																		{resumeFile.name}
+																		{resumeFile?.name || "Pre-loaded Resume"}
 																	</p>
 																	<p className="text-[#76ABAE] text-xs font-medium">
-																		✓ Ready for analysis
+																		{isPreloaded
+																			? "✓ Pre-loaded from analysis"
+																			: "✓ Ready for analysis"}
 																	</p>
+																	{isPreloaded && (
+																		<p className="text-[#EEEEEE]/60 text-xs mt-1">
+																			You can upload a new file to replace
+																		</p>
+																	)}
 																</motion.div>
 															) : (
 																<motion.div

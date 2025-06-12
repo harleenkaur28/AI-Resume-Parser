@@ -10,6 +10,8 @@ import {
 	AlertCircle,
 	Eye,
 	Lightbulb,
+	Mail,
+	Users,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
@@ -136,6 +138,40 @@ export function FileUpload() {
 				jobCategory
 			)}&skills=${encodeURIComponent(skills)}`
 		);
+	};
+
+	const handleColdMailGenerator = () => {
+		// Store the file and analysis data in localStorage to pass to cold-mail page
+		if (file && analysisResult) {
+			localStorage.setItem(
+				"resumeFile",
+				JSON.stringify({
+					name: file.name,
+					size: file.size,
+					type: file.type,
+					lastModified: file.lastModified,
+				})
+			);
+			localStorage.setItem("analysisData", JSON.stringify(analysisResult.data));
+		}
+		router.push("/dashboard/cold-mail");
+	};
+
+	const handleHiringAssistant = () => {
+		// Store the file and analysis data in localStorage to pass to hiring-assistant page
+		if (file && analysisResult) {
+			localStorage.setItem(
+				"resumeFile",
+				JSON.stringify({
+					name: file.name,
+					size: file.size,
+					type: file.type,
+					lastModified: file.lastModified,
+				})
+			);
+			localStorage.setItem("analysisData", JSON.stringify(analysisResult.data));
+		}
+		router.push("/dashboard/hiring-assistant");
 	};
 
 	return (
@@ -296,32 +332,59 @@ export function FileUpload() {
 									</div>
 								)}
 
-								<div className="flex flex-col sm:flex-row gap-3">
-									<Button
-										onClick={handleDetailedAnalysis}
-										disabled={isGettingDetailedAnalysis}
-										className="flex-1 bg-[#76ABAE] hover:bg-[#76ABAE]/90"
-									>
-										{isGettingDetailedAnalysis ? (
-											<div className="flex items-center space-x-2">
-												<Loader variant="spinner" size="sm" />
-												<span>Loading...</span>
-											</div>
-										) : (
-											<>
-												<Eye className="mr-2 h-4 w-4" />
-												View Detailed Analysis
-											</>
-										)}
-									</Button>
-									<Button
-										onClick={handleGetTips}
-										variant="outline"
-										className="flex-1 border-[#76ABAE]/30 text-[#76ABAE] hover:bg-[#76ABAE]/10"
-									>
-										<Lightbulb className="mr-2 h-4 w-4" />
-										Get Career Tips
-									</Button>
+								<div className="flex flex-col gap-3">
+									<div className="flex flex-col sm:flex-row gap-3">
+										<Button
+											onClick={handleDetailedAnalysis}
+											disabled={isGettingDetailedAnalysis}
+											className="flex-1 bg-[#76ABAE] hover:bg-[#76ABAE]/90"
+										>
+											{isGettingDetailedAnalysis ? (
+												<div className="flex items-center space-x-2">
+													<Loader variant="spinner" size="sm" />
+													<span>Loading...</span>
+												</div>
+											) : (
+												<>
+													<Eye className="mr-2 h-4 w-4" />
+													View Detailed Analysis
+												</>
+											)}
+										</Button>
+										<Button
+											onClick={handleGetTips}
+											variant="outline"
+											className="flex-1 border-[#76ABAE]/30 text-[#76ABAE] hover:bg-[#76ABAE]/10"
+										>
+											<Lightbulb className="mr-2 h-4 w-4" />
+											Get Career Tips
+										</Button>
+									</div>
+
+									{/* Quick Actions */}
+									<div className="pt-2 border-t border-white/10">
+										<p className="text-[#EEEEEE]/60 text-sm mb-3 text-center">
+											Quick Actions with Your Resume
+										</p>
+										<div className="flex flex-col sm:flex-row gap-3">
+											<Button
+												onClick={handleColdMailGenerator}
+												variant="outline"
+												className="flex-1 border-[#76ABAE]/30 text-[#76ABAE] hover:bg-[#76ABAE]/10 hover:border-[#76ABAE]/50"
+											>
+												<Mail className="mr-2 h-4 w-4" />
+												Generate Cold Mail
+											</Button>
+											<Button
+												onClick={handleHiringAssistant}
+												variant="outline"
+												className="flex-1 border-[#76ABAE]/30 text-[#76ABAE] hover:bg-[#76ABAE]/10 hover:border-[#76ABAE]/50"
+											>
+												<Users className="mr-2 h-4 w-4" />
+												Interview Prep
+											</Button>
+										</div>
+									</div>
 								</div>
 							</CardContent>
 						</Card>

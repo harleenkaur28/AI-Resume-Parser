@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,6 +49,7 @@ export default function HiringAssistant() {
 	} | null>(null);
 	const [resumeFile, setResumeFile] = useState<File | null>(null);
 	const [resumeText, setResumeText] = useState("");
+	const [isPreloaded, setIsPreloaded] = useState(false);
 	const [questions, setQuestions] = useState<string[]>([""]);
 	const { toast } = useToast();
 
@@ -74,11 +75,49 @@ export default function HiringAssistant() {
 		"Do you have any questions for us?",
 	];
 
-	// Simulate page load
-	useState(() => {
+	// Simulate page load and check for pre-populated data
+	useEffect(() => {
 		const timer = setTimeout(() => setIsPageLoading(false), 100);
+
+		// Check for pre-populated resume file and analysis data
+		const storedResumeFile = localStorage.getItem("resumeFile");
+		const storedAnalysisData = localStorage.getItem("analysisData");
+
+		if (storedResumeFile && storedAnalysisData) {
+			try {
+				const fileData = JSON.parse(storedResumeFile);
+				const analysisData = JSON.parse(storedAnalysisData);
+
+				// Set pre-loaded file info
+				setResumeText(
+					`${fileData.name} (${(fileData.size / 1024).toFixed(
+						1
+					)} KB) - Pre-loaded from analysis`
+				);
+				setIsPreloaded(true);
+
+				// Pre-populate form with analysis data
+				setFormData((prev) => ({
+					...prev,
+					role: analysisData.predicted_field || "",
+				}));
+
+				// Clear the stored data after using it
+				localStorage.removeItem("resumeFile");
+				localStorage.removeItem("analysisData");
+
+				toast({
+					title: "Resume Pre-loaded!",
+					description:
+						"Your resume and details have been automatically filled from your recent analysis.",
+				});
+			} catch (error) {
+				console.error("Error loading pre-populated data:", error);
+			}
+		}
+
 		return () => clearTimeout(timer);
-	});
+	}, [toast]);
 
 	const handleInputChange = (field: string, value: string | number) => {
 		setFormData((prev) => ({ ...prev, [field]: value }));
@@ -88,6 +127,7 @@ export default function HiringAssistant() {
 		const file = event.target.files?.[0];
 		if (file) {
 			setResumeFile(file);
+			setIsPreloaded(false); // Clear preloaded state when new file is uploaded
 
 			const fileExtension = file.name.toLowerCase().split(".").pop();
 			if (fileExtension === "txt" || fileExtension === "md") {
@@ -130,10 +170,19 @@ export default function HiringAssistant() {
 	};
 
 	const generateAnswers = async () => {
-		if (!resumeFile) {
+		if (!resumeFile && !isPreloaded) {
 			toast({
 				title: "Resume Required",
 				description: "Please upload your resume first.",
+				variant: "destructive",
+			});
+			return;
+		}
+
+		if (isPreloaded && !resumeFile) {
+			toast({
+				title: "Resume File Needed",
+				description: "Please re-upload your resume file to generate answers.",
 				variant: "destructive",
 			});
 			return;
@@ -162,7 +211,7 @@ export default function HiringAssistant() {
 
 		try {
 			const formDataToSend = new FormData();
-			formDataToSend.append("file", resumeFile);
+			formDataToSend.append("file", resumeFile!);
 			formDataToSend.append("role", formData.role);
 			formDataToSend.append("company_name", formData.company);
 			formDataToSend.append("word_limit", formData.word_limit.toString());
