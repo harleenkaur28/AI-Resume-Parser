@@ -1051,6 +1051,174 @@ skills_list = [
 ]
 
 
+def generate_answers_for_geting_hired(
+    resume_text,
+    role,
+    company,
+    questions_list,
+    word_limit,
+    model_provider="Google",
+    model_name="gemini-2.0-flash",
+    api_keys_dict={
+        "Google": google_api_key,
+    },
+    user_company_knowledge="",
+    company_research="",
+):
+    """Generates answers to interview questions based on the resume and inputs."""
+    if not questions_list:
+        return []
+
+    llm = None
+    try:
+        if model_provider == "Google":
+            if not api_keys_dict.get("Google"):
+                raise ValueError("Google API Key not provided.")
+            llm = GoogleGenerativeAI(
+                model=model_name,
+                temperature=0.3,
+                google_api_key=api_keys_dict["Google"],
+            )
+        # elif model_provider == "OpenAI":
+        #     if not api_keys_dict.get("OpenAI"):
+        #         raise ValueError("OpenAI API Key not provided.")
+        #     llm = ChatOpenAI(
+        #         model_name=model_name,
+        #         temperature=0.3,
+        #         openai_api_key=api_keys_dict["OpenAI"],
+        #     )
+        # elif model_provider == "Claude":
+        #     if not api_keys_dict.get("Claude"):
+        #         raise ValueError("Anthropic API Key not provided.")
+        #     llm = ChatAnthropic(
+        #         model=model_name,
+        #         temperature=0.3,
+        #         anthropic_api_key=api_keys_dict["Claude"],
+        #     )
+        else:
+            raise ValueError(f"Unsupported model provider: {model_provider}")
+
+    except ValueError as ve:
+        error_msg = str(ve)
+        provider_help = {
+            "Google": "Verify your Google API key at https://aistudio.google.com/app/apikey",
+            "OpenAI": "Verify your OpenAI API key at https://platform.openai.com/api-keys",
+            "Claude": "Verify your Anthropic API key at https://console.anthropic.com/",
+        }
+
+        for provider, help_text in provider_help.items():
+            if provider in error_msg:
+                error_msg += f"\n💡 {help_text}"
+                break
+
+        return [
+            {"question": q, "answer": f"Configuration Error: {error_msg}"}
+            for q in questions_list
+        ]
+
+    except Exception as e:
+        error_msg = f"Unexpected error: {str(e)}"
+        if "rate limit" in str(e).lower():
+            error_msg += (
+                "\nYou may have hit API rate limits. Try again in a few moments."
+            )
+        elif "authentication" in str(e).lower() or "unauthorized" in str(e).lower():
+            error_msg += (
+                "\nPlease check your API key is valid and has sufficient credits."
+            )
+        elif "connection" in str(e).lower() or "network" in str(e).lower():
+            error_msg += (
+                "\nNetwork connection issue. Please check your internet connection."
+            )
+
+        return [
+            {
+                "question": q,
+                "answer": f"Error: {error_msg}",
+            }
+            for q in questions_list
+        ]
+
+    # Build context about the company
+    company_context = ""
+    if user_company_knowledge.strip():
+        company_context += f"\n\nAdditional information about {company}:\n{user_company_knowledge.strip()}"
+
+    if company_research.strip():
+        company_context += (
+            f"\n\nResearch findings about {company}:\n{company_research.strip()}"
+        )
+
+    template = """
+    You are an expert interview coach and career advisor.
+
+    Below is the candidate’s résumé (Markdown):
+    ```
+    {resume}
+    ```
+
+    They are applying for the role of **{role}** at **{company}**{company_context}.
+
+    Your task: craft a clear, concise answer (≤ {word_limit} words) to the interview question below.
+
+    Question:
+    {question}
+
+    Formatting guidelines:
+    1. Start with a one-sentence summary of why this candidate is a great fit.
+    2. Then use 3–4 bullet points that each:
+    • Reference a specific skill or achievement from the résumé  
+    • Include metrics or outcomes whenever possible  
+    • Tie back to the company’s mission, values or culture  
+    3. Maintain a professional, confident tone.
+    4. If no {company_context} is provided, skip references to company culture.
+
+    Answer:
+    """
+
+    prompt = PromptTemplate(
+        input_variables=[
+            "resume",
+            "role",
+            "company",
+            "company_context",
+            "question",
+            "word_limit",
+        ],
+        template=template,
+    )
+    chain = prompt | llm
+
+    results = []
+    for q in questions_list:
+
+        try:
+            answer = chain.run(
+                resume=resume_text,
+                role=role,
+                company=company,
+                company_context=company_context,
+                question=q,
+                word_limit=word_limit,
+            )
+            results.append(
+                {
+                    "question": q,
+                    "answer": answer,
+                }
+            )
+
+        except Exception as e:
+            results.append(
+                {
+                    "question": q,
+                    "answer": f"Error generating answer: {e}",
+                }
+            )
+
+    return results
+
+
 # Pydantic models
 class ResumeAnalysis(BaseModel):
     name: str
