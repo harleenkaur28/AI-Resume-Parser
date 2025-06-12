@@ -16,8 +16,9 @@ import shutil
 from datetime import datetime, timezone 
 import uvicorn
 
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAI
 from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
 
 from pydantic import BaseModel, Field, ValidationError 
 
@@ -473,6 +474,99 @@ def extract_text_from_pdf(uploaded_file):
         text += page.extract_text()
     return text
 
+def format_resume_text_with_llm(raw_text, model_provider="Google", model_name="gemini-2.0-flash", api_keys_dict={"Google": google_api_key,},):
+    """Formats the extracted resume text using an LLM."""
+    
+    if not raw_text.strip():
+        return ""
+    
+    llm = None
+    
+    try:
+        if model_provider == "Google":
+            if not api_keys_dict.get("Google"):
+                raise ValueError("Google API Key not provided for resume formatting.")
+            llm = GoogleGenerativeAI(
+                model=model_name,
+                temperature=0.1,
+                google_api_key=api_keys_dict["Google"],
+            )
+        # elif model_provider == "OpenAI":
+        #     if not api_keys_dict.get("OpenAI"):
+        #         raise ValueError("OpenAI API Key not provided for resume formatting.")
+        #     llm = ChatOpenAI(
+        #         model_name=model_name,
+        #         temperature=0.1,
+        #         openai_api_key=api_keys_dict["OpenAI"],
+        #     )
+        # elif model_provider == "Claude":
+        #     if not api_keys_dict.get("Claude"):
+        #         raise ValueError(
+        #             "Anthropic API Key not provided for resume formatting."
+        #         )
+        #     llm = ChatAnthropic(
+        #         model=model_name,
+        #         temperature=0.1,
+        #         anthropic_api_key=api_keys_dict["Claude"],
+        #     )
+        else:
+            raise ValueError(
+                f"Unsupported model provider for resume formatting: {model_provider}"
+            )
+
+        template = """
+        You are an expert resume text processing assistant.
+        The following text was extracted from a resume file. It may contain:
+        - Formatting errors (e.g., inconsistent spacing, broken lines)
+        - Unnecessary characters or artifacts from the extraction process (e.g., page numbers, headers/footers not part of content)
+        - Poor structure or illogical flow of information.
+
+        Your task is to meticulously clean and reformat this text into a professional, clear, and well-structured resume format.
+
+        Key objectives:
+        1.  **Preserve all key information**: Ensure that all substantive content related to experience, education, skills, projects, contact information, and other relevant resume sections is retained.
+        2.  **Logical Presentation**: Organize the information logically. Common resume sections (e.g., Contact Info, Summary/Objective, Experience, Education, Skills, Projects) should be clearly delineated if present in the original text. Use consistent formatting for headings and bullet points.
+        3.  **Clarity and Readability**: Improve readability by correcting formatting issues, ensuring consistent spacing, and using clear language.
+        4.  **Remove Artifacts**: Eliminate any text or characters that are clearly not part of the resume's content (e.g., "Page 1 of 2", file paths, extraction tool watermarks).
+        5.  **Conciseness**: While preserving all information, aim for concise phrasing where appropriate, without altering the meaning.
+        6.  **Plain Text Output**: The output should be ONLY the cleaned and formatted resume text, suitable for further processing or display. Do not include any of your own commentary, preamble, or markdown formatting like ```.
+
+        ---
+        Raw Resume Text:
+        ```
+        {raw_resume_text}
+        ```
+        ---
+        Cleaned and Formatted Resume Text (plain text only):
+        """
+        prompt = PromptTemplate(
+            input_variables=["raw_resume_text"],
+            template=template,
+        )
+        chain = LLMChain(llm=llm, prompt=prompt)
+        formatted_text = chain.run(raw_resume_text=raw_text)
+        return formatted_text.strip()
+
+    except ValueError as ve:
+        error_msg = str(ve)
+        provider_help = {
+            "Google": "Verify your Google API key at https://aistudio.google.com/app/apikey",
+            "OpenAI": "Verify your OpenAI API key at https://platform.openai.com/api-keys",
+            "Claude": "Verify your Anthropic API key at https://console.anthropic.com/",
+        }
+        return raw_text
+    
+    except Exception as e:
+        error_msg = f"Error formatting resume text: {str(e)}"
+        
+        if "rate limit" in str(e).lower():
+            error_msg += "\n💡 You may have hit API rate limits. Using original text."
+
+        elif "authentication" in str(e).lower() or "unauthorized" in str(e).lower():
+            error_msg += "\n💡 API authentication issue. Using original text."
+
+        return raw_text  
+
 
 def is_valid_resume(text):
     """Check if the PDF is a valid resume based on text content."""
@@ -909,7 +1003,7 @@ async def analyze_resume(file: UploadFile = File(...)):
             shutil.copyfileobj(file.file, buffer)
 
         if file.filename.endswith(".pdf"):
-            resume_text = extract_text_from_pdf(temp_file)
+            resume_text = format_resume_text_with_llm(extract_text_from_pdf(temp_file))
         else:
             with open(temp_file, "r", encoding="utf-8", errors="ignore") as f:
                 resume_text = f.read()
@@ -1131,7 +1225,7 @@ async def comprehensive_resume_analysis(file: UploadFile = File(...)):
 
         resume_text = ""
         if file.filename.endswith(".pdf"):
-            resume_text = extract_text_from_pdf(temp_file)
+            resume_text = format_resume_text_with_llm(extract_text_from_pdf(temp_file),)
         else:
             with open(temp_file, "r", encoding="utf-8", errors="ignore") as f:
                 resume_text = f.read()
