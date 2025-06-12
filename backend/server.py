@@ -1036,7 +1036,9 @@ async def analyze_resume(file: UploadFile = File(...)):
             os.remove(temp_file_path) # Clean up temp file
             raise HTTPException(status_code=400, detail=f"Unsupported file type or error processing file: {file.filename}")
         
-        if resume_text.strip():
+        
+        file_extension = os.path.splitext(file.filename)[1].lower()
+        if resume_text.strip() and file_extension not in [".md", ".txt"]:
             resume_text = format_resume_text_with_llm(resume_text)
 
 
