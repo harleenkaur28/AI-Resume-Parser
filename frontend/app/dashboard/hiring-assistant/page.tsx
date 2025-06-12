@@ -292,39 +292,23 @@ export default function HiringAssistant() {
 							</Link>
 						</motion.div>
 
-						{/* Hero Section */}
+						{/* Modern header with better mobile typography */}
 						<motion.div
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ duration: 0.8, delay: 0.2 }}
-							className="text-center mb-8 md:mb-12"
+							className="text-center mb-8 sm:mb-12"
 						>
-							<motion.div
-								initial={{ scale: 0.8, opacity: 0 }}
-								animate={{ scale: 1, opacity: 1 }}
-								transition={{ duration: 0.6, delay: 0.3 }}
-								className="relative inline-block mb-4 md:mb-6"
-							>
-								<div className="absolute inset-0 bg-gradient-to-r from-[#76ABAE] to-[#76ABAE]/60 rounded-full blur-xl opacity-30"></div>
-								<Users className="h-12 w-12 md:h-16 md:w-16 text-[#76ABAE] relative z-10" />
-							</motion.div>
-							<motion.h1
-								initial={{ opacity: 0, y: 20 }}
-								animate={{ opacity: 1, y: 0 }}
-								transition={{ duration: 0.8, delay: 0.4 }}
-								className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-[#EEEEEE] via-[#76ABAE] to-[#EEEEEE] bg-clip-text text-transparent mb-3 md:mb-4"
-							>
+							<div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-[#76ABAE]/10 rounded-2xl mb-4 sm:mb-6">
+								<Users className="h-8 w-8 sm:h-10 sm:w-10 text-[#76ABAE]" />
+							</div>
+							<h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#EEEEEE] mb-3 sm:mb-4 leading-tight">
 								AI Hiring Assistant
-							</motion.h1>
-							<motion.p
-								initial={{ opacity: 0, y: 20 }}
-								animate={{ opacity: 1, y: 0 }}
-								transition={{ duration: 0.8, delay: 0.6 }}
-								className="text-[#EEEEEE]/70 text-sm sm:text-base lg:text-lg max-w-2xl mx-auto leading-relaxed px-2"
-							>
-								Get personalized interview answers tailored to your resume,
-								role, and company insights.
-							</motion.p>
+							</h1>
+							<p className="text-[#EEEEEE]/70 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed px-4">
+								Generate personalized interview answers using AI to help you
+								prepare for your next opportunity.
+							</p>
 						</motion.div>
 
 						{/* Main Content Grid */}
