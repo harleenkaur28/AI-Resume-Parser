@@ -487,10 +487,13 @@ def clean_resume(txt):
 
 def extract_text_from_pdf(uploaded_file):
     """Extract text from a PDF file."""
+
     pdf_reader = PdfReader(uploaded_file)
     text = ""
+
     for page in pdf_reader.pages:
-        text += page.extract_text() or ""  # Ensure None is handled
+        text += page.extract_text() or ""
+
     return text
 
 
@@ -501,22 +504,27 @@ def process_document(file_bytes, file_name):
     try:
         if file_extension == ".txt" or file_extension == ".md":
             raw_text = file_bytes.decode()
+
         elif file_extension == ".pdf":
             pdf_reader = PdfReader(io.BytesIO(file_bytes))
             for page in pdf_reader.pages:
                 raw_text += page.extract_text() or ""
+
         elif file_extension == ".docx":
             doc = Document(io.BytesIO(file_bytes))
             for para in doc.paragraphs:
                 raw_text += para.text + "\\n"
+
         else:
             print(
                 f"Unsupported file type: {file_extension}. Please upload TXT, MD, PDF, or DOCX."
             )
             return None
+
     except Exception as e:
         print(f"Error processing file {file_name}: {e}")
         return None
+
     return raw_text
 
 
@@ -539,6 +547,7 @@ def format_resume_text_with_llm(
         if model_provider == "Google":
             if not api_keys_dict.get("Google"):
                 raise ValueError("Google API Key not provided for resume formatting.")
+
             llm = GoogleGenerativeAI(
                 model=model_name,
                 temperature=0.1,
@@ -843,6 +852,7 @@ def extract_files_from_zip(zip_file_path):
 
     except zipfile.BadZipFile:
         print("Error: Invalid ZIP file.")
+
     except Exception as e:
         print(f"Unexpected error: {e}")
 
@@ -1164,6 +1174,7 @@ async def analyze_resume(file: UploadFile = File(...)):
 
             try:
                 analysis_data = ResumeAnalysis(**initial_resume_data)
+
             except ValidationError as e:
                 raise HTTPException(
                     status_code=400,
@@ -1182,6 +1193,7 @@ async def analyze_resume(file: UploadFile = File(...)):
             try:
                 response = llm.invoke(formatted_prompt)
                 llm_response_content = response.content
+
             except Exception as e:
                 print(f"Error during LLM invocation: {e}")
                 raise HTTPException(
@@ -1220,6 +1232,7 @@ async def analyze_resume(file: UploadFile = File(...)):
                         error_detail="LLM did not return valid JSON.",
                     ).model_dump(),
                 )
+
             except ValidationError as e:
                 print(f"Pydantic validation error after LLM processing: {e.errors()}")
                 raise HTTPException(
@@ -1448,6 +1461,7 @@ async def comprehensive_resume_analysis(file: UploadFile = File(...)):
 
     except HTTPException:
         raise
+
     except Exception as e:
         print(f"Error in /comprehensive-analysis/: {e}")
         import traceback
@@ -1482,10 +1496,13 @@ async def get_career_tips(
         job_category = job_category.strip().lower()
         if not job_category:
             job_category = "general"
+
     else:
         job_category = "general"
+
     if skills:
         skills = [skill.strip() for skill in skills.split(",") if skill.strip()]
+
     else:
         skills = []
 
@@ -1501,6 +1518,7 @@ async def get_career_tips(
         try:
             response = llm.invoke(formatted_prompt)
             llm_response_content = response.content
+
         except Exception as e:
             print(f"Error during LLM invocation for tips: {e}")
             raise HTTPException(
@@ -1529,6 +1547,7 @@ async def get_career_tips(
                     error_detail="LLM did not return valid JSON for tips.",
                 ).model_dump(),
             )
+
         except ValidationError as e:
             print(f"Pydantic validation error (tips): {e.errors()}")
             raise HTTPException(
@@ -1541,6 +1560,7 @@ async def get_career_tips(
 
     except HTTPException:
         raise
+
     except Exception as e:
         print(f"Error in /tips/: {e}")
         import traceback
