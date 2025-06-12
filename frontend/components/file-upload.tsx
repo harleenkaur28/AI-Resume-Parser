@@ -56,6 +56,9 @@ export function FileUpload() {
 		accept: {
 			"application/pdf": [".pdf"],
 			"text/plain": [".txt"],
+			"text/markdown": [".md"],
+			"application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+				[".docx"],
 		},
 		maxFiles: 1,
 	});
@@ -172,7 +175,7 @@ export function FileUpload() {
 											or click to select a file
 										</p>
 										<p className="text-[#EEEEEE]/40 text-sm mt-2">
-											Supports PDF and TXT files
+											Supports PDF, TXT, DOCX and MD files
 										</p>
 									</div>
 								)}
