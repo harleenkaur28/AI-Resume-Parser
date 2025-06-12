@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException, Query
+from fastapi import FastAPI, File, UploadFile, HTTPException, Query, Form
 from fastapi.middleware.cors import CORSMiddleware
 import asyncpg
 import json
@@ -1718,8 +1718,13 @@ async def analyze_resume(file: UploadFile = File(...)):
 
 @app.post("/hiring-assistant/", response_model=HiringAssistantResponse)
 async def hiring_assistant(
-    request_data: HiringAssistantRequest,
     file: UploadFile = File(...),
+    role: str = Form(...),
+    questions: str = Form(...),  # JSON string: '["q1", "q2"]'
+    company_name: str = Form(...),
+    user_knowledge: Optional[str] = Form(""),
+    company_url: Optional[str] = Form(None),
+    word_limit: Optional[int] = Form(150),
 ):
     if not llm:
         raise HTTPException(
@@ -1730,6 +1735,24 @@ async def hiring_assistant(
         )
 
     try:
+        # Parse questions JSON string to list
+        try:
+            questions_list = json.loads(questions)
+            if (
+                not isinstance(questions_list, list)
+                or not all(isinstance(q, str) for q in questions_list)
+                or not questions_list
+            ):
+                raise ValueError("Questions must be a non-empty list of strings.")
+        except (json.JSONDecodeError, ValueError) as e:
+            raise HTTPException(
+                status_code=422,
+                detail=ErrorResponse(
+                    message="Invalid format for questions. Expected a JSON string representing a non-empty list of strings.",
+                    error_detail=str(e),
+                ).model_dump(),
+            )
+
         uploads_dir = os.path.join(
             os.path.dirname(__file__),
             "uploads",
@@ -1771,18 +1794,16 @@ async def hiring_assistant(
             )
 
         company_research_info = ""
-        if request_data.company_url:
-            company_research_info = get_company_research(
-                request_data.company_name, request_data.company_url
-            )
+        if company_url:
+            company_research_info = get_company_research(company_name, company_url)
 
         generated_answers_list = generate_answers_for_geting_hired(
             resume_text=resume_text,
-            role=request_data.role,
-            company=request_data.company_name,
-            questions_list=request_data.questions,
-            word_limit=request_data.word_limit,
-            user_company_knowledge=request_data.user_knowledge,
+            role=role,
+            company=company_name,
+            questions_list=questions_list,
+            word_limit=word_limit,
+            user_company_knowledge=user_knowledge,
             company_research=company_research_info,
         )
 
@@ -1817,6 +1838,14 @@ async def hiring_assistant(
             ).model_dump(),
         )
 
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=422,
+            detail=ErrorResponse(
+                message="Invalid input value.", error_detail=str(ve)
+            ).model_dump(),
+        )
+
     except Exception as e:
         print(f"Error in /hiring-assistant/: {e}")
         import traceback
@@ -1832,8 +1861,15 @@ async def hiring_assistant(
 
 @app.post("/cold-mail-generator/", response_model=ColdMailResponse)
 async def cold_mail_generator(
-    request_data: ColdMailRequest,
     file: UploadFile = File(...),
+    recipient_name: str = Form(...),
+    recipient_designation: str = Form(...),
+    company_name: str = Form(...),
+    sender_name: str = Form(...),
+    sender_role_or_goal: str = Form(...),
+    key_points_to_include: str = Form(...),
+    additional_info_for_llm: Optional[str] = Form(""),
+    company_url: Optional[str] = Form(None),
 ):
     if not llm:
         raise HTTPException(
@@ -1875,20 +1911,18 @@ async def cold_mail_generator(
             )
 
         company_research_info = ""
-        if request_data.company_url:
-            company_research_info = get_company_research(
-                request_data.company_name, request_data.company_url
-            )
+        if company_url:
+            company_research_info = get_company_research(company_name, company_url)
 
         email_content = generate_cold_mail_content(
             resume_text=resume_text,
-            recipient_name=request_data.recipient_name,
-            recipient_designation=request_data.recipient_designation,
-            company_name=request_data.company_name,
-            sender_name=request_data.sender_name,
-            sender_role_or_goal=request_data.sender_role_or_goal,
-            key_points_to_include=request_data.key_points_to_include,
-            additional_info_for_llm=request_data.additional_info_for_llm,
+            recipient_name=recipient_name,
+            recipient_designation=recipient_designation,
+            company_name=company_name,
+            sender_name=sender_name,
+            sender_role_or_goal=sender_role_or_goal,
+            key_points_to_include=key_points_to_include,
+            additional_info_for_llm=additional_info_for_llm,
             company_research=company_research_info,
         )
 
@@ -1907,16 +1941,14 @@ async def cold_mail_generator(
 
     except HTTPException:
         raise
-    except ValidationError as e:  # Catch Pydantic validation errors for the request
+    except ValidationError as e:
         raise HTTPException(
             status_code=422,
             detail=ErrorResponse(
                 message="Input validation error.", error_detail=str(e.errors())
             ).model_dump(),
         )
-    except (
-        ValueError
-    ) as ve:  # Catch ValueErrors from LLM initialization or other direct calls
+    except ValueError as ve:
         raise HTTPException(
             status_code=500,
             detail=ErrorResponse(
@@ -1996,7 +2028,6 @@ async def comprehensive_resume_analysis(file: UploadFile = File(...)):
                 status_code=400, detail="Invalid resume format or content."
             )
 
-        # Basic info extraction
         name, email = extract_name_and_email(resume_text)
         contact = extract_contact_number_from_resume(resume_text)
         cleaned_resume_for_prediction = clean_resume(resume_text)
@@ -2036,7 +2067,6 @@ async def comprehensive_resume_analysis(file: UploadFile = File(...)):
 
             analysis_dict = json.loads(llm_response_content)
 
-            # Ensure predicted_field is correctly passed or set
             if (
                 "predicted_field" not in analysis_dict
                 or not analysis_dict["predicted_field"]
