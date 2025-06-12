@@ -4,7 +4,14 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FileUpload } from "@/components/file-upload";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Upload, BarChart3, Lightbulb } from "lucide-react";
+import {
+	ArrowLeft,
+	Upload,
+	BarChart3,
+	Lightbulb,
+	Mail,
+	Users,
+} from "lucide-react";
 import Link from "next/link";
 import { KnowButton } from "@/components/know-more-button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -125,6 +132,59 @@ export default function SeekerDashboard() {
 										</p>
 									</CardContent>
 								</Card>
+							</motion.div>
+
+							{/* Additional Services */}
+							<motion.div
+								initial={{ opacity: 0, y: 20 }}
+								animate={{ opacity: 1, y: 0 }}
+								transition={{ duration: 0.8, delay: 0.8 }}
+								className="text-center mb-8"
+							>
+								<h2 className="text-2xl md:text-3xl font-bold text-[#EEEEEE] mb-4">
+									Additional Services
+								</h2>
+								<p className="text-[#EEEEEE]/70 text-lg mb-8 max-w-2xl mx-auto">
+									Enhance your job search with our AI-powered tools
+								</p>
+
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+									<Link href="/dashboard/cold-mail">
+										<Card className="backdrop-blur-lg bg-white/5 border-white/10 hover:bg-white/10 transition-all duration-300 cursor-pointer group">
+											<CardContent className="p-8 text-center">
+												<Mail className="h-12 w-12 text-[#76ABAE] mx-auto mb-4 group-hover:scale-110 transition-transform duration-300" />
+												<h3 className="text-[#EEEEEE] font-semibold text-xl mb-3">
+													Cold Mail Generator
+												</h3>
+												<p className="text-[#EEEEEE]/60 text-sm mb-4">
+													Generate personalized cold emails to connect with
+													potential employers and expand your network
+												</p>
+												<Button className="bg-[#76ABAE] hover:bg-[#76ABAE]/80 text-white">
+													Generate Cold Mail
+												</Button>
+											</CardContent>
+										</Card>
+									</Link>
+
+									<Link href="/dashboard/hiring-assistant">
+										<Card className="backdrop-blur-lg bg-white/5 border-white/10 hover:bg-white/10 transition-all duration-300 cursor-pointer group">
+											<CardContent className="p-8 text-center">
+												<Users className="h-12 w-12 text-[#76ABAE] mx-auto mb-4 group-hover:scale-110 transition-transform duration-300" />
+												<h3 className="text-[#EEEEEE] font-semibold text-xl mb-3">
+													Hiring Assistant
+												</h3>
+												<p className="text-[#EEEEEE]/60 text-sm mb-4">
+													Get AI-powered answers to interview questions tailored
+													to your resume and target role
+												</p>
+												<Button className="bg-[#76ABAE] hover:bg-[#76ABAE]/80 text-white">
+													Prepare for Interview
+												</Button>
+											</CardContent>
+										</Card>
+									</Link>
+								</div>
 							</motion.div>
 						</div>
 					</div>
