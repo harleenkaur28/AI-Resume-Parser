@@ -148,8 +148,13 @@ class UIDetailedWorkExperienceEntry(BaseModel):
     company_and_duration: str # e.g., "Tech Corp | 2020 - Present"
     bullet_points: List[str]
 
+class UIProjectEntry(BaseModel):
+    title: str
+    technologies_used: List[str] = Field(default_factory=list)
+    description: str
+
 class LanguageEntry(BaseModel):
-    language: str # e.g., "English (Native)"
+    language: str 
 
 class EducationEntry(BaseModel):
     education_detail: str # e.g., "Master's in Computer Science"
@@ -160,6 +165,7 @@ class ComprehensiveAnalysisData(BaseModel):
     languages: List[LanguageEntry] = Field(default_factory=list)
     education: List[EducationEntry] = Field(default_factory=list)
     work_experience: List[UIDetailedWorkExperienceEntry] = Field(default_factory=list)
+    projects: List[UIProjectEntry] = Field(default_factory=list)
     name: Optional[str] = None
     email: Optional[str] = None
     contact: Optional[str] = None
@@ -203,6 +209,11 @@ class UIDetailedWorkExperienceEntry(BaseModel):
     company_and_duration: str # Format as "Company Name | Start Year - End Year" or "Company Name | Start Year - Present"
     bullet_points: List[str] # Each bullet point as a separate string
 
+class UIProjectEntry(BaseModel):
+    title: str
+    technologies_used: List[str] = Field(default_factory=list)
+    description: str
+
 class LanguageEntry(BaseModel):
     language: str # e.g., "English (Native)", "Spanish (Professional)"
 
@@ -215,6 +226,7 @@ class ComprehensiveAnalysisData(BaseModel):
     languages: List[LanguageEntry] = Field(default_factory=list)
     education: List[EducationEntry] = Field(default_factory=list) # List all distinct education entries.
     work_experience: List[UIDetailedWorkExperienceEntry] = Field(default_factory=list) # List all significant work experiences.
+    projects: List[UIProjectEntry] = Field(default_factory=list) # List all significant projects.
     name: Optional[str] = None
     email: Optional[str] = None
     contact: Optional[str] = None
@@ -254,8 +266,14 @@ Instructions:
         *   Extract `role`.
         *   Combine `company` and `duration` into `company_and_duration`.
         *   List key responsibilities/achievements as `bullet_points`.
+7.  **Projects**:
+    *   For each project mentioned in the resume:
+        *   Extract project `title`.
+        *   Identify `technologies_used` as a list of technologies, frameworks, or tools used.
+        *   Extract project `description` with key details about what was built/accomplished.
+    *   If no projects are explicitly mentioned, infer 1-2 typical projects for the `predicted_category` and append `'(inferred)'` to the `title`.
 
-7.  **General Inference Rule**: Prioritize direct extraction. When inferring missing fields, use statistical averages for the `predicted_category` and clearly mark all inferred values by appending `"(inferred)"`.
+8.  **General Inference Rule**: Prioritize direct extraction. When inferring missing fields, use statistical averages for the `predicted_category` and clearly mark all inferred values by appending `"(inferred)"`.
 
 Output:
 Return ONLY a single JSON object that would successfully instantiate `ComprehensiveAnalysisData(...)`. Ensure all fields are populated as accurately as possible. If a section is not present, use an empty list for list-based fields or null for optional fields.
