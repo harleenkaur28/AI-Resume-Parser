@@ -15,6 +15,7 @@ from typing import List, Optional, Dict
 import shutil
 from datetime import datetime, timezone 
 import uvicorn
+from docx import Document
 
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAI
 from langchain.prompts import PromptTemplate
@@ -471,8 +472,33 @@ def extract_text_from_pdf(uploaded_file):
     pdf_reader = PdfReader(uploaded_file)
     text = ""
     for page in pdf_reader.pages:
-        text += page.extract_text()
+        text += page.extract_text() or "" # Ensure None is handled
     return text
+
+def process_document(file_bytes, file_name):
+    """Extracts text from uploaded TXT, MD, PDF, or DOCX file."""
+    file_extension = os.path.splitext(file_name)[1].lower()
+    raw_text = ""
+    try:
+        if file_extension == ".txt" or file_extension == ".md":
+            raw_text = file_bytes.decode()
+        elif file_extension == ".pdf":
+            pdf_reader = PdfReader(io.BytesIO(file_bytes))
+            for page in pdf_reader.pages:
+                raw_text += page.extract_text() or ""
+        elif file_extension == ".docx":
+            doc = Document(io.BytesIO(file_bytes))
+            for para in doc.paragraphs:
+                raw_text += para.text + "\\n"
+        else:
+            print(
+                f"Unsupported file type: {file_extension}. Please upload TXT, MD, PDF, or DOCX."
+            )
+            return None
+    except Exception as e:
+        print(f"Error processing file {file_name}: {e}")
+        return None
+    return raw_text
 
 def format_resume_text_with_llm(raw_text, model_provider="Google", model_name="gemini-2.0-flash", api_keys_dict={"Google": google_api_key,},):
     """Formats the extracted resume text using an LLM."""
@@ -998,17 +1024,22 @@ async def analyze_resume(file: UploadFile = File(...)):
         ) 
         os.makedirs(uploads_dir, exist_ok=True)
 
-        temp_file = os.path.join(uploads_dir, f"temp_{file.filename}")
-        with open(temp_file, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        temp_file_path = os.path.join(uploads_dir, f"temp_{file.filename}")
+        file_bytes = await file.read() # Read file content as bytes
+        with open(temp_file_path, "wb") as buffer:
+            buffer.write(file_bytes)
 
-        if file.filename.endswith(".pdf"):
-            resume_text = format_resume_text_with_llm(extract_text_from_pdf(temp_file))
-        else:
-            with open(temp_file, "r", encoding="utf-8", errors="ignore") as f:
-                resume_text = f.read()
 
-        os.remove(temp_file)
+        resume_text = process_document(file_bytes, file.filename)
+        if resume_text is None:
+            os.remove(temp_file_path) # Clean up temp file
+            raise HTTPException(status_code=400, detail=f"Unsupported file type or error processing file: {file.filename}")
+        
+        if resume_text.strip():
+            resume_text = format_resume_text_with_llm(resume_text)
+
+
+        os.remove(temp_file_path) 
 
         if not is_valid_resume(resume_text):
             raise HTTPException(status_code=400, detail="Invalid resume format")
@@ -1219,17 +1250,25 @@ async def comprehensive_resume_analysis(file: UploadFile = File(...)):
     try:
         uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
         os.makedirs(uploads_dir, exist_ok=True)
-        temp_file = os.path.join(uploads_dir, f"temp_comp_{file.filename}")
-        with open(temp_file, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        
+        file_bytes = await file.read() 
 
-        resume_text = ""
-        if file.filename.endswith(".pdf"):
-            resume_text = format_resume_text_with_llm(extract_text_from_pdf(temp_file),)
-        else:
-            with open(temp_file, "r", encoding="utf-8", errors="ignore") as f:
-                resume_text = f.read()
-        os.remove(temp_file)
+        temp_file_path = os.path.join(uploads_dir, f"temp_comp_{file.filename}")
+        with open(temp_file_path, "wb") as buffer:
+            buffer.write(file_bytes)
+
+
+        resume_text = process_document(file_bytes, file.filename)
+        if resume_text is None:
+            os.remove(temp_file_path) 
+            raise HTTPException(status_code=400, detail=f"Unsupported file type or error processing file: {file.filename}",)
+
+
+        if resume_text.strip():
+            resume_text = format_resume_text_with_llm(resume_text)
+        
+        os.remove(temp_file_path) 
+
 
         if not is_valid_resume(resume_text):
             raise HTTPException(status_code=400, detail="Invalid resume format or content.")
