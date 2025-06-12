@@ -1,6 +1,8 @@
 import { LandingHero } from "@/components/landing-hero";
 import { MobileFeatures } from "@/components/features";
 import { KnowButton } from "@/components/know-more-button";
+import { ColdMailButton } from "@/components/cold-mail-button";
+import { HiringAssistantButton } from "@/components/hiring-assistant-button";
 
 export default function Home() {
 	return (
@@ -8,6 +10,8 @@ export default function Home() {
 			<LandingHero />
 			<MobileFeatures />
 			<KnowButton />
+			<ColdMailButton />
+			<HiringAssistantButton />
 		</main>
 	);
 }
