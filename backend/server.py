@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 import zipfile
 import pickle
 import re
+import requests
 import spacy
 import nltk
 from nltk.corpus import stopwords
@@ -14,7 +15,7 @@ import os
 from typing import List, Optional, Dict
 import shutil
 import io
-from datetime import datetime, timezone 
+from datetime import datetime, timezone
 import uvicorn
 from docx import Document
 
@@ -22,7 +23,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
-from pydantic import BaseModel, Field, ValidationError 
+from pydantic import BaseModel, Field, ValidationError
 
 from dotenv import load_dotenv
 
@@ -45,16 +46,21 @@ llm = None
 try:
     google_api_key = os.getenv("GOOGLE_API_KEY")
     if not google_api_key:
-        print("Warning: GOOGLE_API_KEY not found in .env. LLM functionality will be disabled.")
+        print(
+            "Warning: GOOGLE_API_KEY not found in .env. LLM functionality will be disabled."
+        )
     else:
         llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash", 
-            google_api_key=google_api_key, 
+            model="gemini-2.0-flash",
+            google_api_key=google_api_key,
             temperature=0.1,
         )
 
 except Exception as e:
-    print(f"Error initializing Google Generative AI: {e}. LLM functionality will be disabled.")
+    print(
+        f"Error initializing Google Generative AI: {e}. LLM functionality will be disabled."
+    )
+
 
 # Define structured Pydantic models for WorkExperience and Projects
 class WorkExperienceEntry(BaseModel):
@@ -63,10 +69,12 @@ class WorkExperienceEntry(BaseModel):
     duration: Optional[str] = None
     description: Optional[str] = None
 
+
 class ProjectEntry(BaseModel):
     title: Optional[str] = None
     technologies_used: Optional[List[str]] = Field(default_factory=list)
     description: Optional[str] = None
+
 
 prompt_template_str = """
 You are a JSON‐validation assistant.
@@ -144,23 +152,28 @@ langchain_prompt = PromptTemplate(
 # Pydantic models for comprehensive UI analysis
 class SkillProficiency(BaseModel):
     skill_name: str
-    percentage: int # e.g., 90 for 90%
+    percentage: int  # e.g., 90 for 90%
+
 
 class UIDetailedWorkExperienceEntry(BaseModel):
     role: str
-    company_and_duration: str # e.g., "Tech Corp | 2020 - Present"
+    company_and_duration: str  # e.g., "Tech Corp | 2020 - Present"
     bullet_points: List[str]
+
 
 class UIProjectEntry(BaseModel):
     title: str
     technologies_used: List[str] = Field(default_factory=list)
     description: str
 
+
 class LanguageEntry(BaseModel):
-    language: str 
+    language: str
+
 
 class EducationEntry(BaseModel):
-    education_detail: str # e.g., "Master's in Computer Science"
+    education_detail: str  # e.g., "Master's in Computer Science"
+
 
 class ComprehensiveAnalysisData(BaseModel):
     skills_analysis: List[SkillProficiency] = Field(default_factory=list)
@@ -174,19 +187,23 @@ class ComprehensiveAnalysisData(BaseModel):
     contact: Optional[str] = None
     predicted_field: Optional[str] = None
 
+
 class ComprehensiveAnalysisResponse(BaseModel):
     success: bool = True
     message: str = "Comprehensive analysis successful"
     data: ComprehensiveAnalysisData
 
+
 # Pydantic models for tips
 class Tip(BaseModel):
-    category: str 
+    category: str
     advice: str
+
 
 class TipsData(BaseModel):
     resume_tips: List[Tip] = Field(default_factory=list)
     interview_tips: List[Tip] = Field(default_factory=list)
+
 
 class TipsResponse(BaseModel):
     success: bool = True
@@ -473,8 +490,9 @@ def extract_text_from_pdf(uploaded_file):
     pdf_reader = PdfReader(uploaded_file)
     text = ""
     for page in pdf_reader.pages:
-        text += page.extract_text() or "" # Ensure None is handled
+        text += page.extract_text() or ""  # Ensure None is handled
     return text
+
 
 def process_document(file_bytes, file_name):
     """Extracts text from uploaded TXT, MD, PDF, or DOCX file."""
@@ -501,19 +519,22 @@ def process_document(file_bytes, file_name):
         return None
     return raw_text
 
+
 def format_resume_text_with_llm(
     raw_text,
     model_provider="Google",
     model_name="gemini-2.0-flash",
-    api_keys_dict={"Google": google_api_key,},
+    api_keys_dict={
+        "Google": google_api_key,
+    },
 ):
     """Formats the extracted resume text using an LLM."""
-    
+
     if not raw_text.strip():
         return ""
-    
+
     llm = None
-    
+
     try:
         if model_provider == "Google":
             if not api_keys_dict.get("Google"):
@@ -578,7 +599,9 @@ def format_resume_text_with_llm(
 
         chain = prompt | llm
         result = chain.invoke({"raw_resume_text": raw_text})
-        formatted_text = result if isinstance(result, str) else getattr(result, "content", "")
+        formatted_text = (
+            result if isinstance(result, str) else getattr(result, "content", "")
+        )
         return formatted_text.strip()
 
     except ValueError as ve:
@@ -589,23 +612,23 @@ def format_resume_text_with_llm(
             "Claude": "Verify your Anthropic API key at https://console.anthropic.com/",
         }
         return raw_text
-    
+
     except Exception as e:
         error_msg = f"Error formatting resume text: {str(e)}"
-        
+
         if "rate limit" in str(e).lower():
             error_msg += "\n💡 You may have hit API rate limits. Using original text."
 
         elif "authentication" in str(e).lower() or "unauthorized" in str(e).lower():
             error_msg += "\n💡 API authentication issue. Using original text."
 
-        return raw_text  
+        return raw_text
 
 
 def is_valid_resume(text):
     """Check if the PDF is a valid resume based on text content."""
 
-    if not text:  
+    if not text:
         return False
 
     resume_keywords = [
@@ -686,8 +709,19 @@ def extract_projects(text: str) -> List[str]:
     """Extract project information from the resume text as a list of strings."""
     projects_info = []
     in_project_section = False
-    project_section_keywords = ["PROJECTS", "PERSONAL PROJECTS", "ACADEMIC PROJECTS", "PROJECT EXPERIENCE"]
-    section_end_keywords = ["EXPERIENCE", "EDUCATION", "SKILLS", "CERTIFICATIONS", "AWARDS"] 
+    project_section_keywords = [
+        "PROJECTS",
+        "PERSONAL PROJECTS",
+        "ACADEMIC PROJECTS",
+        "PROJECT EXPERIENCE",
+    ]
+    section_end_keywords = [
+        "EXPERIENCE",
+        "EDUCATION",
+        "SKILLS",
+        "CERTIFICATIONS",
+        "AWARDS",
+    ]
 
     lines = text.splitlines()
     for line in lines:
@@ -695,29 +729,42 @@ def extract_projects(text: str) -> List[str]:
         if not stripped_line:
             continue
 
-        is_project_header = any(re.search(r'\b' + keyword + r'\b', stripped_line, re.IGNORECASE) for keyword in project_section_keywords)
-        is_section_ender = any(re.search(r'\b' + keyword + r'\b', stripped_line, re.IGNORECASE) for keyword in section_end_keywords)
+        is_project_header = any(
+            re.search(r"\b" + keyword + r"\b", stripped_line, re.IGNORECASE)
+            for keyword in project_section_keywords
+        )
+        is_section_ender = any(
+            re.search(r"\b" + keyword + r"\b", stripped_line, re.IGNORECASE)
+            for keyword in section_end_keywords
+        )
 
         if is_project_header:
             in_project_section = True
 
             continue
-        
+
         if in_project_section:
-            if is_section_ender and not is_project_header: 
+            if is_section_ender and not is_project_header:
                 in_project_section = False
-                break 
+                break
             projects_info.append(stripped_line)
-            
 
     if not projects_info:
-        project_line_keywords = ["developed", "implemented", "created", "designed", "project on", "built a", "application for"]
+        project_line_keywords = [
+            "developed",
+            "implemented",
+            "created",
+            "designed",
+            "project on",
+            "built a",
+            "application for",
+        ]
         for line in lines:
             if any(keyword in line.lower() for keyword in project_line_keywords):
 
-                if len(line.strip()) > 20: 
+                if len(line.strip()) > 20:
                     projects_info.append(line.strip())
-                    if len(projects_info) >= 10: 
+                    if len(projects_info) >= 10:
                         break
     return projects_info
 
@@ -772,13 +819,17 @@ def predict_category(cleaned_resume):
 
 def extract_files_from_zip(zip_file_path):
 
-    extract_to_dir = os.path.join(__file__, "uploads", "extracted_files",)
+    extract_to_dir = os.path.join(
+        __file__,
+        "uploads",
+        "extracted_files",
+    )
     os.makedirs(extract_to_dir, exist_ok=True)
     extracted_files = []
 
     try:
         with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
-            zip_ref.extractall(extract_to_dir)  
+            zip_ref.extractall(extract_to_dir)
             for file in zip_ref.namelist():
 
                 if "__MACOSX" in file or file.endswith("/"):
@@ -796,6 +847,35 @@ def extract_files_from_zip(zip_file_path):
         print(f"Unexpected error: {e}")
 
     return extracted_files
+
+
+def get_company_research(company_name: str, url: str) -> str:
+    """Gets basic company research information."""
+    try:
+        if not url:
+            return (
+                f"Research about {company_name}: No URL provided for company research."
+            )
+        res = requests.get("https://r.jina.ai/" + url)
+
+        # soup = BeautifulSoup(res.content, "html.parser")
+        # return soup.prettify()
+
+        if res.status_code != 200:
+            return f"Research about {company_name}: Unable to fetch data from the provided URL."
+
+        if not res.text.strip():
+            return (
+                f"Research about {company_name}: No content found at the provided URL."
+            )
+
+        if not company_name.strip():
+            return f"The website of content: {res.text.strip()}"
+
+        return f"Research about {company_name}: {res.text}"
+
+    except:
+        return f"Research about {company_name}: This is a placeholder for company research functionality."
 
 
 skills_list = [
@@ -968,16 +1048,15 @@ class ResumeAnalysis(BaseModel):
     contact: Optional[str] = None
     predicted_field: str
     college: Optional[str] = None
-    work_experience: Optional[List[WorkExperienceEntry]] = Field(default_factory=list) 
-    projects: Optional[List[ProjectEntry]] = Field(default_factory=list) 
+    work_experience: Optional[List[WorkExperienceEntry]] = Field(default_factory=list)
+    projects: Optional[List[ProjectEntry]] = Field(default_factory=list)
     skills: List[str] = Field(default_factory=list)
-    upload_date: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    upload_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class ResumeUploadResponse(BaseModel):
     """Response model for resume analysis"""
+
     success: bool = True
     message: str = "Resume analyzed successfully"
     data: ResumeAnalysis
@@ -985,6 +1064,7 @@ class ResumeUploadResponse(BaseModel):
 
 class ResumeListResponse(BaseModel):
     """Response model for getting list of resumes"""
+
     success: bool = True
     message: str = "Resumes retrieved successfully"
     data: List[ResumeAnalysis]
@@ -993,6 +1073,7 @@ class ResumeListResponse(BaseModel):
 
 class ResumeCategoryResponse(BaseModel):
     """Response model for getting resumes by category"""
+
     success: bool = True
     message: str = "Resumes retrieved successfully"
     data: List[ResumeAnalysis]
@@ -1002,6 +1083,7 @@ class ResumeCategoryResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     """Error response model"""
+
     success: bool = False
     message: str
     error_detail: Optional[str] = None
@@ -1029,58 +1111,55 @@ async def analyze_resume(file: UploadFile = File(...)):
         uploads_dir = os.path.join(
             os.path.dirname(__file__),
             "uploads",
-        ) 
+        )
         os.makedirs(uploads_dir, exist_ok=True)
 
         temp_file_path = os.path.join(uploads_dir, f"temp_{file.filename}")
-        file_bytes = await file.read() # Read file content as bytes
+        file_bytes = await file.read()  # Read file content as bytes
         with open(temp_file_path, "wb") as buffer:
             buffer.write(file_bytes)
 
-
         resume_text = process_document(file_bytes, file.filename)
         if resume_text is None:
-            os.remove(temp_file_path) # Clean up temp file
-            raise HTTPException(status_code=400, detail=f"Unsupported file type or error processing file: {file.filename}")
-        
-        
+            os.remove(temp_file_path)  # Clean up temp file
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported file type or error processing file: {file.filename}",
+            )
+
         file_extension = os.path.splitext(file.filename)[1].lower()
         if resume_text.strip() and file_extension not in [".md", ".txt"]:
             resume_text = format_resume_text_with_llm(resume_text)
 
-
-        os.remove(temp_file_path) 
+        os.remove(temp_file_path)
 
         if not is_valid_resume(resume_text):
             raise HTTPException(status_code=400, detail="Invalid resume format")
 
-
         name, email = extract_name_and_email(resume_text)
         contact = extract_contact_number_from_resume(resume_text)
-        work_experience = extract_work_experience(resume_text) 
+        work_experience = extract_work_experience(resume_text)
         extracted_skills = extract_skills_from_resume(resume_text, skills_list)
         college = extract_college_name(resume_text)
         projects = extract_projects(resume_text)
-        
 
-        cleaned_resume_for_prediction = clean_resume(resume_text) 
+        cleaned_resume_for_prediction = clean_resume(resume_text)
         predicted_category = predict_category(cleaned_resume_for_prediction)
-
 
         initial_resume_data = {
             "name": name,
             "email": email,
             "contact": contact,
-            "predicted_field": predicted_category, 
+            "predicted_field": predicted_category,
             "college": college,
             "work_experience": work_experience,
             "skills": extracted_skills,
-            "projects": projects, 
-            "upload_date": datetime.now(timezone.utc).isoformat() 
+            "projects": projects,
+            "upload_date": datetime.now(timezone.utc).isoformat(),
         }
         initial_resume_json_str = json.dumps(initial_resume_data)
 
-        if not llm: 
+        if not llm:
             print("Warning: LLM not available, skipping LLM processing step.")
 
             try:
@@ -1090,28 +1169,26 @@ async def analyze_resume(file: UploadFile = File(...)):
                     status_code=400,
                     detail=ErrorResponse(
                         message="Validation error for extracted data (LLM unavailable)",
-                        error_detail=str(e.errors())
-                    ).model_dump()
+                        error_detail=str(e.errors()),
+                    ).model_dump(),
                 )
         else:
 
             formatted_prompt = langchain_prompt.format_prompt(
-                resume_json=initial_resume_json_str,
-                extracted_resume_text=resume_text
+                resume_json=initial_resume_json_str, extracted_resume_text=resume_text
             ).to_string()
-            
+
             llm_response_content = ""
             try:
-                response = llm.invoke(formatted_prompt) 
-                llm_response_content = response.content 
+                response = llm.invoke(formatted_prompt)
+                llm_response_content = response.content
             except Exception as e:
                 print(f"Error during LLM invocation: {e}")
                 raise HTTPException(
                     status_code=500,
                     detail=ErrorResponse(
-                        message="LLM invocation failed",
-                        error_detail=str(e)
-                    ).model_dump()
+                        message="LLM invocation failed", error_detail=str(e)
+                    ).model_dump(),
                 )
 
             try:
@@ -1119,7 +1196,7 @@ async def analyze_resume(file: UploadFile = File(...)):
                     llm_response_content = llm_response_content.strip()[7:]
                 if llm_response_content.strip().endswith("```"):
                     llm_response_content = llm_response_content.strip()[:-3]
-                
+
                 cleaned_data_dict = json.loads(llm_response_content)
 
                 if "errors" in cleaned_data_dict:
@@ -1128,10 +1205,10 @@ async def analyze_resume(file: UploadFile = File(...)):
                         status_code=400,
                         detail=ErrorResponse(
                             message="LLM reported validation errors",
-                            error_detail=error_detail_str
-                        ).model_dump()
+                            error_detail=error_detail_str,
+                        ).model_dump(),
                     )
-                
+
                 analysis_data = ResumeAnalysis(**cleaned_data_dict)
 
             except json.JSONDecodeError:
@@ -1140,19 +1217,19 @@ async def analyze_resume(file: UploadFile = File(...)):
                     status_code=500,
                     detail=ErrorResponse(
                         message="Failed to parse LLM response as JSON",
-                        error_detail="LLM did not return valid JSON."
-                    ).model_dump()
+                        error_detail="LLM did not return valid JSON.",
+                    ).model_dump(),
                 )
-            except ValidationError as e: 
+            except ValidationError as e:
                 print(f"Pydantic validation error after LLM processing: {e.errors()}")
                 raise HTTPException(
                     status_code=400,
                     detail=ErrorResponse(
                         message="Validation error after LLM processing",
-                        error_detail=str(e.errors()) 
-                    ).model_dump()
+                        error_detail=str(e.errors()),
+                    ).model_dump(),
                 )
-        
+
         if analysis_data.work_experience:
 
             filtered_work_experience = []
@@ -1160,20 +1237,20 @@ async def analyze_resume(file: UploadFile = File(...)):
                 null_or_empty_count = 0
                 please_remove = False
 
-                if not exp.role: 
+                if not exp.role:
                     null_or_empty_count += 1
                     if not exp.duration:
                         please_remove = True
 
-                if not exp.company: 
+                if not exp.company:
                     null_or_empty_count += 1
-                
-                if not exp.duration: 
+
+                if not exp.duration:
                     null_or_empty_count += 1
-                
-                if not exp.description: 
+
+                if not exp.description:
                     null_or_empty_count += 1
-                
+
                 if null_or_empty_count <= 2 and not please_remove:
                     filtered_work_experience.append(exp)
 
@@ -1183,10 +1260,13 @@ async def analyze_resume(file: UploadFile = File(...)):
             filtered_projects = []
             for proj in analysis_data.projects:
                 null_or_empty_count = 0
-                if not proj.title: null_or_empty_count += 1
-                if not proj.technologies_used: null_or_empty_count += 1 # Empty list counts as unpopulated
-                if not proj.description: null_or_empty_count += 1
-                
+                if not proj.title:
+                    null_or_empty_count += 1
+                if not proj.technologies_used:
+                    null_or_empty_count += 1  # Empty list counts as unpopulated
+                if not proj.description:
+                    null_or_empty_count += 1
+
                 if null_or_empty_count < 2:
                     filtered_projects.append(proj)
             analysis_data.projects = filtered_projects
@@ -1210,20 +1290,20 @@ async def analyze_resume(file: UploadFile = File(...)):
 
         return ResumeUploadResponse(data=analysis_data)
 
-    except HTTPException: 
+    except HTTPException:
         raise
 
     except Exception as e:
 
         print(f"Error in /analyze-resume/: {e}")
         import traceback
+
         traceback.print_exc()
         raise HTTPException(
             status_code=500,
             detail=ErrorResponse(
-                message="Failed to analyze resume",
-                error_detail=str(e)
-            ).model_dump() 
+                message="Failed to analyze resume", error_detail=str(e)
+            ).model_dump(),
         )
 
 
@@ -1249,7 +1329,9 @@ async def get_resumes_by_category(category: str):
         )
 
         resumes = [ResumeAnalysis(**dict(row)) for row in rows]
-        return ResumeCategoryResponse(data=resumes, count=len(resumes), category=category)
+        return ResumeCategoryResponse(
+            data=resumes, count=len(resumes), category=category
+        )
 
 
 @app.post("/comprehensive-analysis/", response_model=ComprehensiveAnalysisResponse)
@@ -1260,35 +1342,37 @@ async def comprehensive_resume_analysis(file: UploadFile = File(...)):
     try:
         uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
         os.makedirs(uploads_dir, exist_ok=True)
-        
-        file_bytes = await file.read() 
+
+        file_bytes = await file.read()
 
         temp_file_path = os.path.join(uploads_dir, f"temp_comp_{file.filename}")
         with open(temp_file_path, "wb") as buffer:
             buffer.write(file_bytes)
 
-
         resume_text = process_document(file_bytes, file.filename)
         if resume_text is None:
-            os.remove(temp_file_path) 
-            raise HTTPException(status_code=400, detail=f"Unsupported file type or error processing file: {file.filename}",)
-
+            os.remove(temp_file_path)
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported file type or error processing file: {file.filename}",
+            )
 
         if resume_text.strip():
             resume_text = format_resume_text_with_llm(resume_text)
-        
-        os.remove(temp_file_path) 
 
+        os.remove(temp_file_path)
 
         if not is_valid_resume(resume_text):
-            raise HTTPException(status_code=400, detail="Invalid resume format or content.")
+            raise HTTPException(
+                status_code=400, detail="Invalid resume format or content."
+            )
 
         # Basic info extraction
         name, email = extract_name_and_email(resume_text)
         contact = extract_contact_number_from_resume(resume_text)
         cleaned_resume_for_prediction = clean_resume(resume_text)
         predicted_category = predict_category(cleaned_resume_for_prediction)
-        
+
         basic_info = {
             "name": name,
             "email": email,
@@ -1299,7 +1383,7 @@ async def comprehensive_resume_analysis(file: UploadFile = File(...)):
         formatted_prompt = comprehensive_analysis_prompt.format_prompt(
             extracted_resume_text=resume_text,
             predicted_category=predicted_category,
-            basic_info_json=basic_info_json_str
+            basic_info_json=basic_info_json_str,
         ).to_string()
 
         llm_response_content = ""
@@ -1308,54 +1392,88 @@ async def comprehensive_resume_analysis(file: UploadFile = File(...)):
             llm_response_content = response.content
         except Exception as e:
             print(f"Error during LLM invocation for comprehensive analysis: {e}")
-            raise HTTPException(status_code=500, detail=ErrorResponse(message="LLM invocation failed", error_detail=str(e)).model_dump())
+            raise HTTPException(
+                status_code=500,
+                detail=ErrorResponse(
+                    message="LLM invocation failed", error_detail=str(e)
+                ).model_dump(),
+            )
 
         try:
             if llm_response_content.strip().startswith("```json"):
                 llm_response_content = llm_response_content.strip()[7:]
             if llm_response_content.strip().endswith("```"):
                 llm_response_content = llm_response_content.strip()[:-3]
-            
-            analysis_dict = json.loads(llm_response_content)
-            
-            # Ensure predicted_field is correctly passed or set
-            if 'predicted_field' not in analysis_dict or not analysis_dict['predicted_field']:
-                analysis_dict['predicted_field'] = predicted_category
-            if 'name' not in analysis_dict or not analysis_dict['name']:
-                 analysis_dict['name'] = name
-            if 'email' not in analysis_dict or not analysis_dict['email']:
-                 analysis_dict['email'] = email
-            if 'contact' not in analysis_dict and contact: # only add if contact was found
-                 analysis_dict['contact'] = contact
 
+            analysis_dict = json.loads(llm_response_content)
+
+            # Ensure predicted_field is correctly passed or set
+            if (
+                "predicted_field" not in analysis_dict
+                or not analysis_dict["predicted_field"]
+            ):
+                analysis_dict["predicted_field"] = predicted_category
+            if "name" not in analysis_dict or not analysis_dict["name"]:
+                analysis_dict["name"] = name
+            if "email" not in analysis_dict or not analysis_dict["email"]:
+                analysis_dict["email"] = email
+            if (
+                "contact" not in analysis_dict and contact
+            ):  # only add if contact was found
+                analysis_dict["contact"] = contact
 
             comprehensive_data = ComprehensiveAnalysisData(**analysis_dict)
             return ComprehensiveAnalysisResponse(data=comprehensive_data)
 
         except json.JSONDecodeError:
-            print(f"LLM output (comprehensive) was not valid JSON: {llm_response_content}")
-            raise HTTPException(status_code=500, detail=ErrorResponse(message="Failed to parse LLM response as JSON", error_detail="LLM did not return valid JSON.").model_dump())
+            print(
+                f"LLM output (comprehensive) was not valid JSON: {llm_response_content}"
+            )
+            raise HTTPException(
+                status_code=500,
+                detail=ErrorResponse(
+                    message="Failed to parse LLM response as JSON",
+                    error_detail="LLM did not return valid JSON.",
+                ).model_dump(),
+            )
         except ValidationError as e:
             print(f"Pydantic validation error (comprehensive): {e.errors()}")
-            raise HTTPException(status_code=400, detail=ErrorResponse(message="Validation error for LLM comprehensive data", error_detail=str(e.errors())).model_dump())
+            raise HTTPException(
+                status_code=400,
+                detail=ErrorResponse(
+                    message="Validation error for LLM comprehensive data",
+                    error_detail=str(e.errors()),
+                ).model_dump(),
+            )
 
     except HTTPException:
         raise
     except Exception as e:
         print(f"Error in /comprehensive-analysis/: {e}")
         import traceback
+
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=ErrorResponse(message="Failed to perform comprehensive analysis", error_detail=str(e)).model_dump())
+        raise HTTPException(
+            status_code=500,
+            detail=ErrorResponse(
+                message="Failed to perform comprehensive analysis", error_detail=str(e)
+            ).model_dump(),
+        )
 
 
 class TipsRequest(BaseModel):
     job_category: Optional[str] = None
     skills: Optional[str] = None
 
+
 @app.get("/tips/", response_model=TipsResponse)
 async def get_career_tips(
-    job_category: Optional[str] = Query(None, description="Job category for tailored tips"),
-    skills: Optional[str] = Query(None, description="Comma-separated skills for tailored tips"),
+    job_category: Optional[str] = Query(
+        None, description="Job category for tailored tips"
+    ),
+    skills: Optional[str] = Query(
+        None, description="Comma-separated skills for tailored tips"
+    ),
 ):
     if not llm:
         raise HTTPException(status_code=503, detail="LLM service is not available.")
@@ -1371,14 +1489,12 @@ async def get_career_tips(
     else:
         skills = []
 
-
     skills_list_str = skills if skills else ""
     category_str = job_category if job_category else "general"
 
     try:
         formatted_prompt = tips_generator_prompt.format_prompt(
-            job_category=category_str,
-            skills_list_str=skills_list_str
+            job_category=category_str, skills_list_str=skills_list_str
         ).to_string()
 
         llm_response_content = ""
@@ -1387,32 +1503,55 @@ async def get_career_tips(
             llm_response_content = response.content
         except Exception as e:
             print(f"Error during LLM invocation for tips: {e}")
-            raise HTTPException(status_code=500, detail=ErrorResponse(message="LLM invocation for tips failed", error_detail=str(e)).model_dump())
+            raise HTTPException(
+                status_code=500,
+                detail=ErrorResponse(
+                    message="LLM invocation for tips failed", error_detail=str(e)
+                ).model_dump(),
+            )
 
         try:
             if llm_response_content.strip().startswith("```json"):
                 llm_response_content = llm_response_content.strip()[7:]
             if llm_response_content.strip().endswith("```"):
                 llm_response_content = llm_response_content.strip()[:-3]
-            
+
             tips_dict = json.loads(llm_response_content)
             tips_data = TipsData(**tips_dict)
             return TipsResponse(data=tips_data)
 
         except json.JSONDecodeError:
             print(f"LLM output (tips) was not valid JSON: {llm_response_content}")
-            raise HTTPException(status_code=500, detail=ErrorResponse(message="Failed to parse LLM tips response as JSON", error_detail="LLM did not return valid JSON for tips.").model_dump())
+            raise HTTPException(
+                status_code=500,
+                detail=ErrorResponse(
+                    message="Failed to parse LLM tips response as JSON",
+                    error_detail="LLM did not return valid JSON for tips.",
+                ).model_dump(),
+            )
         except ValidationError as e:
             print(f"Pydantic validation error (tips): {e.errors()}")
-            raise HTTPException(status_code=400, detail=ErrorResponse(message="Validation error for LLM tips data", error_detail=str(e.errors())).model_dump())
-            
+            raise HTTPException(
+                status_code=400,
+                detail=ErrorResponse(
+                    message="Validation error for LLM tips data",
+                    error_detail=str(e.errors()),
+                ).model_dump(),
+            )
+
     except HTTPException:
         raise
     except Exception as e:
         print(f"Error in /tips/: {e}")
         import traceback
+
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=ErrorResponse(message="Failed to retrieve tips", error_detail=str(e)).model_dump())
+        raise HTTPException(
+            status_code=500,
+            detail=ErrorResponse(
+                message="Failed to retrieve tips", error_detail=str(e)
+            ).model_dump(),
+        )
 
 
 if __name__ == "__main__":
