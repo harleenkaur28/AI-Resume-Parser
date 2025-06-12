@@ -231,6 +231,44 @@ export default function ColdMailGenerator() {
 
 			{!isPageLoading && (
 				<div className="min-h-screen bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831]">
+					{/* Full-screen loading overlay for email generation */}
+					<AnimatePresence>
+						{isGenerating && (
+							<motion.div
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								exit={{ opacity: 0 }}
+								className="fixed inset-0 bg-black/50 backdrop-blur-md z-50 flex items-center justify-center"
+							>
+								<motion.div
+									initial={{ scale: 0.8, opacity: 0 }}
+									animate={{ scale: 1, opacity: 1 }}
+									exit={{ scale: 0.8, opacity: 0 }}
+									className="bg-white/10 backdrop-blur-lg rounded-3xl p-10 border border-white/20 text-center max-w-sm mx-4"
+								>
+									<div className="relative mb-6">
+										<Loader
+											variant="pulse"
+											size="xl"
+											className="text-[#76ABAE]"
+										/>
+									</div>
+									<h3 className="text-[#EEEEEE] font-semibold text-xl mb-3">
+										Crafting Your Email
+									</h3>
+									<p className="text-[#EEEEEE]/70 text-sm leading-relaxed">
+										AI is analyzing your resume and generating a personalized
+										cold email...
+									</p>
+									<div className="mt-6 flex justify-center space-x-2">
+										<div className="w-2 h-2 bg-[#76ABAE] rounded-full animate-pulse"></div>
+										<div className="w-2 h-2 bg-[#76ABAE] rounded-full animate-pulse delay-75"></div>
+										<div className="w-2 h-2 bg-[#76ABAE] rounded-full animate-pulse delay-150"></div>
+									</div>
+								</motion.div>
+							</motion.div>
+						)}
+					</AnimatePresence>
 					{/* Mobile-optimized container */}
 					<div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
 						{/* Back button - better mobile positioning */}
@@ -283,44 +321,6 @@ export default function ColdMailGenerator() {
 									className="order-1"
 								>
 									<Card className="relative backdrop-blur-lg bg-white/5 border-white/10 shadow-2xl overflow-hidden">
-										{/* Loading overlay */}
-										<AnimatePresence>
-											{isGenerating && (
-												<motion.div
-													initial={{ opacity: 0 }}
-													animate={{ opacity: 1 }}
-													exit={{ opacity: 0 }}
-													className="absolute inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center"
-												>
-													<motion.div
-														initial={{ scale: 0.8, opacity: 0 }}
-														animate={{ scale: 1, opacity: 1 }}
-														exit={{ scale: 0.8, opacity: 0 }}
-														className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 text-center"
-													>
-														<div className="relative mb-4">
-															<Loader
-																variant="pulse"
-																size="lg"
-																className="text-[#76ABAE]"
-															/>
-														</div>
-														<h3 className="text-[#EEEEEE] font-semibold text-lg mb-2">
-															Crafting Your Email
-														</h3>
-														<p className="text-[#EEEEEE]/70 text-sm max-w-xs">
-															AI is analyzing your resume and generating a
-															personalized cold email...
-														</p>
-														<div className="mt-4 flex justify-center space-x-1">
-															<div className="w-2 h-2 bg-[#76ABAE] rounded-full animate-pulse"></div>
-															<div className="w-2 h-2 bg-[#76ABAE] rounded-full animate-pulse delay-75"></div>
-															<div className="w-2 h-2 bg-[#76ABAE] rounded-full animate-pulse delay-150"></div>
-														</div>
-													</motion.div>
-												</motion.div>
-											)}
-										</AnimatePresence>
 										<CardHeader className="pb-4">
 											<CardTitle className="text-[#EEEEEE] text-xl sm:text-2xl font-semibold">
 												Email Details
