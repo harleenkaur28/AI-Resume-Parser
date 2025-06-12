@@ -352,10 +352,10 @@ export default function ColdMailGenerator() {
 														htmlFor="resume"
 														whileHover={{ scale: 1.01 }}
 														whileTap={{ scale: 0.99 }}
-														className="relative flex items-center justify-center w-full h-32 sm:h-36 border-2 border-dashed border-white/20 rounded-2xl bg-gradient-to-br from-white/5 to-white/10 hover:from-[#76ABAE]/10 hover:to-[#76ABAE]/5 transition-all duration-500 cursor-pointer group overflow-hidden"
+														className="relative flex items-center justify-center w-full h-28 border-2 border-dashed border-white/20 rounded-xl bg-gradient-to-br from-white/5 to-white/10 hover:from-[#76ABAE]/10 hover:to-[#76ABAE]/5 transition-all duration-500 cursor-pointer group overflow-hidden"
 													>
 														{/* Animated background gradient */}
-														<div className="absolute inset-0 bg-gradient-to-r from-[#76ABAE]/0 via-[#76ABAE]/5 to-[#76ABAE]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-pulse"></div>
+														<div className="absolute inset-0 bg-gradient-to-r from-[#76ABAE]/0 via-[#76ABAE]/5 to-[#76ABAE]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
 														<div className="relative z-10 text-center">
 															{resumeFile ? (
@@ -364,37 +364,31 @@ export default function ColdMailGenerator() {
 																	animate={{ opacity: 1, scale: 1 }}
 																	className="flex flex-col items-center"
 																>
-																	<div className="relative mb-3">
+																	<div className="relative mb-2">
 																		<div className="absolute inset-0 bg-[#76ABAE]/20 rounded-full blur-lg"></div>
-																		<CheckCircle className="relative h-8 w-8 text-[#76ABAE]" />
+																		<CheckCircle className="relative h-6 w-6 text-[#76ABAE]" />
 																	</div>
-																	<p className="text-[#EEEEEE] text-sm font-medium mb-1 max-w-48 truncate">
+																	<p className="text-[#EEEEEE] text-sm font-medium mb-1 max-w-44 truncate">
 																		{resumeFile.name}
 																	</p>
 																	<p className="text-[#76ABAE] text-xs font-medium">
-																		✓ File uploaded successfully
-																	</p>
-																	<p className="text-[#EEEEEE]/50 text-xs mt-1">
-																		Click to change file
+																		✓ Ready for analysis
 																	</p>
 																</motion.div>
 															) : (
 																<motion.div
 																	className="flex flex-col items-center"
-																	whileHover={{ y: -2 }}
+																	whileHover={{ y: -1 }}
 																	transition={{ duration: 0.2 }}
 																>
-																	<div className="relative mb-3">
+																	<div className="relative mb-2">
 																		<div className="absolute inset-0 bg-[#76ABAE]/10 rounded-full blur-lg group-hover:bg-[#76ABAE]/20 transition-colors duration-500"></div>
-																		<Upload className="relative h-8 w-8 text-[#EEEEEE]/60 group-hover:text-[#76ABAE] transition-colors duration-300" />
+																		<Upload className="relative h-6 w-6 text-[#EEEEEE]/60 group-hover:text-[#76ABAE] transition-colors duration-300" />
 																	</div>
-																	<p className="text-[#EEEEEE] text-base font-medium mb-1">
-																		Drop your resume here
+																	<p className="text-[#EEEEEE] text-sm font-medium mb-1">
+																		Upload Resume
 																	</p>
-																	<p className="text-[#EEEEEE]/60 text-sm mb-2">
-																		or click to browse
-																	</p>
-																	<div className="flex items-center space-x-2 text-xs text-[#EEEEEE]/50">
+																	<div className="flex items-center space-x-2 text-xs text-[#EEEEEE]/50 mt-2">
 																		<span className="px-2 py-1 bg-white/10 rounded-full">
 																			PDF
 																		</span>
@@ -411,9 +405,6 @@ export default function ColdMailGenerator() {
 																</motion.div>
 															)}
 														</div>
-
-														{/* Animated border effect */}
-														<div className="absolute inset-0 rounded-2xl border-2 border-transparent bg-gradient-to-r from-[#76ABAE]/0 via-[#76ABAE]/50 to-[#76ABAE]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-pulse"></div>
 													</motion.label>
 												</div>
 												{resumeText && (
@@ -659,7 +650,6 @@ export default function ColdMailGenerator() {
 									</Card>
 								</motion.div>
 
-								{/* Generated Email Display - Modern design */}
 								<motion.div
 									initial={{ opacity: 0, y: 20 }}
 									animate={{ opacity: 1, y: 0 }}

@@ -402,9 +402,20 @@ export default function HiringAssistant() {
 																<p className="text-[#EEEEEE] text-sm font-medium mb-1">
 																	Upload Resume
 																</p>
-																<p className="text-[#EEEEEE]/60 text-xs">
-																	PDF, DOC, DOCX, TXT, MD
-																</p>
+																<div className="flex items-center space-x-2 text-xs text-[#EEEEEE]/50 mt-2">
+																	<span className="px-2 py-1 bg-white/10 rounded-full">
+																		PDF
+																	</span>
+																	<span className="px-2 py-1 bg-white/10 rounded-full">
+																		DOC
+																	</span>
+																	<span className="px-2 py-1 bg-white/10 rounded-full">
+																		TXT
+																	</span>
+																	<span className="px-2 py-1 bg-white/10 rounded-full">
+																		MD
+																	</span>
+																</div>
 															</motion.div>
 														)}
 													</div>
