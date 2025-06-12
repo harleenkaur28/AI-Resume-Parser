@@ -339,9 +339,8 @@ export default function HiringAssistant() {
 								{/* Interview Setup Card */}
 								<Card className="backdrop-blur-xl bg-white/5 border border-white/10 shadow-2xl hover:bg-white/10 transition-all duration-500">
 									<CardHeader className="pb-4">
-										<CardTitle className="text-[#EEEEEE] text-lg md:text-xl font-semibold bg-gradient-to-r from-[#76ABAE] to-[#EEEEEE] bg-clip-text text-transparent flex items-center">
-											<Briefcase className="mr-2 h-5 w-5 text-[#76ABAE]" />
-											Interview Setup
+										<CardTitle className="text-[#EEEEEE] text-lg md:text-xl font-semibold">
+											Interview Details
 										</CardTitle>
 									</CardHeader>
 									<CardContent className="space-y-4">
@@ -619,9 +618,8 @@ export default function HiringAssistant() {
 								{/* Common Questions */}
 								<Card className="backdrop-blur-xl bg-white/5 border border-white/10 shadow-2xl hover:bg-white/10 transition-all duration-500">
 									<CardHeader className="pb-3">
-										<CardTitle className="text-[#EEEEEE] text-lg font-semibold bg-gradient-to-r from-[#76ABAE] to-[#EEEEEE] bg-clip-text text-transparent flex items-center">
-											<HelpCircle className="mr-2 h-4 w-4 text-[#76ABAE]" />
-											Quick Add
+										<CardTitle className="text-[#EEEEEE] text-lg font-semibold flex items-center">
+											Quick Add Common Questions:
 										</CardTitle>
 									</CardHeader>
 									<CardContent>
@@ -654,17 +652,15 @@ export default function HiringAssistant() {
 							>
 								<Card className="backdrop-blur-xl bg-white/5 border border-white/10 shadow-2xl hover:bg-white/10 transition-all duration-500 flex-1 flex flex-col max-h-[calc(100vh-16rem)]">
 									<CardHeader className="pb-4 flex-shrink-0">
-										<CardTitle className="text-[#EEEEEE] text-lg md:text-xl font-semibold bg-gradient-to-r from-[#76ABAE] to-[#EEEEEE] bg-clip-text text-transparent flex items-center justify-between">
-											<span className="flex items-center">
-												<HelpCircle className="mr-2 h-5 w-5 text-[#76ABAE]" />
-												Questions
-											</span>
+										<CardTitle className="text-[#EEEEEE] text-lg md:text-xl font-semibold flex items-center justify-between">
+											Interview Questions
 											<Button
 												size="sm"
 												onClick={addQuestion}
-												className="bg-gradient-to-r from-[#76ABAE] to-[#76ABAE]/80 hover:from-[#76ABAE]/90 hover:to-[#76ABAE]/70 text-white shadow-lg hover:shadow-xl transition-all duration-300 h-8 w-8 p-0"
+												className="bg-[#76ABAE]/20 hover:bg-[#76ABAE]/30 text-[#76ABAE] border border-[#76ABAE]/30 h-8 px-3"
 											>
-												<Plus className="h-4 w-4" />
+												<Plus className="h-3 w-3 mr-1" />
+												Add
 											</Button>
 										</CardTitle>
 									</CardHeader>
@@ -727,11 +723,16 @@ export default function HiringAssistant() {
 							>
 								<Card className="backdrop-blur-xl bg-white/5 border border-white/10 shadow-2xl hover:bg-white/10 transition-all duration-500 flex-1 flex flex-col max-h-[calc(100vh-16rem)]">
 									<CardHeader className="pb-4 flex-shrink-0">
-										<CardTitle className="text-[#EEEEEE] text-lg md:text-xl font-semibold bg-gradient-to-r from-[#76ABAE] to-[#EEEEEE] bg-clip-text text-transparent flex items-center justify-between">
-											<span className="flex items-center">
-												<FileText className="mr-2 h-5 w-5 text-[#76ABAE]" />
-												Answers
-											</span>
+										<div className="flex items-center justify-between">
+											<div>
+												<CardTitle className="text-[#EEEEEE] text-lg md:text-xl font-semibold flex items-center">
+													<Users className="mr-2 h-5 w-5 text-[#76ABAE]" />
+													Generated Answers
+												</CardTitle>
+												<p className="text-[#EEEEEE]/60 text-sm mt-1">
+													Your personalized interview answers will appear here
+												</p>
+											</div>
 											{generatedAnswers && (
 												<Button
 													size="sm"
@@ -742,7 +743,7 @@ export default function HiringAssistant() {
 													<Download className="h-3 w-3" />
 												</Button>
 											)}
-										</CardTitle>
+										</div>
 									</CardHeader>
 									<CardContent className="flex-1 flex flex-col overflow-hidden">
 										{generatedAnswers ? (
