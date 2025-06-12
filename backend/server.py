@@ -862,30 +862,32 @@ def extract_files_from_zip(zip_file_path):
 def get_company_research(company_name: str, url: str) -> str:
     """Gets basic company research information."""
     try:
-        if not url:
-            return (
-                f"Research about {company_name}: No URL provided for company research."
-            )
-        res = requests.get("https://r.jina.ai/" + url)
+        if not url or not url.startswith(("http://", "https://")):
+            return f"Research about {company_name}: Invalid or no URL provided for company research."
 
-        # soup = BeautifulSoup(res.content, "html.parser")
-        # return soup.prettify()
+        response = requests.get("https://r.jina.ai/" + url, timeout=10)
+        response.raise_for_status()
 
-        if res.status_code != 200:
-            return f"Research about {company_name}: Unable to fetch data from the provided URL."
-
-        if not res.text.strip():
+        if not response.text.strip():
             return (
                 f"Research about {company_name}: No content found at the provided URL."
             )
 
+        max_research_length = 20_000
+        research_text = response.text.strip()
+        if len(research_text) > max_research_length:
+            research_text = research_text[:max_research_length] + "..."
+
         if not company_name.strip():
-            return f"The website of content: {res.text.strip()}"
+            return f"The website content: {research_text}"
 
-        return f"Research about {company_name}: {res.text}"
+        return f"Research about {company_name}: {research_text}"
 
-    except:
-        return f"Research about {company_name}: This is a placeholder for company research functionality."
+    except requests.exceptions.RequestException as e:
+        return f"Research about {company_name}: Error fetching data from URL: {e}"
+
+    except Exception as e:
+        return f"Research about {company_name}: An unexpected error occurred during company research: {e}"
 
 
 skills_list = [
@@ -1139,7 +1141,6 @@ def generate_answers_for_geting_hired(
             for q in questions_list
         ]
 
-    # Build context about the company
     company_context = ""
     if user_company_knowledge.strip():
         company_context += f"\n\nAdditional information about {company}:\n{user_company_knowledge.strip()}"
@@ -1193,18 +1194,26 @@ def generate_answers_for_geting_hired(
     for q in questions_list:
 
         try:
-            answer = chain.run(
-                resume=resume_text,
-                role=role,
-                company=company,
-                company_context=company_context,
-                question=q,
-                word_limit=word_limit,
+            response_content = chain.invoke(
+                {
+                    "resume": resume_text,
+                    "role": role,
+                    "company": company,
+                    "company_context": company_context,
+                    "question": q,
+                    "word_limit": word_limit,
+                }
             )
+            answer = (
+                response_content
+                if isinstance(response_content, str)
+                else getattr(response_content, "content", "")
+            )
+
             results.append(
                 {
                     "question": q,
-                    "answer": answer,
+                    "answer": answer.strip(),
                 }
             )
 
@@ -1265,6 +1274,31 @@ class ErrorResponse(BaseModel):
     success: bool = False
     message: str
     error_detail: Optional[str] = None
+
+
+class HiringAssistantRequest(BaseModel):
+    role: str = Field(
+        ..., min_length=1, description="The role the candidate is applying for."
+    )
+    questions: List[str] = Field(
+        ..., min_items=1, description="List of interview questions."
+    )
+    company_name: str = Field(..., min_length=1, description="Name of the company.")
+    user_knowledge: Optional[str] = Field(
+        "", description="What the user already knows about the company/role."
+    )
+    company_url: Optional[str] = Field(
+        None, description="URL of the company for research."
+    )
+    word_limit: Optional[int] = Field(
+        150, ge=50, le=500, description="Word limit for each answer."
+    )
+
+
+class HiringAssistantResponse(BaseModel):
+    success: bool = True
+    message: str = "Answers generated successfully."
+    data: Dict[str, str]  # {"question": "answer"}
 
 
 def clean_resume(txt):
@@ -1484,6 +1518,120 @@ async def analyze_resume(file: UploadFile = File(...)):
             status_code=500,
             detail=ErrorResponse(
                 message="Failed to analyze resume", error_detail=str(e)
+            ).model_dump(),
+        )
+
+
+@app.post("/hiring-assistant/", response_model=HiringAssistantResponse)
+async def hiring_assistant(
+    request_data: HiringAssistantRequest,
+    file: UploadFile = File(...),
+):
+    if not llm:
+        raise HTTPException(
+            status_code=503,
+            detail=ErrorResponse(
+                message="LLM service is not available.",
+            ).model_dump(),
+        )
+
+    try:
+        uploads_dir = os.path.join(
+            os.path.dirname(__file__),
+            "uploads",
+        )
+        os.makedirs(uploads_dir, exist_ok=True)
+
+        temp_file_path = os.path.join(
+            uploads_dir,
+            f"temp_hr_assist_{file.filename}",
+        )
+
+        file_bytes = await file.read()
+        with open(temp_file_path, "wb") as buffer:
+            buffer.write(file_bytes)
+
+        resume_text = process_document(file_bytes, file.filename)
+        if resume_text is None:
+            os.remove(temp_file_path)
+            raise HTTPException(
+                status_code=400,
+                detail=ErrorResponse(
+                    message=f"Unsupported file type or error processing file: {file.filename}"
+                ).model_dump(),
+            )
+
+        file_extension = os.path.splitext(file.filename)[1].lower()
+
+        if resume_text.strip() and file_extension not in [".md", ".txt"]:
+            resume_text = format_resume_text_with_llm(resume_text)
+
+        os.remove(temp_file_path)
+
+        if not is_valid_resume(resume_text):
+            raise HTTPException(
+                status_code=400,
+                detail=ErrorResponse(
+                    message="Invalid resume format or content."
+                ).model_dump(),
+            )
+
+        company_research_info = ""
+        if request_data.company_url:
+            company_research_info = get_company_research(
+                request_data.company_name, request_data.company_url
+            )
+
+        generated_answers_list = generate_answers_for_geting_hired(
+            resume_text=resume_text,
+            role=request_data.role,
+            company=request_data.company_name,
+            questions_list=request_data.questions,
+            word_limit=request_data.word_limit,
+            user_company_knowledge=request_data.user_knowledge,
+            company_research=company_research_info,
+        )
+
+        answers_data = {}
+        for item in generated_answers_list:
+            if "Error:" in item["answer"] or "Configuration Error:" in item["answer"]:
+                raise HTTPException(
+                    status_code=500,
+                    detail=ErrorResponse(
+                        message="Failed to generate one or more answers due to an internal error.",
+                        error_detail=item["answer"],
+                    ).model_dump(),
+                )
+            answers_data[item["question"]] = item["answer"]
+
+        if not answers_data:
+            raise HTTPException(
+                status_code=500,
+                detail=ErrorResponse(message="No answers were generated.").model_dump(),
+            )
+
+        return HiringAssistantResponse(data=answers_data)
+
+    except HTTPException:
+        raise
+
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=422,
+            detail=ErrorResponse(
+                message="Input validation error.", error_detail=str(e.errors())
+            ).model_dump(),
+        )
+
+    except Exception as e:
+        print(f"Error in /hiring-assistant/: {e}")
+        import traceback
+
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=ErrorResponse(
+                message="Failed to generate hiring assistance.", error_detail=str(e)
             ).model_dump(),
         )
 
