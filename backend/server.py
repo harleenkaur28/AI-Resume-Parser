@@ -892,7 +892,27 @@ def get_company_research(company_name: str, url: str) -> str:
 
 cold_mail_prompt_template_str = """
 You are an expert career advisor and professional communication assistant.
-Your task is to draft a compelling and concise cold email based on the provided information.
+Your task is to draft a compelling, personalized, and concise cold email based
+on the provided information, following the style and structure of this fictional example:
+
+
+My name is Priya Desai, and I’m in my final year of B.Tech in Software Engineering at 
+IIT Bombay. I have a deep interest in cybersecurity and cloud computing—particularly in 
+autonomous intrusion detection and secure DevOps pipelines. Given SecureCloud Inc.’s 
+lead in developing self-healing network security solutions, I’m reaching out to express 
+my interest in contributing as a Security Engineering Intern.
+Previously, I interned at Google Cloud as a Security Analyst Intern, where I focused on 
+vulnerability assessment, incident response simulations, and automating security audits. 
+I’m also co-authoring a research paper on threat modeling for containerized environments, 
+currently under peer review. My personal projects include an open-source real-time anomaly
+detection tool built with Python, Flask, Docker, and Kubernetes. I’m proficient in Python, 
+Go, and familiar with AWS, Azure, Terraform, and security frameworks like MITRE ATT&CK. 
+With this tech stack and my theoretical background, I am confident in my ability to 
+quickly adapt to your workflows and contribute meaningfully to your security initiatives.
+As an aspiring security professional, I’m eager to learn from experienced engineers and 
+grow within a pioneering organization like SecureCloud Inc. I’ve attached my resume for 
+your review—please let me know if you need any further information.
+Thank you for your time and consideration.
 
 **Candidate's Resume (Markdown):**
 ```
@@ -900,54 +920,66 @@ Your task is to draft a compelling and concise cold email based on the provided 
 ```
 
 **Email Details:**
-- **Recipient Name:** {recipient_name}
-- **Recipient Designation:** {recipient_designation}
-- **Company Name:** {company_name}
-- **Sender's Name:** {sender_name}
-- **Sender's Primary Goal/Role:** {sender_role_or_goal} (e.g., "seeking an internship in Data Science", "exploring full-time Software Engineer roles", "interested in learning more about opportunities at {company_name}")
-- **Key Points to Highlight (from sender):**
-{key_points_to_include}
-- **Additional Information/Context for LLM (from sender):**
-{additional_info_for_llm}
-- **Company Research (if available):**
-{company_research}
+- Recipient Name: {recipient_name}
+- Recipient Designation: {recipient_designation}
+- Company Name: {company_name}
+- Sender Name: {sender_name}
+- Sender Goal/Role: {sender_role_or_goal}
+- Key Points to Highlight:
+  {key_points_to_include}
+- Additional Context/Notes:
+  {additional_info_for_llm}
+- Company Research Insights (if any):
+  {company_research}
 
-**Instructions for Email Generation:**
+Instructions for Email Generation:
 
-1.  **Subject Line:**
-    *   Create a concise, professional, and engaging subject line (max 10-15 words).
-    *   It should clearly indicate the email's purpose and value to the recipient. Examples:
-        *   "Aspiring [Your Role/Goal] | [Your Name] - Exploring Opportunities at [Company Name]"
-        *   "Inquiry from a [Your Field] Enthusiast: [Your Name]"
-        *   "Following Up: [Your Name] - Passionate about [Company's Area/Recipient's Work]" (if applicable)
+1. Subject Line (8–12 words):
+   • Clear, concise, and engaging.
+   • Reflects your role/goal, name, and company.
+   • Example: "Security Intern Candidate | Priya Desai – Joining SecureCloud"
 
-2.  **Email Body (max 200-250 words):**
-    *   **Salutation:** Address the recipient professionally (e.g., "Dear Mr./Ms./Mx. {Recipient Last Name}," or "Dear {Recipient Name}," if more appropriate).
-    *   **Opening:** Briefly introduce yourself ({sender_name}) and state your primary goal ({sender_role_or_goal}) and why you are reaching out to *them* specifically (mention their role, company, or work if relevant from research or user input).
-    *   **Value Proposition:**
-        *   Subtly weave in 2-3 key achievements or skills from the resume that align with the {sender_role_or_goal} and would be relevant to the {recipient_designation} or {company_name}.
-        *   Directly incorporate the "{key_points_to_include}" provided by the sender.
-        *   If {company_research} is available, try to connect your interest or skills to something specific about the company (e.g., a recent project, company values, a specific technology they use).
-    *   **Call to Action:** Clearly state what you are asking for. This could be:
-        *   A brief informational interview (e.g., "Would you be open to a brief 15-20 minute virtual coffee chat in the coming weeks to discuss your experiences at {company_name} and any advice you might have for someone aspiring to enter the field?").
-        *   Consideration for current or future opportunities.
-        *   Guidance or advice.
-    *   **Closing:** Thank the recipient for their time and consideration. Use a professional closing (e.g., "Sincerely," "Best regards,").
-    *   **Signature:** Include {sender_name}.
+2. Email Body (180–220 words):
+   a. Salutation:
+      • "Dear Mr./Ms. [Last Name]," or "Dear [Full Name],"
+   b. Paragraph 1 – Introduction:
+      • State who you are, your current status/study, and your goal.
+      • Mention why you chose *this* recipient/company.
+   c. Paragraph 2 – Relevant Experience & Skills:
+      • Highlight 2–3 achievements or projects from the resume.
+      • Include internship, research, publications, personal projects.
+      • Cite specific technologies or frameworks.
+   d. Paragraph 3 – Fit & Value:
+      • Connect your skills/interests to the company’s work or values.
+      • Refer to any {company_research} details.
+   e. Paragraph 4 – Call to Action & Closing:
+      • Request consideration for internship/opportunity or a short chat.
+      • Offer to share more details or schedule a call.
+      • Thank them for their time.
+   f. Signature:
+      • "Sincerely," or "Best regards,"
+      • {sender_name}
+      • Optionally: contact info or “Resume attached.”
 
-3.  **Tone:** Professional, respectful, concise, and enthusiastic. Avoid overly casual language or demands.
-4.  **Formatting:** Ensure the email is well-structured and easy to read.
+3. Tone & Style:
+   • Professional, respectful, enthusiastic.
+   • Concise paragraphs, varied sentence structure.
+   • Mirror the example’s clarity and flow.
+   • Avoid jargon overload; focus on impact and fit.
+
+4. Formatting:
+   • Short subject line.
+   • 4 paragraphs max.
+   • Mention attachment: "I’ve attached my resume for reference."
 
 **Output:**
-Return ONLY a JSON object with two keys: "subject" and "body".
-Example:
+Return only a JSON object with "subject" and "body" keys:
 ```json
 {{
   "subject": "Generated Subject Line",
   "body": "Generated Email Body..."
 }}
 ```
-Do not include any other commentary or markdown.
 """
 
 cold_mail_prompt = PromptTemplate(
