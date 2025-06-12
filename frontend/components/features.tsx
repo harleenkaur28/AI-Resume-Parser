@@ -40,13 +40,19 @@ function Features() {
 					{features.map((feature, index) => (
 						<div
 							key={index}
-							className="relative backdrop-blur-lg bg-white/5 rounded-xl p-6 border border-white/10 hover:border-[#76ABAE]/50 transition-all duration-300"
+							className="backdrop-blur-lg bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-300 group"
 						>
-							<feature.icon className="h-6 w-6 mr-2 text-[#76ABAE] mb-2 inline" />
-							<h3 className="text-[#EEEEEE] text-xl font-semibold mb-2 inline-block">
-								{feature.title}
-							</h3>
-							<p className="text-[#EEEEEE]/60">{feature.description}</p>
+							<div className="mb-4">
+								<div className="w-12 h-12 rounded-lg bg-[#76ABAE]/20 flex items-center justify-center mb-4 group-hover:bg-[#76ABAE]/30 transition-colors">
+									<feature.icon className="h-6 w-6 text-[#76ABAE]" />
+								</div>
+								<h3 className="text-lg font-semibold text-[#EEEEEE] mb-2">
+									{feature.title}
+								</h3>
+								<p className="text-[#EEEEEE]/60 text-sm leading-relaxed">
+									{feature.description}
+								</p>
+							</div>
 						</div>
 					))}
 				</motion.div>

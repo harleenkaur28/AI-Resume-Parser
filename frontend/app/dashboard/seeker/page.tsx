@@ -44,11 +44,12 @@ export default function SeekerDashboard() {
 							initial={{ opacity: 0, x: -20 }}
 							animate={{ opacity: 1, x: 0 }}
 							transition={{ duration: 0.5 }}
+							className="mb-8"
 						>
 							<Link href="/">
 								<Button
 									variant="ghost"
-									className="text-[#EEEEEE] hover:text-[#76ABAE]"
+									className="text-[#EEEEEE] hover:text-[#76ABAE] hover:bg-white/5 transition-all duration-300"
 								>
 									<ArrowLeft className="mr-2 h-4 w-4" />
 									Back to Home
@@ -56,84 +57,76 @@ export default function SeekerDashboard() {
 							</Link>
 						</motion.div>
 
-						<motion.div
-							initial={{ opacity: 0, y: 20 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.8, delay: 0.2 }}
-							className="max-w-4xl mx-auto mt-12"
-						>
-							<div className="text-center mb-12">
-								<motion.h1
-									initial={{ opacity: 0, y: 20 }}
-									animate={{ opacity: 1, y: 0 }}
-									transition={{ duration: 0.8, delay: 0.4 }}
-									className="text-4xl font-bold text-[#EEEEEE] mb-4"
-								>
-									Resume Analysis Dashboard
-								</motion.h1>
-								<motion.p
-									initial={{ opacity: 0, y: 20 }}
-									animate={{ opacity: 1, y: 0 }}
-									transition={{ duration: 0.8, delay: 0.6 }}
-									className="text-[#EEEEEE]/60 text-lg max-w-2xl mx-auto"
-								>
-									Upload your resume to get instant analysis, detailed insights,
-									and personalized career tips
-								</motion.p>
-							</div>
-
-							{/* Features Overview */}
-							<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-								{[
-									{
-										icon: Upload,
-										title: "Quick Analysis",
-										desc: "Instant resume parsing with key information extraction",
-										delay: 0.8,
-									},
-									{
-										icon: BarChart3,
-										title: "Detailed Insights",
-										desc: "Comprehensive analysis with skills assessment and recommendations",
-										delay: 1.0,
-									},
-									{
-										icon: Lightbulb,
-										title: "Career Tips",
-										desc: "Personalized advice for resume improvement and interview prep",
-										delay: 1.2,
-									},
-								].map((feature, index) => (
-									<motion.div
-										key={index}
-										initial={{ opacity: 0, y: 20 }}
-										animate={{ opacity: 1, y: 0 }}
-										transition={{ duration: 0.8, delay: feature.delay }}
-									>
-										<Card className="backdrop-blur-lg bg-white/5 border-white/10 hover:bg-white/10 transition-colors duration-300">
-											<CardContent className="p-6 text-center">
-												<feature.icon className="h-12 w-12 text-[#76ABAE] mx-auto mb-4" />
-												<h3 className="text-lg font-semibold text-[#EEEEEE] mb-2">
-													{feature.title}
-												</h3>
-												<p className="text-[#EEEEEE]/60 text-sm">
-													{feature.desc}
-												</p>
-											</CardContent>
-										</Card>
-									</motion.div>
-								))}
-							</div>
-
-							{/* File Upload Component */}
+						<div className="max-w-4xl mx-auto">
+							{/* Main Upload Section */}
 							<motion.div
 								initial={{ opacity: 0, y: 20 }}
 								animate={{ opacity: 1, y: 0 }}
-								transition={{ duration: 0.8, delay: 1.4 }}
+								transition={{ duration: 0.8, delay: 0.2 }}
+								className="text-center mb-12"
 							>
-								<FileUpload />
+								<h1 className="text-4xl md:text-5xl font-bold text-[#EEEEEE] mb-4">
+									Upload Your Resume
+								</h1>
+								<p className="text-[#EEEEEE]/70 text-lg mb-8 max-w-2xl mx-auto">
+									Get instant AI-powered analysis of your resume with detailed
+									insights and career recommendations
+								</p>
+
+								{/* Upload Component - Front and Center */}
+								<motion.div
+									initial={{ opacity: 0, scale: 0.95 }}
+									animate={{ opacity: 1, scale: 1 }}
+									transition={{ duration: 0.8, delay: 0.4 }}
+								>
+									<FileUpload />
+								</motion.div>
 							</motion.div>
-						</motion.div>
+
+							{/* Simple Features Grid */}
+							<motion.div
+								initial={{ opacity: 0, y: 20 }}
+								animate={{ opacity: 1, y: 0 }}
+								transition={{ duration: 0.8, delay: 0.6 }}
+								className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
+							>
+								<Card className="backdrop-blur-lg bg-white/5 border-white/10 text-center">
+									<CardContent className="p-6">
+										<Upload className="h-8 w-8 text-[#76ABAE] mx-auto mb-3" />
+										<h3 className="text-[#EEEEEE] font-semibold mb-2">
+											Quick Analysis
+										</h3>
+										<p className="text-[#EEEEEE]/60 text-sm">
+											Instant parsing and field prediction
+										</p>
+									</CardContent>
+								</Card>
+
+								<Card className="backdrop-blur-lg bg-white/5 border-white/10 text-center">
+									<CardContent className="p-6">
+										<BarChart3 className="h-8 w-8 text-[#76ABAE] mx-auto mb-3" />
+										<h3 className="text-[#EEEEEE] font-semibold mb-2">
+											Detailed Insights
+										</h3>
+										<p className="text-[#EEEEEE]/60 text-sm">
+											Skills analysis and recommendations
+										</p>
+									</CardContent>
+								</Card>
+
+								<Card className="backdrop-blur-lg bg-white/5 border-white/10 text-center">
+									<CardContent className="p-6">
+										<Lightbulb className="h-8 w-8 text-[#76ABAE] mx-auto mb-3" />
+										<h3 className="text-[#EEEEEE] font-semibold mb-2">
+											Career Tips
+										</h3>
+										<p className="text-[#EEEEEE]/60 text-sm">
+											Personalized career advice
+										</p>
+									</CardContent>
+								</Card>
+							</motion.div>
+						</div>
 					</div>
 					<KnowButton />
 				</div>
