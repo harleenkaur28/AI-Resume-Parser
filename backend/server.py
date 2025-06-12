@@ -890,6 +890,167 @@ def get_company_research(company_name: str, url: str) -> str:
         return f"Research about {company_name}: An unexpected error occurred during company research: {e}"
 
 
+cold_mail_prompt_template_str = """
+You are an expert career advisor and professional communication assistant.
+Your task is to draft a compelling and concise cold email based on the provided information.
+
+**Candidate's Resume (Markdown):**
+```
+{resume_text}
+```
+
+**Email Details:**
+- **Recipient Name:** {recipient_name}
+- **Recipient Designation:** {recipient_designation}
+- **Company Name:** {company_name}
+- **Sender's Name:** {sender_name}
+- **Sender's Primary Goal/Role:** {sender_role_or_goal} (e.g., "seeking an internship in Data Science", "exploring full-time Software Engineer roles", "interested in learning more about opportunities at {company_name}")
+- **Key Points to Highlight (from sender):**
+{key_points_to_include}
+- **Additional Information/Context for LLM (from sender):**
+{additional_info_for_llm}
+- **Company Research (if available):**
+{company_research}
+
+**Instructions for Email Generation:**
+
+1.  **Subject Line:**
+    *   Create a concise, professional, and engaging subject line (max 10-15 words).
+    *   It should clearly indicate the email's purpose and value to the recipient. Examples:
+        *   "Aspiring [Your Role/Goal] | [Your Name] - Exploring Opportunities at [Company Name]"
+        *   "Inquiry from a [Your Field] Enthusiast: [Your Name]"
+        *   "Following Up: [Your Name] - Passionate about [Company's Area/Recipient's Work]" (if applicable)
+
+2.  **Email Body (max 200-250 words):**
+    *   **Salutation:** Address the recipient professionally (e.g., "Dear Mr./Ms./Mx. {Recipient Last Name}," or "Dear {Recipient Name}," if more appropriate).
+    *   **Opening:** Briefly introduce yourself ({sender_name}) and state your primary goal ({sender_role_or_goal}) and why you are reaching out to *them* specifically (mention their role, company, or work if relevant from research or user input).
+    *   **Value Proposition:**
+        *   Subtly weave in 2-3 key achievements or skills from the resume that align with the {sender_role_or_goal} and would be relevant to the {recipient_designation} or {company_name}.
+        *   Directly incorporate the "{key_points_to_include}" provided by the sender.
+        *   If {company_research} is available, try to connect your interest or skills to something specific about the company (e.g., a recent project, company values, a specific technology they use).
+    *   **Call to Action:** Clearly state what you are asking for. This could be:
+        *   A brief informational interview (e.g., "Would you be open to a brief 15-20 minute virtual coffee chat in the coming weeks to discuss your experiences at {company_name} and any advice you might have for someone aspiring to enter the field?").
+        *   Consideration for current or future opportunities.
+        *   Guidance or advice.
+    *   **Closing:** Thank the recipient for their time and consideration. Use a professional closing (e.g., "Sincerely," "Best regards,").
+    *   **Signature:** Include {sender_name}.
+
+3.  **Tone:** Professional, respectful, concise, and enthusiastic. Avoid overly casual language or demands.
+4.  **Formatting:** Ensure the email is well-structured and easy to read.
+
+**Output:**
+Return ONLY a JSON object with two keys: "subject" and "body".
+Example:
+```json
+{{
+  "subject": "Generated Subject Line",
+  "body": "Generated Email Body..."
+}}
+```
+Do not include any other commentary or markdown.
+"""
+
+cold_mail_prompt = PromptTemplate(
+    input_variables=[
+        "resume_text",
+        "recipient_name",
+        "recipient_designation",
+        "company_name",
+        "sender_name",
+        "sender_role_or_goal",
+        "key_points_to_include",
+        "additional_info_for_llm",
+        "company_research",
+    ],
+    template=cold_mail_prompt_template_str,
+)
+
+
+def generate_cold_mail_content(
+    resume_text: str,
+    recipient_name: str,
+    recipient_designation: str,
+    company_name: str,
+    sender_name: str,
+    sender_role_or_goal: str,
+    key_points_to_include: str,
+    additional_info_for_llm: str,
+    company_research: str,
+    model_provider="Google",
+    model_name="gemini-2.0-flash",
+    api_keys_dict={"Google": google_api_key},
+):
+    """Generates cold email content using LLM."""
+    if not llm:
+        raise ValueError("LLM service is not available or not initialized.")
+
+    current_llm = llm
+    if not current_llm:
+        try:
+            if model_provider == "Google":
+                if not api_keys_dict.get("Google"):
+                    raise ValueError("Google API Key not provided.")
+                current_llm = ChatGoogleGenerativeAI(
+                    model=model_name,
+                    temperature=0.4,
+                    google_api_key=api_keys_dict["Google"],
+                )
+            else:
+                raise ValueError(f"Unsupported model provider: {model_provider}")
+
+        except Exception as e:
+            raise ValueError(f"Error initializing LLM for cold mail: {e}")
+
+    formatted_prompt_str = cold_mail_prompt.format(
+        resume_text=resume_text,
+        recipient_name=recipient_name,
+        recipient_designation=recipient_designation,
+        company_name=company_name,
+        sender_name=sender_name,
+        sender_role_or_goal=sender_role_or_goal,
+        key_points_to_include=key_points_to_include,
+        additional_info_for_llm=additional_info_for_llm,
+        company_research=company_research,
+    )
+
+    try:
+        response = current_llm.invoke(formatted_prompt_str)
+        response_content = (
+            response.content if hasattr(response, "content") else str(response)
+        )
+
+        if response_content.strip().startswith("```json"):
+            response_content = response_content.strip()[7:]
+
+        if response_content.strip().endswith("```"):
+            response_content = response_content.strip()[:-3]
+
+        email_data = json.loads(response_content)
+        if (
+            not isinstance(email_data, dict)
+            or "subject" not in email_data
+            or "body" not in email_data
+        ):
+            raise ValueError(
+                "LLM did not return the expected JSON structure with 'subject' and 'body'."
+            )
+        return email_data
+
+    except json.JSONDecodeError:
+        print(f"LLM output (cold mail) was not valid JSON: {response_content}")
+
+        return {
+            "subject": "Error: Could not parse LLM response",
+            "body": "Failed to generate email content due to parsing error. Raw LLM output: "
+            + response_content[:500]
+            + "...",
+        }
+
+    except Exception as e:
+        print(f"Error during LLM invocation for cold mail: {e}")
+        raise
+
+
 skills_list = [
     "Java",
     "Spring Boot",
@@ -1301,6 +1462,39 @@ class HiringAssistantResponse(BaseModel):
     data: Dict[str, str]  # {"question": "answer"}
 
 
+# Pydantic models for Cold Mail Generator
+class ColdMailRequest(BaseModel):
+    recipient_name: str = Field(
+        ..., min_length=1, description="Name of the person being emailed."
+    )
+    recipient_designation: str = Field(
+        ..., min_length=1, description="Designation of the recipient."
+    )
+    company_name: str = Field(
+        ..., min_length=1, description="Company the recipient works for."
+    )
+    sender_name: str = Field(..., min_length=1, description="Your name (sender).")
+    sender_role_or_goal: str = Field(
+        ..., min_length=1, description="Your primary goal or role you're interested in."
+    )
+    key_points_to_include: str = Field(
+        ..., min_length=10, description="Key points or achievements to highlight."
+    )
+    additional_info_for_llm: Optional[str] = Field(
+        "", description="Any other context for the LLM."
+    )
+    company_url: Optional[str] = Field(
+        None, description="URL of the company for research (optional)."
+    )
+
+
+class ColdMailResponse(BaseModel):
+    success: bool = True
+    message: str = "Cold email content generated successfully."
+    subject: str
+    body: str
+
+
 def clean_resume(txt):
     cleantxt = re.sub(r"https\\S+", "", txt)
     cleantxt = re.sub(r"@\\S+|#\\S+", "", cleantxt)
@@ -1632,6 +1826,112 @@ async def hiring_assistant(
             status_code=500,
             detail=ErrorResponse(
                 message="Failed to generate hiring assistance.", error_detail=str(e)
+            ).model_dump(),
+        )
+
+
+@app.post("/cold-mail-generator/", response_model=ColdMailResponse)
+async def cold_mail_generator(
+    request_data: ColdMailRequest,
+    file: UploadFile = File(...),
+):
+    if not llm:
+        raise HTTPException(
+            status_code=503,
+            detail=ErrorResponse(message="LLM service is not available.").model_dump(),
+        )
+
+    try:
+        uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+        os.makedirs(uploads_dir, exist_ok=True)
+
+        temp_file_path = os.path.join(uploads_dir, f"temp_cold_mail_{file.filename}")
+        file_bytes = await file.read()
+        with open(temp_file_path, "wb") as buffer:
+            buffer.write(file_bytes)
+
+        resume_text = process_document(file_bytes, file.filename)
+        if resume_text is None:
+            os.remove(temp_file_path)
+            raise HTTPException(
+                status_code=400,
+                detail=ErrorResponse(
+                    message=f"Unsupported file type or error processing file: {file.filename}"
+                ).model_dump(),
+            )
+
+        file_extension = os.path.splitext(file.filename)[1].lower()
+        if resume_text.strip() and file_extension not in [".md", ".txt"]:
+            resume_text = format_resume_text_with_llm(resume_text)
+
+        os.remove(temp_file_path)
+
+        if not is_valid_resume(resume_text):
+            raise HTTPException(
+                status_code=400,
+                detail=ErrorResponse(
+                    message="Invalid resume format or content."
+                ).model_dump(),
+            )
+
+        company_research_info = ""
+        if request_data.company_url:
+            company_research_info = get_company_research(
+                request_data.company_name, request_data.company_url
+            )
+
+        email_content = generate_cold_mail_content(
+            resume_text=resume_text,
+            recipient_name=request_data.recipient_name,
+            recipient_designation=request_data.recipient_designation,
+            company_name=request_data.company_name,
+            sender_name=request_data.sender_name,
+            sender_role_or_goal=request_data.sender_role_or_goal,
+            key_points_to_include=request_data.key_points_to_include,
+            additional_info_for_llm=request_data.additional_info_for_llm,
+            company_research=company_research_info,
+        )
+
+        if "Error:" in email_content["subject"] or "Error:" in email_content["body"]:
+            raise HTTPException(
+                status_code=500,
+                detail=ErrorResponse(
+                    message="Failed to generate email content due to an LLM or parsing error.",
+                    error_detail=f"Subject: {email_content['subject']}, Body: {email_content['body'][:200]}...",
+                ).model_dump(),
+            )
+
+        return ColdMailResponse(
+            subject=email_content["subject"], body=email_content["body"]
+        )
+
+    except HTTPException:
+        raise
+    except ValidationError as e:  # Catch Pydantic validation errors for the request
+        raise HTTPException(
+            status_code=422,
+            detail=ErrorResponse(
+                message="Input validation error.", error_detail=str(e.errors())
+            ).model_dump(),
+        )
+    except (
+        ValueError
+    ) as ve:  # Catch ValueErrors from LLM initialization or other direct calls
+        raise HTTPException(
+            status_code=500,
+            detail=ErrorResponse(
+                message="Configuration or internal error.", error_detail=str(ve)
+            ).model_dump(),
+        )
+    except Exception as e:
+        print(f"Error in /cold-mail-generator/: {e}")
+        import traceback
+
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=ErrorResponse(
+                message="Failed to generate cold mail content.", error_detail=str(e)
             ).model_dump(),
         )
 
