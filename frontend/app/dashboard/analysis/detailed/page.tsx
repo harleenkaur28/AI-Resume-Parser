@@ -344,7 +344,9 @@ export default function DetailedAnalysisPage() {
 												</CardHeader>
 												<CardContent className="space-y-6">
 													{analysisData.projects
-														.filter((project) => project.title && project.description)
+														.filter(
+															(project) => project.title && project.description
+														)
 														.map((project, index) => (
 															<div
 																key={index}
