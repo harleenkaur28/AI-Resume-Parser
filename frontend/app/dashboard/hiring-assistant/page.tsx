@@ -76,7 +76,7 @@ export default function HiringAssistant() {
 
 	// Simulate page load
 	useState(() => {
-		const timer = setTimeout(() => setIsPageLoading(false), 800);
+		const timer = setTimeout(() => setIsPageLoading(false), 100);
 		return () => clearTimeout(timer);
 	});
 
