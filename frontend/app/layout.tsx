@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Navbar } from "@/components/navbar";
 import { Toaster } from "@/components/ui/toaster";
+import { Providers } from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,9 +21,11 @@ export default function RootLayout({
 	return (
 		<html lang="en" className={inter.className} suppressHydrationWarning>
 			<body className="bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831]">
-				<Navbar />
-				<main className="pt-16">{children}</main>
-				<Toaster />
+				<Providers>
+					<Navbar />
+					<main className="pt-16">{children}</main>
+					<Toaster />
+				</Providers>
 			</body>
 		</html>
 	);
