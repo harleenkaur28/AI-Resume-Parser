@@ -91,9 +91,11 @@ export default function ColdMailGenerator() {
 					sender_role_or_goal: analysisData.predicted_field || "",
 				}));
 
-				// Clear the stored data after using it
-				localStorage.removeItem("resumeFile");
-				localStorage.removeItem("analysisData");
+				// Clear the stored data after using it (with a small delay to ensure it's processed)
+				setTimeout(() => {
+					localStorage.removeItem("resumeFile");
+					localStorage.removeItem("analysisData");
+				}, 100);
 
 				toast({
 					title: "Resume Pre-loaded!",

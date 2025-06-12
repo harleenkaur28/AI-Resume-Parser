@@ -102,9 +102,11 @@ export default function HiringAssistant() {
 					role: analysisData.predicted_field || "",
 				}));
 
-				// Clear the stored data after using it
-				localStorage.removeItem("resumeFile");
-				localStorage.removeItem("analysisData");
+				// Clear the stored data after using it (with a small delay to ensure it's processed)
+				setTimeout(() => {
+					localStorage.removeItem("resumeFile");
+					localStorage.removeItem("analysisData");
+				}, 100);
 
 				toast({
 					title: "Resume Pre-loaded!",
@@ -442,7 +444,7 @@ export default function HiringAssistant() {
 													<div className="absolute inset-0 bg-gradient-to-r from-[#76ABAE]/0 via-[#76ABAE]/5 to-[#76ABAE]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-pulse"></div>
 
 													<div className="relative z-10 text-center">
-														{resumeFile ? (
+														{resumeFile || isPreloaded ? (
 															<motion.div
 																initial={{ opacity: 0, scale: 0.8 }}
 																animate={{ opacity: 1, scale: 1 }}
@@ -453,11 +455,18 @@ export default function HiringAssistant() {
 																	<CheckCircle className="relative h-6 w-6 text-[#76ABAE]" />
 																</div>
 																<p className="text-[#EEEEEE] text-sm font-medium mb-1 max-w-44 truncate">
-																	{resumeFile.name}
+																	{resumeFile?.name || "Pre-loaded Resume"}
 																</p>
 																<p className="text-[#76ABAE] text-xs font-medium">
-																	✓ Ready for analysis
+																	{isPreloaded
+																		? "✓ Pre-loaded from analysis"
+																		: "✓ Ready for analysis"}
 																</p>
+																{isPreloaded && (
+																	<p className="text-[#EEEEEE]/60 text-xs mt-1">
+																		Please re-upload file to generate answers
+																	</p>
+																)}
 															</motion.div>
 														) : (
 															<motion.div
