@@ -45,7 +45,7 @@ try:
         print("Warning: GOOGLE_API_KEY not found in .env. LLM functionality will be disabled.")
     else:
         llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash-lite", 
+            model="gemini-2.0-flash", 
             google_api_key=google_api_key, 
             temperature=0.1,
         )
