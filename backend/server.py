@@ -13,6 +13,7 @@ from PyPDF2 import PdfReader
 import os
 from typing import List, Optional, Dict
 import shutil
+import io
 from datetime import datetime, timezone 
 import uvicorn
 from docx import Document
