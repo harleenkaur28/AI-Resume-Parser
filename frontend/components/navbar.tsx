@@ -66,11 +66,7 @@ export function Navbar() {
 	const UserMenu = () => (
 		<div className="flex items-center space-x-3">
 			<div className="flex items-center space-x-2 text-[#EEEEEE]/90">
-				<Avatar 
-					src={session?.user?.image} 
-					alt="Profile" 
-					size="sm"
-				/>
+				<Avatar src={session?.user?.image} alt="Profile" size="sm" />
 				<div className="hidden md:block">
 					<div className="text-sm font-medium">
 						{session?.user?.name || session?.user?.email || "Account"}

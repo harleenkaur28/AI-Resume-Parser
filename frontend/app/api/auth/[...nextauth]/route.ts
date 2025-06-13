@@ -114,10 +114,8 @@ export const authOptions = {
         });
         if (dbUser) {
           token.role = dbUser.role?.name;
-          // Preserve the image from the database
-          if (dbUser.image) {
-            token.picture = dbUser.image;
-          }
+          // Always update the image from database on token refresh
+          token.picture = dbUser.image;
         }
       } else if (user) {
         // For OAuth users, check if they have a role
