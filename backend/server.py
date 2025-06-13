@@ -5,6 +5,7 @@ from fastapi import (
     HTTPException,
     Query,
     Form,
+    APIRouter,
 )
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -406,15 +407,15 @@ tips_generator_prompt = PromptTemplate(
 #         await pool.close()
 
 
-# app.add_event_handler(
+# v1_router.add_event_handler(
 #     "startup",
 #     connect_to_db,
 # )
-# app.add_event_handler(
+# v1_router.add_event_handler(
 #     "startup",
 #     lambda: init_skills_pg(),
 # )
-# app.add_event_handler(
+# v1_router.add_event_handler(
 #     "shutdown",
 #     close_db_connection,
 # )
@@ -1563,9 +1564,21 @@ def clean_resume(txt):
     return " ".join(tokens)
 
 
+# routers
+
+v1_router = APIRouter(
+    prefix="/v1",
+    responses={
+        404: {
+            "description": "Not found",
+        },
+    },
+)
+
+
 # routes
-@app.post(
-    "v1/resume/analysis",
+@v1_router.post(
+    "resume/analysis",
     summary="Analyze Resume",
     response_model=ResumeUploadResponse,
     tags=[
@@ -1784,8 +1797,8 @@ async def analyze_resume(file: UploadFile = File(...)):
         )
 
 
-@app.post(
-    "v1/hiring-assistant/",
+@v1_router.post(
+    "hiring-assistant/",
     description="Generates answers to interview questions based on the provided resume and inputs.",
     response_model=HiringAssistantResponse,
     tags=[
@@ -1934,8 +1947,8 @@ async def hiring_assistant(
         )
 
 
-@app.post(
-    "v1/cold-mail/generator/",
+@v1_router.post(
+    "cold-mail/generator/",
     response_model=ColdMailResponse,
     description="Generates a cold email based on the provided resume and user inputs.",
     tags=[
@@ -2053,8 +2066,8 @@ async def cold_mail_generator(
         )
 
 
-@app.get(
-    "v1/resumes/",
+@v1_router.get(
+    "resumes/",
     response_model=ResumeListResponse,
     description="Fetch all resumes from the database.",
     tags=[
@@ -2080,8 +2093,8 @@ async def get_resumes():
     #     )
 
 
-@app.get(
-    "v1/resumes/{category}",
+@v1_router.get(
+    "resumes/{category}",
     response_model=ResumeCategoryResponse,
     description="Fetch resumes by category. The category is the predicted field from the resume analysis.",
     tags=[
@@ -2109,8 +2122,8 @@ async def get_resumes_by_category(category: str):
     #     )
 
 
-@app.post(
-    "v1/resume/comprehensive/analysis/",
+@v1_router.post(
+    "resume/comprehensive/analysis/",
     response_model=ComprehensiveAnalysisResponse,
     description="Performs a comprehensive analysis of the uploaded resume using LLM.",
     tags=[
@@ -2245,8 +2258,8 @@ class TipsRequest(BaseModel):
     skills: Optional[str] = None
 
 
-@app.get(
-    "v1/generate/tips/",
+@v1_router.get(
+    "generate/tips/",
     response_model=TipsResponse,
     description="Generates career & resume tips based on job category and skills.",
     tags=[
@@ -2346,6 +2359,14 @@ async def get_career_tips(
                 message="Failed to retrieve tips", error_detail=str(e)
             ).model_dump(),
         )
+
+
+# comprehesive route inclusion
+app.include_router(
+    v1_router,
+    prefix="/api",
+    responses={404: {"description": "Not found"}},
+)
 
 
 if __name__ == "__main__":
