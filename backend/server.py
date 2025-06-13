@@ -2063,6 +2063,10 @@ async def cold_mail_generator(
 )
 async def get_resumes():
     ...
+    return {
+        "success": True,
+        "message": "underconstruction",
+    }
     # global pool
     # async with pool.acquire() as connection:
     #     rows = await connection.fetch(
@@ -2086,6 +2090,10 @@ async def get_resumes():
 )
 async def get_resumes_by_category(category: str):
     ...
+    return {
+        "success": True,
+        "message": "underconstruction",
+    }
     # global pool
     # async with pool.acquire() as connection:
     #     rows = await connection.fetch(
