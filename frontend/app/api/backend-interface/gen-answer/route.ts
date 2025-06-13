@@ -334,8 +334,11 @@ export async function POST(request: NextRequest) {
         }, { status: 502 });
       }
 
+      // Process and sanitize the response data to extract answers
+      const sanitizedData = backendResult.data || sanitizeResponseData(backendResult);
+      
       // Store the hiring assistant request in database
-      await prisma.interviewRequest.create({
+      const interviewRequest = await prisma.interviewRequest.create({
         data: {
           userId: (session.user as any).id,
           role,
@@ -347,10 +350,70 @@ export async function POST(request: NextRequest) {
         }
       });
 
+      // Extract and save individual answers
+      if (sanitizedData && typeof sanitizedData === 'object') {
+        const answerPromises = [];
+        console.log('Processing sanitized data for answer saving (existing resume):', Object.keys(sanitizedData));
+        
+        // Process each entry in sanitizedData - keys are questions, values are answers
+        for (const [question, answer] of Object.entries(sanitizedData)) {
+          if (typeof answer === 'string' && answer.trim()) {
+            console.log(`Saving answer for question: "${question}"`);
+            
+            // Save the answer to database
+            answerPromises.push(
+              prisma.interviewAnswer.create({
+                data: {
+                  requestId: interviewRequest.id,
+                  question: question.trim(),
+                  answer: answer.trim()
+                }
+              }).catch((error) => {
+                console.error(`Failed to save answer for question "${question}":`, error);
+                throw error;
+              })
+            );
+          } else if (typeof answer === 'object' && answer !== null) {
+            // Handle nested question-answer objects (fallback case)
+            for (const [subQuestion, subAnswer] of Object.entries(answer)) {
+              if (typeof subAnswer === 'string' && subAnswer.trim()) {
+                console.log(`Saving nested answer for question: "${subQuestion}"`);
+                answerPromises.push(
+                  prisma.interviewAnswer.create({
+                    data: {
+                      requestId: interviewRequest.id,
+                      question: subQuestion.trim(),
+                      answer: subAnswer.trim()
+                    }
+                  }).catch((error) => {
+                    console.error(`Failed to save nested answer for question "${subQuestion}":`, error);
+                    throw error;
+                  })
+                );
+              }
+            }
+          }
+        }
+        
+        // Wait for all answers to be saved
+        if (answerPromises.length > 0) {
+          console.log(`Attempting to save ${answerPromises.length} answers to database`);
+          try {
+            await Promise.all(answerPromises);
+            console.log('Successfully saved all answers to database');
+          } catch (error) {
+            console.error('Error saving answers to database:', error);
+            throw error;
+          }
+        } else {
+          console.warn('No valid question-answer pairs found to save');
+        }
+      }
+
       return NextResponse.json({
         success: true,
         message: 'Interview assistance generated successfully using existing resume',
-        data: backendResult.data || sanitizeResponseData(backendResult),
+        data: sanitizedData,
         source: 'existing_resume',
         resumeId: resumeId
       });
@@ -456,8 +519,11 @@ export async function POST(request: NextRequest) {
         }, { status: 502 });
       }
 
+      // Process and sanitize the response data to extract answers
+      const sanitizedData = backendResult.data || sanitizeResponseData(backendResult);
+
       // Store the hiring assistant request in database
-      await prisma.interviewRequest.create({
+      const interviewRequest = await prisma.interviewRequest.create({
         data: {
           userId: (session.user as any).id,
           role,
@@ -469,10 +535,70 @@ export async function POST(request: NextRequest) {
         }
       });
 
+      // Extract and save individual answers
+      if (sanitizedData && typeof sanitizedData === 'object') {
+        const answerPromises = [];
+        console.log('Processing sanitized data for answer saving (file upload):', Object.keys(sanitizedData));
+        
+        // Process each entry in sanitizedData - keys are questions, values are answers
+        for (const [question, answer] of Object.entries(sanitizedData)) {
+          if (typeof answer === 'string' && answer.trim()) {
+            console.log(`Saving answer for question: "${question}"`);
+            
+            // Save the answer to database
+            answerPromises.push(
+              prisma.interviewAnswer.create({
+                data: {
+                  requestId: interviewRequest.id,
+                  question: question.trim(),
+                  answer: answer.trim()
+                }
+              }).catch((error) => {
+                console.error(`Failed to save answer for question "${question}":`, error);
+                throw error;
+              })
+            );
+          } else if (typeof answer === 'object' && answer !== null) {
+            // Handle nested question-answer objects (fallback case)
+            for (const [subQuestion, subAnswer] of Object.entries(answer)) {
+              if (typeof subAnswer === 'string' && subAnswer.trim()) {
+                console.log(`Saving nested answer for question: "${subQuestion}"`);
+                answerPromises.push(
+                  prisma.interviewAnswer.create({
+                    data: {
+                      requestId: interviewRequest.id,
+                      question: subQuestion.trim(),
+                      answer: subAnswer.trim()
+                    }
+                  }).catch((error) => {
+                    console.error(`Failed to save nested answer for question "${subQuestion}":`, error);
+                    throw error;
+                  })
+                );
+              }
+            }
+          }
+        }
+        
+        // Wait for all answers to be saved
+        if (answerPromises.length > 0) {
+          console.log(`Attempting to save ${answerPromises.length} answers to database`);
+          try {
+            await Promise.all(answerPromises);
+            console.log('Successfully saved all answers to database');
+          } catch (error) {
+            console.error('Error saving answers to database:', error);
+            throw error;
+          }
+        } else {
+          console.warn('No valid question-answer pairs found to save');
+        }
+      }
+
       return NextResponse.json({
         success: true,
         message: 'Interview assistance generated successfully using uploaded file',
-        data: backendResult.data || sanitizeResponseData(backendResult),
+        data: sanitizedData,
         source: 'uploaded_file',
         fileName: file.name
       });
