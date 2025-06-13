@@ -67,6 +67,15 @@ function sanitizeResponseData(data: any): any {
     return parseInterviewAnswers(data);
   }
   
+  // If data is already in the correct format (question -> answer mapping), return as is
+  if (typeof data === 'object' && !Array.isArray(data)) {
+    // Check if all values are strings (which would indicate question -> answer mapping)
+    const allValuesAreStrings = Object.values(data).every(value => typeof value === 'string');
+    if (allValuesAreStrings) {
+      return data; // Return the question -> answer mapping as is
+    }
+  }
+  
   const sanitized: any = {};
   for (const [key, value] of Object.entries(data)) {
     if (typeof value === 'string' && value.length > 500) {
@@ -341,7 +350,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         message: 'Interview assistance generated successfully using existing resume',
-        data: sanitizeResponseData(backendResult),
+        data: backendResult.data || sanitizeResponseData(backendResult),
         source: 'existing_resume',
         resumeId: resumeId
       });
@@ -463,7 +472,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         message: 'Interview assistance generated successfully using uploaded file',
-        data: sanitizeResponseData(backendResult),
+        data: backendResult.data || sanitizeResponseData(backendResult),
         source: 'uploaded_file',
         fileName: file.name
       });
