@@ -1582,6 +1582,9 @@ v2_router = APIRouter(
             "description": "Not found",
         },
     },
+    tags=[
+        "V2",
+    ],
 )
 
 
@@ -1590,7 +1593,7 @@ v2_router = APIRouter(
 
 
 @v1_router.post(
-    "resume/analysis",
+    "/resume/analysis",
     summary="Analyze Resume",
     response_model=ResumeUploadResponse,
     tags=[
@@ -1810,7 +1813,7 @@ async def analyze_resume(file: UploadFile = File(...)):
 
 
 @v1_router.post(
-    "hiring-assistant/",
+    "/hiring-assistant/",
     description="Generates answers to interview questions based on the provided resume and inputs.",
     response_model=HiringAssistantResponse,
     tags=[
@@ -1960,7 +1963,7 @@ async def hiring_assistant(
 
 
 @v1_router.post(
-    "cold-mail/generator/",
+    "/cold-mail/generator/",
     response_model=ColdMailResponse,
     description="Generates a cold email based on the provided resume and user inputs.",
     tags=[
@@ -2079,7 +2082,7 @@ async def cold_mail_generator(
 
 
 @v1_router.get(
-    "resumes/",
+    "/resumes/",
     response_model=ResumeListResponse,
     description="Fetch all resumes from the database.",
     tags=[
@@ -2106,7 +2109,7 @@ async def get_resumes():
 
 
 @v1_router.get(
-    "resumes/{category}",
+    "/resumes/{category}",
     response_model=ResumeCategoryResponse,
     description="Fetch resumes by category. The category is the predicted field from the resume analysis.",
     tags=[
@@ -2135,7 +2138,7 @@ async def get_resumes_by_category(category: str):
 
 
 @v1_router.post(
-    "resume/comprehensive/analysis/",
+    "/resume/comprehensive/analysis/",
     response_model=ComprehensiveAnalysisResponse,
     description="Performs a comprehensive analysis of the uploaded resume using LLM.",
     tags=[
@@ -2271,7 +2274,7 @@ class TipsRequest(BaseModel):
 
 
 @v1_router.get(
-    "generate/tips/",
+    "/generate/tips/",
     response_model=TipsResponse,
     description="Generates career & resume tips based on job category and skills.",
     tags=[
