@@ -1,10 +1,7 @@
-# /Users/taf/Projects/Resume Portal/backend/schemas/user.py
 import uuid
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
-
-# --- Pydantic Models for DB Schema ---
 
 
 class RoleDB(BaseModel):
@@ -21,7 +18,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
-    role_name: str = "user"  # Default role
+    role_name: str = "user"
 
 
 class UserInDBBase(UserBase):
@@ -39,8 +36,8 @@ class UserInDB(UserInDBBase):
     hashed_password: str
 
 
-class UserPublic(UserInDBBase):  # For sending user data to client (without password)
-    role: RoleDB  # This will require a join or a separate query to populate
+class UserPublic(UserInDBBase):
+    role: RoleDB
 
 
 class EmailVerificationDB(BaseModel):
@@ -62,5 +59,5 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    email: Optional[EmailStr] = None  # Changed from str to EmailStr for validation
-    user_id: Optional[str] = None  # Store user_id as string from UUID
+    email: Optional[EmailStr] = None
+    user_id: Optional[str] = None

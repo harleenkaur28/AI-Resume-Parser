@@ -1,20 +1,17 @@
-# /Users/taf/Projects/Resume Portal/backend/db/init_db.py
 import asyncpg
 
 
 async def init_db_schema(conn: asyncpg.Connection):
-    # Create extensions
+
     await conn.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
     await conn.execute("CREATE EXTENSION IF NOT EXISTS citext;")
 
-    # Create schemas
     await conn.execute("CREATE SCHEMA IF NOT EXISTS auth;")
     await conn.execute("CREATE SCHEMA IF NOT EXISTS resumes;")
     await conn.execute("CREATE SCHEMA IF NOT EXISTS hiring;")
     await conn.execute("CREATE SCHEMA IF NOT EXISTS comms;")
     await conn.execute("CREATE SCHEMA IF NOT EXISTS prep;")
 
-    # auth.role
     await conn.execute(
         """
         CREATE TABLE IF NOT EXISTS auth.role (
@@ -23,7 +20,7 @@ async def init_db_schema(conn: asyncpg.Connection):
         );
     """
     )
-    # Insert default roles if they don't exist
+
     await conn.execute(
         "INSERT INTO auth.role (name) VALUES ('admin') ON CONFLICT (name) DO NOTHING;"
     )
@@ -31,7 +28,6 @@ async def init_db_schema(conn: asyncpg.Connection):
         "INSERT INTO auth.role (name) VALUES ('user') ON CONFLICT (name) DO NOTHING;"
     )
 
-    # auth.user
     await conn.execute(
         """
         CREATE TABLE IF NOT EXISTS auth."user" (
@@ -48,7 +44,7 @@ async def init_db_schema(conn: asyncpg.Connection):
     await conn.execute(
         'CREATE INDEX IF NOT EXISTS idx_user_role_id ON auth."user"(role_id);'
     )
-    # Trigger for updated_at on auth.user
+
     await conn.execute(
         """
         CREATE OR REPLACE FUNCTION auth.timestamp_updated() RETURNS trigger AS $$
@@ -66,7 +62,6 @@ async def init_db_schema(conn: asyncpg.Connection):
     """
     )
 
-    # auth.email_verification
     await conn.execute(
         """
         CREATE TABLE IF NOT EXISTS auth.email_verification (
@@ -83,7 +78,6 @@ async def init_db_schema(conn: asyncpg.Connection):
         "CREATE INDEX IF NOT EXISTS idx_email_verification_user_id ON auth.email_verification(user_id);"
     )
 
-    # resumes.resume
     await conn.execute(
         """
         CREATE TABLE IF NOT EXISTS resumes.resume (
@@ -103,7 +97,6 @@ async def init_db_schema(conn: asyncpg.Connection):
         "CREATE INDEX IF NOT EXISTS idx_resume_show_in_central ON resumes.resume(show_in_central);"
     )
 
-    # resumes.analysis
     await conn.execute(
         """
         CREATE TABLE IF NOT EXISTS resumes.analysis (
@@ -131,7 +124,6 @@ async def init_db_schema(conn: asyncpg.Connection):
         "CREATE INDEX IF NOT EXISTS idx_analysis_projects ON resumes.analysis USING GIN(projects);"
     )
 
-    # resumes.bulk_upload
     await conn.execute(
         """
         CREATE TABLE IF NOT EXISTS resumes.bulk_upload (
@@ -149,7 +141,6 @@ async def init_db_schema(conn: asyncpg.Connection):
         "CREATE INDEX IF NOT EXISTS idx_bulk_upload_admin_id ON resumes.bulk_upload(admin_id);"
     )
 
-    # hiring.recruiter
     await conn.execute(
         """
         CREATE TABLE IF NOT EXISTS hiring.recruiter (
@@ -162,7 +153,6 @@ async def init_db_schema(conn: asyncpg.Connection):
     """
     )
 
-    # comms.cold_mail_request
     await conn.execute(
         """
         CREATE TABLE IF NOT EXISTS comms.cold_mail_request (
@@ -184,8 +174,6 @@ async def init_db_schema(conn: asyncpg.Connection):
         "CREATE INDEX IF NOT EXISTS idx_cold_mail_request_user_id ON comms.cold_mail_request(user_id);"
     )
 
-    # Add comms.cold_mail_response, prep.interview_request, prep.interview_answer tables here
-    # comms.cold_mail_response
     await conn.execute(
         """
         CREATE TABLE IF NOT EXISTS comms.cold_mail_response (
@@ -201,7 +189,6 @@ async def init_db_schema(conn: asyncpg.Connection):
         "CREATE INDEX IF NOT EXISTS idx_cold_mail_response_request_id ON comms.cold_mail_response(request_id);"
     )
 
-    # prep.interview_request
     await conn.execute(
         """
         CREATE TABLE IF NOT EXISTS prep.interview_request (
@@ -221,7 +208,6 @@ async def init_db_schema(conn: asyncpg.Connection):
         "CREATE INDEX IF NOT EXISTS idx_interview_request_user_id ON prep.interview_request(user_id);"
     )
 
-    # prep.interview_answer
     await conn.execute(
         """
         CREATE TABLE IF NOT EXISTS prep.interview_answer (
@@ -240,23 +226,28 @@ async def init_db_schema(conn: asyncpg.Connection):
 
 async def initialize_database():
     conn = None
+
     try:
+
         from db.session import (
             get_db_connection,
             release_db_connection,
-        )  # Relative import
+        )
 
         conn = await get_db_connection()
         await init_db_schema(conn)
+
         print("Database schema initialized successfully.")
+
     except Exception as e:
         print(f"Error initializing database schema: {e}")
+
     finally:
         if conn:
             await release_db_connection(conn)
 
 
-# If you want to run this script directly for setup:
-# import asyncio
-# if __name__ == "__main__":
-#     asyncio.run(initialize_database())
+if __name__ == "__main__":
+    import asyncio
+
+    asyncio.run(initialize_database())

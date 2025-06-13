@@ -1,6 +1,22 @@
 import os
-from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Query, Form
-from typing import List, Optional, Dict, Any
+
+from fastapi import (
+    APIRouter,
+    File,
+    UploadFile,
+    HTTPException,
+    Depends,
+    Query,
+    Form,
+)
+
+from typing import (
+    List,
+    Optional,
+    Dict,
+    Any,
+)
+
 import json
 import re
 import io
@@ -9,77 +25,75 @@ from PyPDF2 import PdfReader
 from docx import Document
 import uuid
 
-from schemas.resume import (  # Assuming these are in schemas.resume
+from schemas.resume import (
     ResumeAnalysisPrompt,
     ComprehensiveAnalysisData,
     ComprehensiveAnalysisResponse,
     TipsData,
     TipsResponse,
-    AnalysisDB,  # For saving to DB
-    ResumeMetadataDB,  # For saving to DB
+    AnalysisDB,
+    ResumeMetadataDB,
 )
-from schemas.user import UserPublic  # For current user context
-from llm.llm_config import (  # Assuming llm_config.py is in llm/
+
+from schemas.user import UserPublic
+
+from llm.llm_config import (
     basic_resume_parser_chain,
     comprehensive_analyzer_chain,
     tips_generator_chain,
 )
+
 from core.ml_setup import (
     nlp,
     stop_words,
     clf,
     tfidf_vectorizer,
-)  # ML models and NLTK setup
-from security.auth import get_current_user  # For authenticated endpoints
-from db.session import get_db_connection  # For database operations
+)
+
+from security.auth import get_current_user
+from db.session import get_db_connection
 import asyncpg
 
 router = APIRouter()
 
 
-# Helper function to extract text from PDF
 def extract_text_from_pdf(file_stream: io.BytesIO) -> str:
     reader = PdfReader(file_stream)
     text = ""
+
     for page_num in range(len(reader.pages)):
         page = reader.pages[page_num]
         text += page.extract_text() or ""
+
     return text
 
 
-# Helper function to extract text from DOCX
 def extract_text_from_docx(file_stream: io.BytesIO) -> str:
     doc = Document(file_stream)
     text = "\n".join([para.text for para in doc.paragraphs])
     return text
 
 
-# Helper function to clean resume text (basic cleaning)
 def clean_resume_text(text: str) -> str:
-    text = re.sub(r"http\S+", "", text)  # Remove URLs
-    text = re.sub(r"[^\x00-\x7f]", " ", text)  # Remove non-ASCII characters
-    text = re.sub(
-        r"\s+", " ", text
-    ).strip()  # Replace multiple spaces with single space
+    text = re.sub(r"http\S+", "", text)
+    text = re.sub(r"[^\x00-\x7f]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
     return text
 
 
-@router.post(
-    "/upload-resume-and-analyze", response_model=AnalysisDB
-)  # Or a more comprehensive response
+@router.post("/upload-resume-and-analyze", response_model=AnalysisDB)
 async def upload_resume_and_analyze(
     file: UploadFile = File(...),
     custom_name: Optional[str] = Form(None),
     show_in_central: bool = Form(False),
-    current_user: UserPublic = Depends(
-        get_current_user
-    ),  # Assuming UserPublic from token
+    current_user: UserPublic = Depends(get_current_user),
     conn: asyncpg.Connection = Depends(get_db_connection),
 ):
     if not clf or not tfidf_vectorizer:
         raise HTTPException(
             status_code=503, detail="ML models not loaded. Analysis unavailable."
         )
+
     if not basic_resume_parser_chain:
         raise HTTPException(
             status_code=503, detail="LLM chain not initialized. Analysis unavailable."
@@ -92,8 +106,10 @@ async def upload_resume_and_analyze(
     extracted_text = ""
     if filename.lower().endswith(".pdf"):
         extracted_text = extract_text_from_pdf(file_stream)
+
     elif filename.lower().endswith(".docx"):
         extracted_text = extract_text_from_docx(file_stream)
+
     else:
         raise HTTPException(
             status_code=400, detail="Unsupported file type. Please upload PDF or DOCX."
@@ -106,21 +122,15 @@ async def upload_resume_and_analyze(
 
     cleaned_text = clean_resume_text(extracted_text)
 
-    # Predict job category using the ML model
     input_features = tfidf_vectorizer.transform([cleaned_text])
     predicted_category = clf.predict(input_features)[0]
 
-    # Use LLM for structured data extraction
-    # Prepare a placeholder for resume_json if you don't have a pre-parser for it
-    # Or, you could try to extract some basic entities using NLP first (e.g., name, email with regex/Spacy)
-    # For this example, we'll pass a minimal JSON or an empty one if not available.
-    # A more robust solution would be to use NLP to find name, email, phone first.
-    name_match = re.search(
-        r"([A-Z][a-z]+(?:\s[A-Z][a-z]+)+)", extracted_text
-    )  # Simple name regex
+    name_match = re.search(r"([A-Z][a-z]+(?:\s[A-Z][a-z]+)+)", extracted_text)
+
     email_match = re.search(
         r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", extracted_text
     )
+
     contact_match = re.search(
         r"(?:\+\d{1,3}[- ]?)?(?:\(?\d{3}\)?[- ]?)?\d{3}[- ]?\d{4}", extracted_text
     )
@@ -130,52 +140,36 @@ async def upload_resume_and_analyze(
         "email": email_match.group(0).lower() if email_match else "unknown@example.com",
         "contact": contact_match.group(0) if contact_match else None,
         "predicted_field": predicted_category,
-        # other fields can be attempted with regex or kept empty for LLM to fill
     }
 
     try:
         llm_input = {
-            "resume_json": json.dumps(
-                initial_json_data
-            ),  # Or a more structured JSON if parsed first
+            "resume_json": json.dumps(initial_json_data),
             "extracted_resume_text": cleaned_text,
         }
         llm_response_str = await basic_resume_parser_chain.arun(llm_input)
         parsed_data = json.loads(llm_response_str)
 
-        # Validate with Pydantic model for the prompt
         resume_analysis_prompt_data = ResumeAnalysisPrompt(**parsed_data)
 
     except json.JSONDecodeError:
         raise HTTPException(
             status_code=500, detail="LLM returned invalid JSON for basic analysis."
         )
+
     except Exception as e:
-        # Log e for more details
+
         raise HTTPException(
             status_code=500, detail=f"Error during LLM basic analysis: {str(e)}"
         )
 
-    # --- Save to Database ---
-    # 1. Save ResumeMetadataDB
-    # This assumes you have a way to store the file (e.g., S3, local filesystem) and get a URL
-    # For now, placeholder file_url
-    # In a real app, upload `contents` to a file storage and get the URL.
-    # For simplicity, we'll use a placeholder or just the filename for now.
-    # Ensure user_id is correctly obtained (it's a UUID)
     user_id_uuid = (
         uuid.UUID(current_user.id)
         if isinstance(current_user.id, str)
         else current_user.id
     )
 
-    # Create a unique filename for storage if needed, e.g., using UUID
-    # stored_file_name = f"{uuid.uuid4()}_{filename}"
-    # file_storage_path = f"/path/to/your/uploads/{stored_file_name}" # Example path
-    # with open(file_storage_path, "wb") as f_out:
-    #     f_out.write(contents)
-    # file_url_for_db = f"/uploads/{stored_file_name}" # URL accessible by the app
-    file_url_for_db = f"uploads/{filename}"  # Placeholder
+    file_url_for_db = f"uploads/{filename}"
 
     async with conn.transaction():
         try:
@@ -184,12 +178,11 @@ async def upload_resume_and_analyze(
                    VALUES ($1, $2, $3, $4, $5) RETURNING id""",
                 user_id_uuid,
                 custom_name or filename,
-                file_url_for_db,  # Replace with actual storage URL
+                file_url_for_db,
                 datetime.now(timezone.utc),
                 show_in_central,
             )
 
-            # 2. Save AnalysisDB
             analysis_id = await conn.fetchval(
                 """INSERT INTO resumes.analysis (resume_id, name, email, contact, predicted_field, college, skills, work_experience, projects, uploaded_at)
                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id""",
@@ -212,7 +205,6 @@ async def upload_resume_and_analyze(
                 resume_analysis_prompt_data.upload_date,
             )
 
-            # Fetch the created analysis record to return
             created_analysis_record = await conn.fetchrow(
                 "SELECT * FROM resumes.analysis WHERE id = $1", analysis_id
             )
@@ -221,7 +213,6 @@ async def upload_resume_and_analyze(
                     status_code=500, detail="Failed to retrieve saved analysis."
                 )
 
-            # Convert work_experience and projects from JSON string back to list of dicts for Pydantic model
             return AnalysisDB(
                 id=created_analysis_record["id"],
                 resume_id=created_analysis_record["resume_id"],
@@ -249,15 +240,16 @@ async def upload_resume_and_analyze(
             )
 
         except asyncpg.PostgresError as db_err:
-            # Log db_err
             raise HTTPException(
                 status_code=500,
                 detail=f"Database error during analysis saving: {str(db_err)}",
             )
+
         except Exception as e:
-            # Log e
+
             raise HTTPException(
-                status_code=500, detail=f"An unexpected error occurred: {str(e)}"
+                status_code=500,
+                detail=f"An unexpected error occurred: {str(e)}",
             )
 
 
@@ -274,8 +266,6 @@ async def get_comprehensive_analysis(
             status_code=503, detail="Comprehensive analyzer LLM chain not initialized."
         )
 
-    # Fetch basic analysis and resume text (or file_url to re-read)
-    # For this, we assume AnalysisDB has the necessary fields or we can join with ResumeMetadataDB
     analysis_record = await conn.fetchrow(
         """SELECT ra.name, ra.email, ra.contact, ra.predicted_field, rm.file_url 
            FROM resumes.analysis ra JOIN resumes.resume rm ON ra.resume_id = rm.id
@@ -289,25 +279,13 @@ async def get_comprehensive_analysis(
             status_code=404, detail="Resume analysis not found or access denied."
         )
 
-    # TODO: Re-extract text from file_url if not stored directly
-    # This part needs a robust way to get the raw text again.
-    # If you stored the cleaned_text in AnalysisDB, use that.
-    # Otherwise, you need to fetch the file from storage (e.g., using analysis_record['file_url'])
-    # and re-run text extraction. For now, let's assume we need to re-extract.
-    # This is a simplified placeholder for fetching and extracting text:
-    # extracted_resume_text = await fetch_and_extract_text_from_url(analysis_record['file_url'])
-    # For now, we'll raise an error if text isn't readily available or use a placeholder.
-    # A better approach: store cleaned_text in resumes.analysis or have a dedicated text cache.
-    # This example will be limited if raw text isn't easily retrievable.
-    # Let's assume for now that we need to pass the existing analysis data to the LLM.
-    # The prompt expects `extracted_resume_text`. This is a gap if not stored.
-    # For demonstration, let's try to get it from a local file if `file_url` points to `uploads/filename`
-    # THIS IS NOT PRODUCTION READY for file_url handling.
     extracted_resume_text = ""
+
     file_path_to_check = os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
         analysis_record["file_url"],
-    )  # backend/uploads/filename
+    )
+
     if os.path.exists(file_path_to_check):
         try:
             with open(file_path_to_check, "rb") as f_resume:
@@ -315,23 +293,20 @@ async def get_comprehensive_analysis(
                     extracted_resume_text = extract_text_from_pdf(
                         io.BytesIO(f_resume.read())
                     )
+
                 elif file_path_to_check.lower().endswith(".docx"):
                     extracted_resume_text = extract_text_from_docx(
                         io.BytesIO(f_resume.read())
                     )
+
         except Exception as e:
             print(f"Could not re-read file for comprehensive analysis: {e}")
-            # Fallback or error
 
     if not extracted_resume_text:
-        # Fallback: use a placeholder or raise error if text is crucial and not found
-        # For now, we proceed but quality might be low if text is missing.
+
         print(
             f"Warning: Could not retrieve full text for resume {resume_id}. Analysis might be limited."
         )
-        # As a last resort, you could try to reconstruct some text from existing analysis fields,
-        # but it's not ideal.
-        # extracted_resume_text = f"Name: {analysis_record['name']}\nEmail: {analysis_record['email']}\nCategory: {analysis_record['predicted_field']}"
 
     basic_info = {
         "name": analysis_record["name"],
@@ -346,15 +321,19 @@ async def get_comprehensive_analysis(
             "predicted_category": analysis_record["predicted_field"],
             "basic_info_json": json.dumps(basic_info),
         }
+
         llm_response_str = await comprehensive_analyzer_chain.arun(llm_input)
         comprehensive_data_dict = json.loads(llm_response_str)
         validated_data = ComprehensiveAnalysisData(**comprehensive_data_dict)
+
         return ComprehensiveAnalysisResponse(data=validated_data)
+
     except json.JSONDecodeError:
         raise HTTPException(
             status_code=500,
             detail="LLM returned invalid JSON for comprehensive analysis.",
         )
+
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Error during comprehensive analysis: {str(e)}"
@@ -364,12 +343,8 @@ async def get_comprehensive_analysis(
 @router.get("/career-tips/", response_model=TipsResponse)
 async def get_career_tips(
     job_category: Optional[str] = Query(None),
-    skills: Optional[List[str]] = Query(
-        None
-    ),  # Pass skills as comma-separated string in query if needed
-    current_user: UserPublic = Depends(
-        get_current_user
-    ),  # Example: if tips are user-specific or metered
+    skills: Optional[List[str]] = Query(None),
+    current_user: UserPublic = Depends(get_current_user),
 ):
     if not tips_generator_chain:
         raise HTTPException(
@@ -380,17 +355,23 @@ async def get_career_tips(
     job_cat_str = job_category if job_category else "general career advice"
 
     try:
-        llm_input = {"job_category": job_cat_str, "skills_list_str": skills_list_str}
+        llm_input = {
+            "job_category": job_cat_str,
+            "skills_list_str": skills_list_str,
+        }
+
         llm_response_str = await tips_generator_chain.arun(llm_input)
         tips_data_dict = json.loads(llm_response_str)
         validated_tips = TipsData(**tips_data_dict)
         return TipsResponse(data=validated_tips)
+
     except json.JSONDecodeError:
         raise HTTPException(
             status_code=500, detail="LLM returned invalid JSON for tips generation."
         )
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating tips: {str(e)}")
-
-
-# Placeholder for other resume-related endpoints (e.g., list resumes, delete resume, etc.)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating tips: {str(e)}",
+        )

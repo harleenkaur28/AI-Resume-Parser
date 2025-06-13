@@ -1,6 +1,13 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException, Query, Form
+from fastapi import (
+    FastAPI,
+    File,
+    UploadFile,
+    HTTPException,
+    Query,
+    Form,
+)
 from fastapi.middleware.cors import CORSMiddleware
-import asyncpg
+
 import json
 from pydantic import BaseModel, Field
 import zipfile
@@ -10,20 +17,31 @@ import requests
 import spacy
 import nltk
 from nltk.corpus import stopwords
+
 from PyPDF2 import PdfReader
 import os
-from typing import List, Optional, Dict
-import shutil
+from typing import (
+    List,
+    Optional,
+    Dict,
+)
+
 import io
 from datetime import datetime, timezone
 import uvicorn
 from docx import Document
 
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAI
+from langchain_google_genai import (
+    ChatGoogleGenerativeAI,
+    GoogleGenerativeAI,
+)
 from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import (
+    BaseModel,
+    Field,
+    ValidationError,
+)
 
 from dotenv import load_dotenv
 
@@ -62,7 +80,6 @@ except Exception as e:
     )
 
 
-# Define structured Pydantic models for WorkExperience and Projects
 class WorkExperienceEntry(BaseModel):
     role: Optional[str] = None
     company: Optional[str] = None
@@ -140,24 +157,22 @@ Now, process the raw JSON and emit the cleaned, validated JSON.
 """
 
 langchain_prompt = PromptTemplate(
-    input_variables=["resume_json", "extracted_resume_text"],
+    input_variables=[
+        "resume_json",
+        "extracted_resume_text",
+    ],
     template=prompt_template_str,
 )
 
-# llm_chain = None
-# if llm:
-#     llm_chain = LLMChain(llm=llm, prompt=langchain_prompt)
 
-
-# Pydantic models for comprehensive UI analysis
 class SkillProficiency(BaseModel):
     skill_name: str
-    percentage: int  # e.g., 90 for 90%
+    percentage: int
 
 
 class UIDetailedWorkExperienceEntry(BaseModel):
     role: str
-    company_and_duration: str  # e.g., "Tech Corp | 2020 - Present"
+    company_and_duration: str
     bullet_points: List[str]
 
 
@@ -172,7 +187,7 @@ class LanguageEntry(BaseModel):
 
 
 class EducationEntry(BaseModel):
-    education_detail: str  # e.g., "Master's in Computer Science"
+    education_detail: str
 
 
 class ComprehensiveAnalysisData(BaseModel):
@@ -194,7 +209,6 @@ class ComprehensiveAnalysisResponse(BaseModel):
     data: ComprehensiveAnalysisData
 
 
-# Pydantic models for tips
 class Tip(BaseModel):
     category: str
     advice: str
@@ -300,7 +314,11 @@ Return ONLY a single JSON object that would successfully instantiate `Comprehens
 """
 
 comprehensive_analysis_prompt = PromptTemplate(
-    input_variables=["extracted_resume_text", "predicted_category", "basic_info_json"],
+    input_variables=[
+        "extracted_resume_text",
+        "predicted_category",
+        "basic_info_json",
+    ],
     template=comprehensive_analysis_prompt_template_str,
 )
 
@@ -403,8 +421,10 @@ NLTK_DATA_PATH = os.path.join(
     "model",
     "nltk_data",
 )
+
 if not os.path.exists(NLTK_DATA_PATH):
     os.makedirs(NLTK_DATA_PATH)
+
 nltk.data.path.append(NLTK_DATA_PATH)
 
 
@@ -553,24 +573,24 @@ def format_resume_text_with_llm(
                 temperature=0.1,
                 google_api_key=api_keys_dict["Google"],
             )
-        # elif model_provider == "OpenAI":
-        #     if not api_keys_dict.get("OpenAI"):
-        #         raise ValueError("OpenAI API Key not provided for resume formatting.")
-        #     llm = ChatOpenAI(
-        #         model_name=model_name,
-        #         temperature=0.1,
-        #         openai_api_key=api_keys_dict["OpenAI"],
-        #     )
-        # elif model_provider == "Claude":
-        #     if not api_keys_dict.get("Claude"):
-        #         raise ValueError(
-        #             "Anthropic API Key not provided for resume formatting."
-        #         )
-        #     llm = ChatAnthropic(
-        #         model=model_name,
-        #         temperature=0.1,
-        #         anthropic_api_key=api_keys_dict["Claude"],
-        #     )
+            # elif model_provider == "OpenAI":
+            #     if not api_keys_dict.get("OpenAI"):
+            #         raise ValueError("OpenAI API Key not provided for resume formatting.")
+            #     llm = ChatOpenAI(
+            #         model_name=model_name,
+            #         temperature=0.1,
+            #         openai_api_key=api_keys_dict["OpenAI"],
+            #     )
+            # elif model_provider == "Claude":
+            #     if not api_keys_dict.get("Claude"):
+            #         raise ValueError(
+            #             "Anthropic API Key not provided for resume formatting."
+            #         )
+            #     llm = ChatAnthropic(
+            #         model=model_name,
+            #         temperature=0.1,
+            #         anthropic_api_key=api_keys_dict["Claude"],
+            #     )
         else:
             raise ValueError(
                 f"Unsupported model provider for resume formatting: {model_provider}"
@@ -649,8 +669,10 @@ def is_valid_resume(text):
         "Projects",
         "Certifications",
     ]
+
     if any(re.search(keyword, text, re.I) for keyword in resume_keywords):
         return True
+
     return False
 
 
@@ -1274,22 +1296,22 @@ def generate_answers_for_geting_hired(
                 temperature=0.3,
                 google_api_key=api_keys_dict["Google"],
             )
-        # elif model_provider == "OpenAI":
-        #     if not api_keys_dict.get("OpenAI"):
-        #         raise ValueError("OpenAI API Key not provided.")
-        #     llm = ChatOpenAI(
-        #         model_name=model_name,
-        #         temperature=0.3,
-        #         openai_api_key=api_keys_dict["OpenAI"],
-        #     )
-        # elif model_provider == "Claude":
-        #     if not api_keys_dict.get("Claude"):
-        #         raise ValueError("Anthropic API Key not provided.")
-        #     llm = ChatAnthropic(
-        #         model=model_name,
-        #         temperature=0.3,
-        #         anthropic_api_key=api_keys_dict["Claude"],
-        #     )
+            # elif model_provider == "OpenAI":
+            #     if not api_keys_dict.get("OpenAI"):
+            #         raise ValueError("OpenAI API Key not provided.")
+            #     llm = ChatOpenAI(
+            #         model_name=model_name,
+            #         temperature=0.3,
+            #         openai_api_key=api_keys_dict["OpenAI"],
+            #     )
+            # elif model_provider == "Claude":
+            #     if not api_keys_dict.get("Claude"):
+            #         raise ValueError("Anthropic API Key not provided.")
+            #     llm = ChatAnthropic(
+            #         model=model_name,
+            #         temperature=0.3,
+            #         anthropic_api_key=api_keys_dict["Claude"],
+            #     )
         else:
             raise ValueError(f"Unsupported model provider: {model_provider}")
 
@@ -1421,7 +1443,7 @@ def generate_answers_for_geting_hired(
     return results
 
 
-# Pydantic models
+# pydaantic
 class ResumeAnalysis(BaseModel):
     name: str
     email: str
@@ -1491,10 +1513,9 @@ class HiringAssistantRequest(BaseModel):
 class HiringAssistantResponse(BaseModel):
     success: bool = True
     message: str = "Answers generated successfully."
-    data: Dict[str, str]  # {"question": "answer"}
+    data: Dict[str, str]
 
 
-# Pydantic models for Cold Mail Generator
 class ColdMailRequest(BaseModel):
     recipient_name: str = Field(
         ..., min_length=1, description="Name of the person being emailed."
@@ -1557,9 +1578,13 @@ async def analyze_resume(file: UploadFile = File(...)):
         with open(temp_file_path, "wb") as buffer:
             buffer.write(file_bytes)
 
-        resume_text = process_document(file_bytes, file.filename)
+        resume_text = process_document(
+            file_bytes,
+            file.filename,
+        )
+
         if resume_text is None:
-            os.remove(temp_file_path)  # Clean up temp file
+            os.remove(temp_file_path)
             raise HTTPException(
                 status_code=400,
                 detail=f"Unsupported file type or error processing file: {file.filename}",
@@ -1704,7 +1729,7 @@ async def analyze_resume(file: UploadFile = File(...)):
                 if not proj.title:
                     null_or_empty_count += 1
                 if not proj.technologies_used:
-                    null_or_empty_count += 1  # Empty list counts as unpopulated
+                    null_or_empty_count += 1
                 if not proj.description:
                     null_or_empty_count += 1
 
@@ -1767,7 +1792,7 @@ async def hiring_assistant(
         )
 
     try:
-        # Parse questions JSON string to list
+
         try:
             questions_list = json.loads(questions)
             if (
@@ -1973,6 +1998,7 @@ async def cold_mail_generator(
 
     except HTTPException:
         raise
+
     except ValidationError as e:
         raise HTTPException(
             status_code=422,
@@ -1980,6 +2006,7 @@ async def cold_mail_generator(
                 message="Input validation error.", error_detail=str(e.errors())
             ).model_dump(),
         )
+
     except ValueError as ve:
         raise HTTPException(
             status_code=500,
@@ -1987,6 +2014,7 @@ async def cold_mail_generator(
                 message="Configuration or internal error.", error_detail=str(ve)
             ).model_dump(),
         )
+
     except Exception as e:
         print(f"Error in /cold-mail-generator/: {e}")
         import traceback

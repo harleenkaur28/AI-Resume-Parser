@@ -4,7 +4,8 @@
 	"private": true,
 	"scripts": {
 		"dev": "next dev",
-		"build": "next build",
+		"build": "prisma generate && next build",
+		"postinstall": "prisma generate",
 		"start": "next start",
 		"lint": "next lint",
 		"seed": "tsx prisma/seed.ts"
@@ -45,6 +46,7 @@
 		"@radix-ui/react-toggle-group": "^1.1.0",
 		"@radix-ui/react-tooltip": "^1.1.2",
 		"@types/node": "20.6.2",
+		"@types/nodemailer": "^6.4.17",
 		"@types/react": "18.2.22",
 		"@types/react-dom": "18.2.7",
 		"autoprefixer": "10.4.15",

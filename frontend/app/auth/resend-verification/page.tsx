@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ import { ArrowLeft, Mail, Send, AlertCircle, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { Loader } from "@/components/ui/loader";
 
-export default function ResendVerificationPage() {
+function ResendVerificationContent() {
 	const searchParams = useSearchParams();
 	const [isPageLoading, setIsPageLoading] = useState(true);
 	const [email, setEmail] = useState("");
@@ -88,6 +88,40 @@ export default function ResendVerificationPage() {
 						className="fixed inset-0 bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831] flex items-center justify-center z-50"
 					>
 						<Loader variant="pulse" size="xl" text="Loading verification..." />
+					</motion.div>
+				)}
+			</AnimatePresence>
+
+			{/* Full-screen loading overlay for verification email */}
+			<AnimatePresence>
+				{isLoading && (
+					<motion.div
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						className="fixed inset-0 bg-black/50 backdrop-blur-md z-50 flex items-center justify-center"
+					>
+						<motion.div
+							initial={{ scale: 0.8, opacity: 0 }}
+							animate={{ scale: 1, opacity: 1 }}
+							exit={{ scale: 0.8, opacity: 0 }}
+							className="bg-white/10 backdrop-blur-lg rounded-3xl p-10 border border-white/20 text-center max-w-sm mx-4"
+						>
+							<div className="relative mb-6">
+								<Loader variant="pulse" size="xl" className="text-[#76ABAE]" />
+							</div>
+							<h3 className="text-[#EEEEEE] font-semibold text-xl mb-3">
+								Sending Verification
+							</h3>
+							<p className="text-[#EEEEEE]/70 text-sm leading-relaxed">
+								We're sending a verification email to your inbox...
+							</p>
+							<div className="mt-6 flex justify-center space-x-2">
+								<div className="w-2 h-2 bg-[#76ABAE] rounded-full animate-pulse"></div>
+								<div className="w-2 h-2 bg-[#76ABAE] rounded-full animate-pulse delay-75"></div>
+								<div className="w-2 h-2 bg-[#76ABAE] rounded-full animate-pulse delay-150"></div>
+							</div>
+						</motion.div>
 					</motion.div>
 				)}
 			</AnimatePresence>
@@ -230,5 +264,30 @@ export default function ResendVerificationPage() {
 				</div>
 			)}
 		</>
+	);
+}
+
+export default function ResendVerificationPage() {
+	return (
+		<Suspense
+			fallback={
+				<div className="min-h-screen bg-gradient-to-br from-[#222831] via-[#393E46] to-[#76ABAE] flex items-center justify-center p-6">
+					<div className="w-full max-w-md">
+						<Card className="border-[#76ABAE]/20 bg-[#222831]/90 backdrop-blur-sm shadow-2xl">
+							<CardHeader className="text-center">
+								<CardTitle className="text-2xl font-bold text-[#EEEEEE]">
+									Loading...
+								</CardTitle>
+							</CardHeader>
+							<CardContent className="flex justify-center">
+								<Loader variant="spinner" size="lg" />
+							</CardContent>
+						</Card>
+					</div>
+				</div>
+			}
+		>
+			<ResendVerificationContent />
+		</Suspense>
 	);
 }

@@ -1,16 +1,17 @@
-# /Users/taf/Projects/Resume Portal/backend/llm/prompts.py
 from langchain.prompts import PromptTemplate
+
 from schemas.common import (
     WorkExperienceEntry,
     ProjectEntry,
-)  # Assuming common schemas are in schemas/
+)
+
 from schemas.resume import (
     ResumeAnalysisPrompt,
     ComprehensiveAnalysisData,
     TipsData,
-)  # Assuming resume schemas
+)
 
-# Prompt for initial resume parsing and validation
+
 prompt_template_str = """
 You are a JSON‐validation assistant.
 Your job is to read an arbitrary JSON object and transform it so that it conforms exactly to this Pydantic model:
@@ -77,11 +78,9 @@ Now, process the raw JSON and emit the cleaned, validated JSON.
 langchain_prompt = PromptTemplate(
     input_variables=["resume_json", "extracted_resume_text"],
     template=prompt_template_str,
-    # Ensure the Pydantic model used in the prompt string matches ResumeAnalysisPrompt
-    # This might require adjusting the prompt string or the model name if they differ.
 )
 
-# Prompt for comprehensive UI analysis
+
 comprehensive_analysis_prompt_template_str = """
 You are an expert resume analyzer. Your task is to extract and structure information from the provided resume text to populate a JSON object conforming to the Pydantic models below.
 The goal is to generate data that can be used to render a UI similar to the provided example.
@@ -175,7 +174,7 @@ comprehensive_analysis_prompt = PromptTemplate(
     template=comprehensive_analysis_prompt_template_str,
 )
 
-# Prompt for generating tips
+
 tips_generator_prompt_template_str = """
 You are a helpful career advisor. Generate practical and actionable tips for resume improvement and interview preparation.
 
@@ -206,6 +205,7 @@ class TipsData(BaseModel):
 Output:
 Return ONLY a single JSON object that would successfully instantiate `TipsData(...)`.
 """
+
 
 tips_generator_prompt = PromptTemplate(
     input_variables=["job_category", "skills_list_str"],

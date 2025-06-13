@@ -1,4 +1,3 @@
-# /Users/taf/Projects/Resume Portal/backend/schemas/prep.py
 import uuid
 from datetime import datetime
 from pydantic import BaseModel
@@ -9,7 +8,7 @@ class InterviewRequestDB(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
     role: str
-    questions: List[str]  # Stored as JSONB in DB, parsed to List[str]
+    questions: List[str]
     company_name: str
     user_knowledge: Optional[str] = ""
     company_url: Optional[str] = None
@@ -22,9 +21,9 @@ class InterviewRequestDB(BaseModel):
 
 class InterviewAnswerDB(BaseModel):
     id: uuid.UUID
-    request_id: uuid.UUID  # Foreign key to InterviewRequestDB
+    request_id: uuid.UUID
     question: str
-    answer: str  # Generated answer
+    answer: str
     created_at: datetime
 
     class Config:

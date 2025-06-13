@@ -1,4 +1,3 @@
-# /Users/taf/Projects/Resume Portal/backend/schemas/hiring.py
 import uuid
 from datetime import datetime
 from pydantic import BaseModel, EmailStr
