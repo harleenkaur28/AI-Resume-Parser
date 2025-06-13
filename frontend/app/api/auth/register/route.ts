@@ -13,8 +13,9 @@ const registerSchema = z.object({
   avatarUrl: z.union([
     z.string().url("Invalid avatar URL"),
     z.literal(""),
-    z.null()
-  ]).optional(),
+    z.null(),
+    z.undefined()
+  ]).optional().transform(val => val || null),
 });
 
 // Create email transporter

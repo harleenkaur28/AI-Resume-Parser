@@ -111,7 +111,10 @@ export default function ResendVerificationPage() {
 									<div>{success}</div>
 									{email && (
 										<div className="text-sm">
-											Sent to: <span className="font-medium text-[#76ABAE]">{email}</span>
+											Sent to:{" "}
+											<span className="font-medium text-[#76ABAE]">
+												{email}
+											</span>
 										</div>
 									)}
 								</div>
@@ -183,7 +186,9 @@ export default function ResendVerificationPage() {
 						) : (
 							<div className="text-center space-y-4">
 								<div className="text-[#EEEEEE]/80">
-									{isLoading ? "Sending verification email..." : "Processing your request..."}
+									{isLoading
+										? "Sending verification email..."
+										: "Processing your request..."}
 								</div>
 								{!isLoading && (
 									<Button

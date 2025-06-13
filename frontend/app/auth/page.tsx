@@ -128,8 +128,10 @@ export default function AuthPage() {
 			setError(
 				<div>
 					Please verify your email before signing in.{" "}
-					<Link 
-						href={`/auth/resend-verification${emailParam ? `?email=${encodeURIComponent(emailParam)}` : ''}`}
+					<Link
+						href={`/auth/resend-verification${
+							emailParam ? `?email=${encodeURIComponent(emailParam)}` : ""
+						}`}
 						className="text-[#76ABAE] hover:underline font-medium"
 					>
 						Resend verification email
@@ -162,8 +164,10 @@ export default function AuthPage() {
 				setError(
 					<div>
 						Please verify your email before signing in.{" "}
-						<Link 
-							href={`/auth/resend-verification?email=${encodeURIComponent(loginForm.email)}`}
+						<Link
+							href={`/auth/resend-verification?email=${encodeURIComponent(
+								loginForm.email
+							)}`}
 							className="text-[#76ABAE] hover:underline font-medium"
 						>
 							Resend verification email
@@ -237,7 +241,9 @@ export default function AuthPage() {
 						</div>
 						<div className="mt-3">
 							<Link
-								href={`/auth/resend-verification?email=${encodeURIComponent(registerForm.email)}`}
+								href={`/auth/resend-verification?email=${encodeURIComponent(
+									registerForm.email
+								)}`}
 								className="text-[#76ABAE] hover:underline font-medium text-sm"
 							>
 								Didn't receive the email? Resend verification
