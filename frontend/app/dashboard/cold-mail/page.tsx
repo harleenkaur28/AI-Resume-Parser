@@ -199,13 +199,10 @@ export default function ColdMailGenerator() {
 				formDataToSend.append("company_url", formData.company_url);
 			}
 
-			const response = await fetch(
-				"http://localhost:8000/cold-mail-generator/",
-				{
-					method: "POST",
-					body: formDataToSend,
-				}
-			);
+			const response = await fetch("/api/backend-interface/cold-mail", {
+				method: "POST",
+				body: formDataToSend,
+			});
 
 			const result: ColdMailResponse = await response.json();
 

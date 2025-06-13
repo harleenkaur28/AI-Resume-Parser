@@ -250,18 +250,80 @@ export async function POST(request: NextRequest) {
       const backendResponse = await fetch(`${BACKEND_URL}/api/v2/hiring-assistant/`, {
         method: 'POST',
         body: backendFormData,
+        signal: AbortSignal.timeout(30000), // 30 second timeout
       });
 
       if (!backendResponse.ok) {
         const errorText = await backendResponse.text();
-        console.error('Backend API v2 error:', errorText);
+        console.error('Backend API v2 error:', {
+          status: backendResponse.status,
+          statusText: backendResponse.statusText,
+          contentType: backendResponse.headers.get('content-type'),
+          error: errorText.substring(0, 300) + (errorText.length > 300 ? '...' : '')
+        });
+        
+        let errorMessage = "Backend processing failed";
+        
+        // Try to parse JSON error response
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.detail?.message) {
+            errorMessage = errorData.detail.message;
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          } else if (errorData.detail) {
+            errorMessage = typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData.detail);
+          }
+        } catch (e) {
+          // If JSON parsing fails, check if it's HTML and extract meaningful info
+          if (errorText.includes('<html') || errorText.includes('<!DOCTYPE')) {
+            const titleMatch = errorText.match(/<title>(.*?)<\/title>/i);
+            const h1Match = errorText.match(/<h1[^>]*>(.*?)<\/h1>/i);
+            
+            if (titleMatch?.[1]) {
+              errorMessage = `Server error: ${titleMatch[1].replace(/<[^>]*>/g, '').trim()}`;
+            } else if (h1Match?.[1]) {
+              errorMessage = `Server error: ${h1Match[1].replace(/<[^>]*>/g, '').trim()}`;
+            } else {
+              errorMessage = "Server returned an HTML error page";
+            }
+          } else if (errorText.length > 0 && errorText.length < 200) {
+            errorMessage = `Server error: ${errorText.trim()}`;
+          }
+        }
+        
         return NextResponse.json({ 
-          error: 'Backend processing failed', 
-          details: errorText 
+          error: errorMessage, 
+          details: process.env.NODE_ENV === 'development' ? {
+            status: backendResponse.status,
+            statusText: backendResponse.statusText,
+            contentType: backendResponse.headers.get('content-type'),
+            responsePreview: errorText.substring(0, 200)
+          } : undefined
         }, { status: backendResponse.status });
       }
 
-      const backendResult = await backendResponse.json();
+      // Try to parse JSON response, handle non-JSON responses gracefully
+      let backendResult: any;
+      const responseText = await backendResponse.text();
+      
+      try {
+        backendResult = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.error('Backend API v2 JSON parsing error:', {
+          jsonError: jsonError instanceof Error ? jsonError.message : 'Unknown',
+          responseText: responseText.substring(0, 500) + (responseText.length > 500 ? '...' : ''),
+          contentType: backendResponse.headers.get('content-type')
+        });
+        
+        return NextResponse.json({
+          error: "The interview service returned an invalid response. Please try again or contact support if the issue persists.",
+          details: process.env.NODE_ENV === 'development' ? {
+            responseText: responseText.substring(0, 200),
+            contentType: backendResponse.headers.get('content-type')
+          } : undefined
+        }, { status: 502 });
+      }
 
       // Store the hiring assistant request in database
       await prisma.interviewRequest.create({
@@ -310,18 +372,80 @@ export async function POST(request: NextRequest) {
       const backendResponse = await fetch(`${BACKEND_URL}/api/v1/hiring-assistant/`, {
         method: 'POST',
         body: backendFormData,
+        signal: AbortSignal.timeout(30000), // 30 second timeout
       });
 
       if (!backendResponse.ok) {
         const errorText = await backendResponse.text();
-        console.error('Backend API v1 error:', errorText);
+        console.error('Backend API v1 error:', {
+          status: backendResponse.status,
+          statusText: backendResponse.statusText,
+          contentType: backendResponse.headers.get('content-type'),
+          error: errorText.substring(0, 300) + (errorText.length > 300 ? '...' : '')
+        });
+        
+        let errorMessage = "Backend processing failed";
+        
+        // Try to parse JSON error response
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.detail?.message) {
+            errorMessage = errorData.detail.message;
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          } else if (errorData.detail) {
+            errorMessage = typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData.detail);
+          }
+        } catch (e) {
+          // If JSON parsing fails, check if it's HTML and extract meaningful info
+          if (errorText.includes('<html') || errorText.includes('<!DOCTYPE')) {
+            const titleMatch = errorText.match(/<title>(.*?)<\/title>/i);
+            const h1Match = errorText.match(/<h1[^>]*>(.*?)<\/h1>/i);
+            
+            if (titleMatch?.[1]) {
+              errorMessage = `Server error: ${titleMatch[1].replace(/<[^>]*>/g, '').trim()}`;
+            } else if (h1Match?.[1]) {
+              errorMessage = `Server error: ${h1Match[1].replace(/<[^>]*>/g, '').trim()}`;
+            } else {
+              errorMessage = "Server returned an HTML error page";
+            }
+          } else if (errorText.length > 0 && errorText.length < 200) {
+            errorMessage = `Server error: ${errorText.trim()}`;
+          }
+        }
+        
         return NextResponse.json({ 
-          error: 'Backend processing failed', 
-          details: errorText 
+          error: errorMessage, 
+          details: process.env.NODE_ENV === 'development' ? {
+            status: backendResponse.status,
+            statusText: backendResponse.statusText,
+            contentType: backendResponse.headers.get('content-type'),
+            responsePreview: errorText.substring(0, 200)
+          } : undefined
         }, { status: backendResponse.status });
       }
 
-      const backendResult = await backendResponse.json();
+      // Try to parse JSON response, handle non-JSON responses gracefully
+      let backendResult: any;
+      const responseText = await backendResponse.text();
+      
+      try {
+        backendResult = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.error('Backend API v1 JSON parsing error:', {
+          jsonError: jsonError instanceof Error ? jsonError.message : 'Unknown',
+          responseText: responseText.substring(0, 500) + (responseText.length > 500 ? '...' : ''),
+          contentType: backendResponse.headers.get('content-type')
+        });
+        
+        return NextResponse.json({
+          error: "The interview service returned an invalid response. Please try again or contact support if the issue persists.",
+          details: process.env.NODE_ENV === 'development' ? {
+            responseText: responseText.substring(0, 200),
+            contentType: backendResponse.headers.get('content-type')
+          } : undefined
+        }, { status: 502 });
+      }
 
       // Store the hiring assistant request in database
       await prisma.interviewRequest.create({
