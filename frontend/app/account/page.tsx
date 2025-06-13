@@ -14,7 +14,15 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { ArrowLeft, User, Mail, Calendar, LogOut, Shield, Upload } from "lucide-react";
+import {
+	ArrowLeft,
+	User,
+	Mail,
+	Calendar,
+	LogOut,
+	Shield,
+	Upload,
+} from "lucide-react";
 import Link from "next/link";
 
 export default function AccountPage() {
@@ -23,7 +31,11 @@ export default function AccountPage() {
 	const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
 	// Check if user is using email authentication (not OAuth)
-	const isEmailUser = session?.user?.email && !session.user?.image?.includes('googleusercontent.com') && !session.user?.image?.includes('github.com') && !session.user?.image?.includes('avatars.githubusercontent.com');
+	const isEmailUser =
+		session?.user?.email &&
+		!session.user?.image?.includes("googleusercontent.com") &&
+		!session.user?.image?.includes("github.com") &&
+		!session.user?.image?.includes("avatars.githubusercontent.com");
 
 	// Redirect if not authenticated
 	useEffect(() => {
@@ -110,14 +122,20 @@ export default function AccountPage() {
 									<div className="flex items-center space-x-4">
 										<Avatar src={session.user?.image} alt="Profile" size="lg" />
 										<div className="flex-1">
-											<p className="text-[#EEEEEE] font-medium mb-1">Profile Picture</p>
+											<p className="text-[#EEEEEE] font-medium mb-1">
+												Profile Picture
+											</p>
 											<p className="text-[#EEEEEE]/60 text-sm">
-												Managed by your {session.user?.image?.includes('googleusercontent.com') ? 'Google' : 'GitHub'} account
+												Managed by your{" "}
+												{session.user?.image?.includes("googleusercontent.com")
+													? "Google"
+													: "GitHub"}{" "}
+												account
 											</p>
 										</div>
 									</div>
 								)}
-								
+
 								<div className="space-y-2">
 									<div className="flex items-center space-x-2">
 										<User className="h-4 w-4 text-[#76ABAE]" />
