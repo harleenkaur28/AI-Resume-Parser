@@ -36,6 +36,7 @@ import {
 	Edit,
 	Trash2,
 	Eye,
+	Copy,
 } from "lucide-react";
 import Link from "next/link";
 import { Loader, LoaderOverlay } from "@/components/ui/loader";
@@ -79,6 +80,31 @@ interface DashboardData {
 	}>;
 }
 
+interface InterviewSession {
+	id: string;
+	role: string;
+	companyName: string;
+	createdAt: string;
+	questionsAndAnswers: Array<{
+		question: string;
+		answer: string;
+	}>;
+}
+
+interface ColdMailSession {
+	id: string;
+	recipientName: string;
+	recipientDesignation: string;
+	companyName: string;
+	createdAt: string;
+	emails: Array<{
+		id: string;
+		subject: string;
+		body: string;
+		createdAt: string;
+	}>;
+}
+
 export default function DashboardPage() {
 	const { data: session, status } = useSession();
 	const router = useRouter();
@@ -98,6 +124,12 @@ export default function DashboardPage() {
 		id: string;
 		name: string;
 	} | null>(null);
+	const [showInterviewsModal, setShowInterviewsModal] = useState(false);
+	const [showColdMailsModal, setShowColdMailsModal] = useState(false);
+	const [interviewsData, setInterviewsData] = useState<InterviewSession[]>([]);
+	const [coldMailsData, setColdMailsData] = useState<ColdMailSession[]>([]);
+	const [isLoadingInterviews, setIsLoadingInterviews] = useState(false);
+	const [isLoadingColdMails, setIsLoadingColdMails] = useState(false);
 	const { toast } = useToast();
 
 	// Fetch dashboard data
@@ -125,6 +157,91 @@ export default function DashboardPage() {
 			});
 		} finally {
 			setIsLoadingData(false);
+		}
+	};
+
+	// Fetch interviews data
+	const fetchInterviews = async () => {
+		try {
+			setIsLoadingInterviews(true);
+			const response = await fetch("/api/interviews");
+			const result = await response.json();
+
+			if (result.success) {
+				setInterviewsData(result.data);
+			} else {
+				toast({
+					title: "Error",
+					description: "Failed to load interviews",
+					variant: "destructive",
+				});
+			}
+		} catch (error) {
+			console.error("Failed to fetch interviews:", error);
+			toast({
+				title: "Error",
+				description: "Failed to load interviews",
+				variant: "destructive",
+			});
+		} finally {
+			setIsLoadingInterviews(false);
+		}
+	};
+
+	// Fetch cold mails data
+	const fetchColdMails = async () => {
+		try {
+			setIsLoadingColdMails(true);
+			const response = await fetch("/api/cold-mails");
+			const result = await response.json();
+
+			if (result.success) {
+				setColdMailsData(result.data);
+			} else {
+				toast({
+					title: "Error",
+					description: "Failed to load cold mails",
+					variant: "destructive",
+				});
+			}
+		} catch (error) {
+			console.error("Failed to fetch cold mails:", error);
+			toast({
+				title: "Error",
+				description: "Failed to load cold mails",
+				variant: "destructive",
+			});
+		} finally {
+			setIsLoadingColdMails(false);
+		}
+	};
+
+	// Handle interviews modal
+	const handleShowInterviews = () => {
+		setShowInterviewsModal(true);
+		fetchInterviews();
+	};
+
+	// Handle cold mails modal
+	const handleShowColdMails = () => {
+		setShowColdMailsModal(true);
+		fetchColdMails();
+	};
+
+	// Copy to clipboard helper
+	const copyToClipboard = async (text: string) => {
+		try {
+			await navigator.clipboard.writeText(text);
+			toast({
+				title: "Copied!",
+				description: "Content copied to clipboard",
+			});
+		} catch (error) {
+			toast({
+				title: "Error",
+				description: "Failed to copy to clipboard",
+				variant: "destructive",
+			});
 		}
 	};
 
@@ -417,7 +534,10 @@ export default function DashboardPage() {
 									animate={{ opacity: 1, y: 0 }}
 									transition={{ duration: 0.5, delay: 0.2 }}
 								>
-									<Card className="backdrop-blur-sm bg-gradient-to-br from-[#31363F]/90 to-[#222831]/90 border-slate-600/30 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group">
+									<Card
+										className="backdrop-blur-sm bg-gradient-to-br from-[#31363F]/90 to-[#222831]/90 border-slate-600/30 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group cursor-pointer"
+										onClick={handleShowColdMails}
+									>
 										<CardContent className="p-6">
 											<div className="flex items-center justify-between mb-4">
 												<div className="p-3 bg-blue-500/30 rounded-xl group-hover:bg-blue-500/40 transition-colors">
@@ -457,7 +577,10 @@ export default function DashboardPage() {
 									animate={{ opacity: 1, y: 0 }}
 									transition={{ duration: 0.5, delay: 0.3 }}
 								>
-									<Card className="backdrop-blur-sm bg-gradient-to-br from-[#31363F]/90 to-[#222831]/90 border-slate-600/30 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group">
+									<Card
+										className="backdrop-blur-sm bg-gradient-to-br from-[#31363F]/90 to-[#222831]/90 border-slate-600/30 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group cursor-pointer"
+										onClick={handleShowInterviews}
+									>
 										<CardContent className="p-6">
 											<div className="flex items-center justify-between mb-4">
 												<div className="p-3 bg-green-500/30 rounded-xl group-hover:bg-green-500/40 transition-colors">
@@ -940,6 +1063,206 @@ export default function DashboardPage() {
 							Delete
 						</Button>
 					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			{/* Interviews Modal */}
+			<Dialog open={showInterviewsModal} onOpenChange={setShowInterviewsModal}>
+				<DialogContent className="bg-[#31363F] border-slate-600/30 text-white max-w-4xl max-h-[80vh] overflow-y-auto">
+					<DialogHeader>
+						<DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
+							<Users className="h-6 w-6 text-green-400" />
+							Interview Sessions ({interviewsData.length})
+						</DialogTitle>
+						<DialogDescription className="text-slate-300">
+							Your practice interview sessions with questions and answers
+						</DialogDescription>
+					</DialogHeader>
+
+					<div className="space-y-6 max-h-96 overflow-y-auto">
+						{isLoadingInterviews ? (
+							<div className="flex items-center justify-center py-8">
+								<Loader variant="dots" size="lg" text="Loading interviews..." />
+							</div>
+						) : interviewsData.length === 0 ? (
+							<div className="text-center py-8 text-slate-400">
+								<Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+								<p>No interview sessions found</p>
+								<p className="text-sm">
+									Start practicing to see your sessions here
+								</p>
+							</div>
+						) : (
+							interviewsData.map((session: InterviewSession) => (
+								<Card
+									key={session.id}
+									className="bg-slate-800/50 border-slate-600/30"
+								>
+									<CardHeader>
+										<div className="flex justify-between items-start">
+											<div>
+												<CardTitle className="text-lg text-white">
+													{session.role} at {session.companyName}
+												</CardTitle>
+												<CardDescription className="text-slate-400">
+													{new Date(session.createdAt).toLocaleDateString(
+														"en-US",
+														{
+															year: "numeric",
+															month: "long",
+															day: "numeric",
+															hour: "2-digit",
+															minute: "2-digit",
+														}
+													)}
+												</CardDescription>
+											</div>
+											<Badge
+												variant="secondary"
+												className="bg-green-500/20 text-green-300"
+											>
+												{session.questionsAndAnswers.length} Questions
+											</Badge>
+										</div>
+									</CardHeader>
+									<CardContent>
+										<div className="space-y-4">
+											{session.questionsAndAnswers.map((qa, index) => (
+												<div
+													key={index}
+													className="border-l-2 border-green-500/30 pl-4"
+												>
+													<div className="mb-2">
+														<p className="font-medium text-white mb-1">
+															Q{index + 1}: {qa.question}
+														</p>
+													</div>
+													<div className="bg-slate-700/30 rounded-lg p-3 relative">
+														<p className="text-slate-300 text-sm leading-relaxed pr-8">
+															{qa.answer}
+														</p>
+														<Button
+															size="sm"
+															variant="ghost"
+															className="absolute top-2 right-2 h-8 w-8 p-0 hover:bg-slate-600/50"
+															onClick={() => copyToClipboard(qa.answer)}
+														>
+															<Copy className="h-4 w-4" />
+														</Button>
+													</div>
+												</div>
+											))}
+										</div>
+									</CardContent>
+								</Card>
+							))
+						)}
+					</div>
+				</DialogContent>
+			</Dialog>
+
+			{/* Cold Mails Modal */}
+			<Dialog open={showColdMailsModal} onOpenChange={setShowColdMailsModal}>
+				<DialogContent className="bg-[#31363F] border-slate-600/30 text-white max-w-4xl max-h-[80vh] overflow-y-auto">
+					<DialogHeader>
+						<DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
+							<Mail className="h-6 w-6 text-blue-400" />
+							Cold Emails ({coldMailsData.length})
+						</DialogTitle>
+						<DialogDescription className="text-slate-300">
+							Your generated cold emails for networking and outreach
+						</DialogDescription>
+					</DialogHeader>
+
+					<div className="space-y-6 max-h-96 overflow-y-auto">
+						{isLoadingColdMails ? (
+							<div className="flex items-center justify-center py-8">
+								<Loader variant="dots" size="lg" text="Loading cold mails..." />
+							</div>
+						) : coldMailsData.length === 0 ? (
+							<div className="text-center py-8 text-slate-400">
+								<Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
+								<p>No cold emails found</p>
+								<p className="text-sm">
+									Generate your first cold email to see it here
+								</p>
+							</div>
+						) : (
+							coldMailsData.map((session: ColdMailSession) => (
+								<Card
+									key={session.id}
+									className="bg-slate-800/50 border-slate-600/30"
+								>
+									<CardHeader>
+										<div className="flex justify-between items-start">
+											<div>
+												<CardTitle className="text-lg text-white">
+													To: {session.recipientName}
+												</CardTitle>
+												<CardDescription className="text-slate-400">
+													{session.recipientDesignation} at{" "}
+													{session.companyName}
+												</CardDescription>
+												<CardDescription className="text-slate-500 text-xs">
+													{new Date(session.createdAt).toLocaleDateString(
+														"en-US",
+														{
+															year: "numeric",
+															month: "long",
+															day: "numeric",
+															hour: "2-digit",
+															minute: "2-digit",
+														}
+													)}
+												</CardDescription>
+											</div>
+											<Badge
+												variant="secondary"
+												className="bg-blue-500/20 text-blue-300"
+											>
+												{session.emails.length} Email
+												{session.emails.length > 1 ? "s" : ""}
+											</Badge>
+										</div>
+									</CardHeader>
+									<CardContent>
+										<div className="space-y-4">
+											{session.emails.map((email, index) => (
+												<div
+													key={email.id}
+													className="border-l-2 border-blue-500/30 pl-4"
+												>
+													<div className="mb-2">
+														<p className="font-medium text-white mb-1 flex items-center gap-2">
+															<Mail className="h-4 w-4" />
+															Subject: {email.subject}
+														</p>
+													</div>
+													<div className="bg-slate-700/30 rounded-lg p-4 relative">
+														<div className="text-slate-300 text-sm leading-relaxed pr-8 whitespace-pre-wrap">
+															{email.body}
+														</div>
+														<Button
+															size="sm"
+															variant="ghost"
+															className="absolute top-2 right-2 h-8 w-8 p-0 hover:bg-slate-600/50"
+															onClick={() =>
+																copyToClipboard(
+																	`Subject: ${email.subject}\n\n${email.body}`
+																)
+															}
+														>
+															<Copy className="h-4 w-4" />
+														</Button>
+													</div>
+												</div>
+											))}
+										</div>
+									</CardContent>
+								</Card>
+							))
+						)}
+					</div>
 				</DialogContent>
 			</Dialog>
 		</>
