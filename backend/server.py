@@ -2789,7 +2789,7 @@ async def format_and_analyze_resume_v2(file: UploadFile = File(...)):
         basic_info_json_str = json.dumps(basic_info)
 
         formatted_prompt_str = format_analyse_prompt.format_prompt(
-            raw_resume_text=raw_resume_text,
+            extracted_resume_text=raw_resume_text,
             basic_info_json=basic_info_json_str,
         ).to_string()
 
@@ -3250,5 +3250,7 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=8000,
         reload=True,
-        reload_dirs=[os.path.dirname(__file__)],
+        reload_dirs=[
+            os.path.dirname(__file__),
+        ],
     )
