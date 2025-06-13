@@ -1136,18 +1136,20 @@ export default function DashboardPage() {
 
 			{/* Interviews Modal */}
 			<Dialog open={showInterviewsModal} onOpenChange={setShowInterviewsModal}>
-				<DialogContent className="bg-[#31363F] border-slate-600/30 text-white max-w-4xl max-h-[80vh] overflow-y-auto">
-					<DialogHeader>
-						<DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
-							<Users className="h-6 w-6 text-green-400" />
-							Interview Sessions ({interviewsData.length})
+				<DialogContent className="backdrop-blur-xl bg-[#31363F]/95 border-slate-600/30 text-white max-w-[95vw] sm:max-w-4xl h-[90vh] sm:h-[85vh] flex flex-col">
+					<DialogHeader className="shrink-0 pb-4">
+						<DialogTitle className="text-lg sm:text-xl font-semibold text-white flex items-center gap-2">
+							<Users className="h-5 w-5 sm:h-6 sm:w-6 text-green-400" />
+							<span className="truncate">
+								Interview Sessions ({interviewsData.length})
+							</span>
 						</DialogTitle>
-						<DialogDescription className="text-slate-300">
+						<DialogDescription className="text-slate-300 text-sm">
 							Your practice interview sessions with questions and answers
 						</DialogDescription>
 					</DialogHeader>
 
-					<div className="space-y-6 max-h-96 overflow-y-auto">
+					<div className="flex-1 overflow-y-auto space-y-4 sm:space-y-6 pr-2">
 						{isLoadingInterviews ? (
 							<div className="flex items-center justify-center py-8">
 								<Loader variant="dots" size="lg" text="Loading interviews..." />
@@ -1164,20 +1166,20 @@ export default function DashboardPage() {
 							interviewsData.map((session: InterviewSession) => (
 								<Card
 									key={session.id}
-									className="bg-slate-800/50 border-slate-600/30"
+									className="bg-slate-800/50 border-slate-600/30 backdrop-blur-sm"
 								>
-									<CardHeader>
-										<div className="flex justify-between items-start">
-											<div>
-												<CardTitle className="text-lg text-white">
+									<CardHeader className="pb-3">
+										<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+											<div className="min-w-0 flex-1">
+												<CardTitle className="text-base sm:text-lg text-white leading-tight">
 													{session.role} at {session.companyName}
 												</CardTitle>
-												<CardDescription className="text-slate-400">
+												<CardDescription className="text-slate-400 text-xs sm:text-sm">
 													{new Date(session.createdAt).toLocaleDateString(
 														"en-US",
 														{
 															year: "numeric",
-															month: "long",
+															month: "short",
 															day: "numeric",
 															hour: "2-digit",
 															minute: "2-digit",
@@ -1185,17 +1187,17 @@ export default function DashboardPage() {
 													)}
 												</CardDescription>
 											</div>
-											<div className="flex items-center gap-2">
+											<div className="flex items-center gap-2 shrink-0">
 												<Badge
 													variant="secondary"
-													className="bg-green-500/20 text-green-300"
+													className="bg-green-500/20 text-green-300 text-xs"
 												>
-													{session.questionsAndAnswers.length} Questions
+													{session.questionsAndAnswers.length} Q
 												</Badge>
 												<Button
 													size="sm"
 													variant="ghost"
-													className="h-8 w-8 p-0 hover:bg-red-500/20 text-red-400 hover:text-red-300"
+													className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-red-500/20 text-red-400 hover:text-red-300"
 													onClick={() =>
 														setDeletingInterview({
 															id: session.id,
@@ -1204,34 +1206,37 @@ export default function DashboardPage() {
 														})
 													}
 												>
-													<Trash2 className="h-4 w-4" />
+													<Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
 												</Button>
 											</div>
 										</div>
 									</CardHeader>
-									<CardContent>
-										<div className="space-y-4">
+									<CardContent className="pt-0">
+										<div className="space-y-3 sm:space-y-4">
 											{session.questionsAndAnswers.map((qa, index) => (
 												<div
 													key={index}
-													className="border-l-2 border-green-500/30 pl-4"
+													className="border-l-2 border-green-500/30 pl-3 sm:pl-4"
 												>
 													<div className="mb-2">
-														<p className="font-medium text-white mb-1">
-															Q{index + 1}: {qa.question}
+														<p className="font-medium text-white mb-1 text-sm sm:text-base">
+															<span className="text-green-400 font-semibold">
+																Q{index + 1}:
+															</span>{" "}
+															{qa.question}
 														</p>
 													</div>
 													<div className="bg-slate-700/30 rounded-lg p-3 relative">
-														<p className="text-slate-300 text-sm leading-relaxed pr-8">
+														<p className="text-slate-300 text-xs sm:text-sm leading-relaxed pr-8 sm:pr-10">
 															{qa.answer}
 														</p>
 														<Button
 															size="sm"
 															variant="ghost"
-															className="absolute top-2 right-2 h-8 w-8 p-0 hover:bg-slate-600/50"
+															className="absolute top-2 right-2 h-6 w-6 sm:h-8 sm:w-8 p-0 hover:bg-slate-600/50"
 															onClick={() => copyToClipboard(qa.answer)}
 														>
-															<Copy className="h-4 w-4" />
+															<Copy className="h-3 w-3 sm:h-4 sm:w-4" />
 														</Button>
 													</div>
 												</div>
@@ -1247,18 +1252,20 @@ export default function DashboardPage() {
 
 			{/* Cold Mails Modal */}
 			<Dialog open={showColdMailsModal} onOpenChange={setShowColdMailsModal}>
-				<DialogContent className="bg-[#31363F] border-slate-600/30 text-white max-w-4xl max-h-[80vh] overflow-y-auto">
-					<DialogHeader>
-						<DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
-							<Mail className="h-6 w-6 text-blue-400" />
-							Cold Emails ({coldMailsData.length})
+				<DialogContent className="backdrop-blur-xl bg-[#31363F]/95 border-slate-600/30 text-white max-w-[95vw] sm:max-w-4xl h-[90vh] sm:h-[85vh] flex flex-col">
+					<DialogHeader className="shrink-0 pb-4">
+						<DialogTitle className="text-lg sm:text-xl font-semibold text-white flex items-center gap-2">
+							<Mail className="h-5 w-5 sm:h-6 sm:w-6 text-blue-400" />
+							<span className="truncate">
+								Cold Emails ({coldMailsData.length})
+							</span>
 						</DialogTitle>
-						<DialogDescription className="text-slate-300">
+						<DialogDescription className="text-slate-300 text-sm">
 							Your generated cold emails for networking and outreach
 						</DialogDescription>
 					</DialogHeader>
 
-					<div className="space-y-6 max-h-96 overflow-y-auto">
+					<div className="flex-1 overflow-y-auto space-y-4 sm:space-y-6 pr-2">
 						{isLoadingColdMails ? (
 							<div className="flex items-center justify-center py-8">
 								<Loader variant="dots" size="lg" text="Loading cold mails..." />
@@ -1275,15 +1282,15 @@ export default function DashboardPage() {
 							coldMailsData.map((session: ColdMailSession) => (
 								<Card
 									key={session.id}
-									className="bg-slate-800/50 border-slate-600/30"
+									className="bg-slate-800/50 border-slate-600/30 backdrop-blur-sm"
 								>
-									<CardHeader>
-										<div className="flex justify-between items-start">
-											<div>
-												<CardTitle className="text-lg text-white">
+									<CardHeader className="pb-3">
+										<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+											<div className="min-w-0 flex-1">
+												<CardTitle className="text-base sm:text-lg text-white leading-tight">
 													To: {session.recipientName}
 												</CardTitle>
-												<CardDescription className="text-slate-400">
+												<CardDescription className="text-slate-400 text-xs sm:text-sm">
 													{session.recipientDesignation} at{" "}
 													{session.companyName}
 												</CardDescription>
@@ -1292,7 +1299,7 @@ export default function DashboardPage() {
 														"en-US",
 														{
 															year: "numeric",
-															month: "long",
+															month: "short",
 															day: "numeric",
 															hour: "2-digit",
 															minute: "2-digit",
@@ -1300,18 +1307,18 @@ export default function DashboardPage() {
 													)}
 												</CardDescription>
 											</div>
-											<div className="flex items-center gap-2">
+											<div className="flex items-center gap-2 shrink-0">
 												<Badge
 													variant="secondary"
-													className="bg-blue-500/20 text-blue-300"
+													className="bg-blue-500/20 text-blue-300 text-xs"
 												>
 													{session.emails.length} Email
-													{session.emails.length > 1 ? "s" : ""}
+													{session.emails.length !== 1 ? "s" : ""}
 												</Badge>
 												<Button
 													size="sm"
 													variant="ghost"
-													className="h-8 w-8 p-0 hover:bg-red-500/20 text-red-400 hover:text-red-300"
+													className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-red-500/20 text-red-400 hover:text-red-300"
 													onClick={() =>
 														setDeletingColdMail({
 															id: session.id,
@@ -1320,39 +1327,42 @@ export default function DashboardPage() {
 														})
 													}
 												>
-													<Trash2 className="h-4 w-4" />
+													<Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
 												</Button>
 											</div>
 										</div>
 									</CardHeader>
-									<CardContent>
-										<div className="space-y-4">
+									<CardContent className="pt-0">
+										<div className="space-y-3 sm:space-y-4">
 											{session.emails.map((email, index) => (
 												<div
 													key={email.id}
-													className="border-l-2 border-blue-500/30 pl-4"
+													className="border-l-2 border-blue-500/30 pl-3 sm:pl-4"
 												>
 													<div className="mb-2">
-														<p className="font-medium text-white mb-1 flex items-center gap-2">
-															<Mail className="h-4 w-4" />
-															Subject: {email.subject}
+														<p className="font-medium text-white mb-1 flex items-center gap-2 text-sm sm:text-base">
+															<Mail className="h-3 w-3 sm:h-4 sm:w-4 text-blue-400" />
+															<span className="text-blue-400 font-semibold">
+																Subject:
+															</span>
+															<span className="truncate">{email.subject}</span>
 														</p>
 													</div>
-													<div className="bg-slate-700/30 rounded-lg p-4 relative">
-														<div className="text-slate-300 text-sm leading-relaxed pr-8 whitespace-pre-wrap">
+													<div className="bg-slate-700/30 rounded-lg p-3 sm:p-4 relative">
+														<div className="text-slate-300 text-xs sm:text-sm leading-relaxed pr-8 sm:pr-10 whitespace-pre-wrap">
 															{email.body}
 														</div>
 														<Button
 															size="sm"
 															variant="ghost"
-															className="absolute top-2 right-2 h-8 w-8 p-0 hover:bg-slate-600/50"
+															className="absolute top-2 right-2 h-6 w-6 sm:h-8 sm:w-8 p-0 hover:bg-slate-600/50"
 															onClick={() =>
 																copyToClipboard(
 																	`Subject: ${email.subject}\n\n${email.body}`
 																)
 															}
 														>
-															<Copy className="h-4 w-4" />
+															<Copy className="h-3 w-3 sm:h-4 sm:w-4" />
 														</Button>
 													</div>
 												</div>
@@ -1371,13 +1381,13 @@ export default function DashboardPage() {
 				open={!!deletingInterview}
 				onOpenChange={() => setDeletingInterview(null)}
 			>
-				<DialogContent className="bg-[#31363F] border-slate-600/30 text-white">
+				<DialogContent className="backdrop-blur-xl bg-[#31363F]/95 border-slate-600/30 text-white max-w-[90vw] sm:max-w-md">
 					<DialogHeader>
-						<DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
-							<Trash2 className="h-6 w-6 text-red-400" />
+						<DialogTitle className="text-lg sm:text-xl font-semibold text-white flex items-center gap-2">
+							<Trash2 className="h-5 w-5 sm:h-6 sm:w-6 text-red-400" />
 							Delete Interview Session
 						</DialogTitle>
-						<DialogDescription className="text-slate-300">
+						<DialogDescription className="text-slate-300 text-sm">
 							Are you sure you want to delete the interview session for "
 							{deletingInterview?.role} at {deletingInterview?.companyName}"?
 							This action cannot be undone and will remove all questions and
@@ -1385,7 +1395,7 @@ export default function DashboardPage() {
 						</DialogDescription>
 					</DialogHeader>
 
-					<DialogFooter className="flex gap-2">
+					<DialogFooter className="flex flex-col sm:flex-row gap-2">
 						<Button
 							variant="outline"
 							onClick={() => setDeletingInterview(null)}
@@ -1413,13 +1423,13 @@ export default function DashboardPage() {
 				open={!!deletingColdMail}
 				onOpenChange={() => setDeletingColdMail(null)}
 			>
-				<DialogContent className="bg-[#31363F] border-slate-600/30 text-white">
+				<DialogContent className="backdrop-blur-xl bg-[#31363F]/95 border-slate-600/30 text-white max-w-[90vw] sm:max-w-md">
 					<DialogHeader>
-						<DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
-							<Trash2 className="h-6 w-6 text-red-400" />
+						<DialogTitle className="text-lg sm:text-xl font-semibold text-white flex items-center gap-2">
+							<Trash2 className="h-5 w-5 sm:h-6 sm:w-6 text-red-400" />
 							Delete Cold Mail Session
 						</DialogTitle>
-						<DialogDescription className="text-slate-300">
+						<DialogDescription className="text-slate-300 text-sm">
 							Are you sure you want to delete the cold mail session for "
 							{deletingColdMail?.recipientName} at{" "}
 							{deletingColdMail?.companyName}"? This action cannot be undone and
@@ -1427,11 +1437,11 @@ export default function DashboardPage() {
 						</DialogDescription>
 					</DialogHeader>
 
-					<DialogFooter className="flex gap-2">
+					<DialogFooter className="flex flex-col sm:flex-row gap-2">
 						<Button
 							variant="outline"
 							onClick={() => setDeletingColdMail(null)}
-							className="border-slate-500 text-slate-300 hover:bg-slate-600"
+							className="border-slate-500 text-slate-300 hover:bg-slate-600 w-full sm:w-auto"
 						>
 							Cancel
 						</Button>
@@ -1442,7 +1452,7 @@ export default function DashboardPage() {
 									setDeletingColdMail(null);
 								}
 							}}
-							className="bg-red-600 hover:bg-red-700 text-white"
+							className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
 						>
 							Delete Session
 						</Button>

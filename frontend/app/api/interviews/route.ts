@@ -48,10 +48,19 @@ export async function GET(request: NextRequest) {
 				role: interview.role,
 				companyName: interview.companyName,
 				createdAt: interview.createdAt,
-				questionsAndAnswers: questions.map((question, index: number) => ({
-					question: typeof question === 'string' ? question : String(question),
-					answer: interview.answers[index]?.answer || "No answer provided",
-				})),
+				questionsAndAnswers: questions.map((question) => {
+					const questionText = typeof question === 'string' ? question : String(question);
+					// Find the corresponding answer by matching the question text
+					// Use trim() and toLowerCase() for more robust matching
+					const correspondingAnswer = interview.answers.find(
+						(answer) => answer.question.trim().toLowerCase() === questionText.trim().toLowerCase()
+					);
+					
+					return {
+						question: questionText,
+						answer: correspondingAnswer?.answer || "No answer provided",
+					};
+				}),
 			};
 		});
 
