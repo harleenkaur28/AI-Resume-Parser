@@ -95,6 +95,7 @@ class ComprehensiveAnalysisData(BaseModel):
     email: Optional[EmailStr] = None  # Changed from str to EmailStr
     contact: Optional[str] = None
     predicted_field: Optional[str] = None
+    cleaned_resume_dict: Optional[dict] = None  # Added for V2 analyze_resume
 
 
 class ComprehensiveAnalysisResponse(BaseModel):
