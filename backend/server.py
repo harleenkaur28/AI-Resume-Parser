@@ -48,7 +48,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-app = FastAPI()
+app = FastAPI(
+    title="Resume Analysis API",
+    description="API for analyzing resumes, extracting structured data, and providing tips for improvement.",
+    version="1.4.3",
+)
 
 
 app.add_middleware(
@@ -1561,10 +1565,10 @@ def clean_resume(txt):
 
 # routes
 @app.post(
-    "/analyze-resume/",
+    "v1/resume/analysis",
+    summary="Analyze Resume",
     response_model=ResumeUploadResponse,
     tags=[
-        "Resume Analysis",
         "V1",
     ],
 )
@@ -1781,10 +1785,10 @@ async def analyze_resume(file: UploadFile = File(...)):
 
 
 @app.post(
-    "/hiring-assistant/",
+    "v1/hiring-assistant/",
+    description="Generates answers to interview questions based on the provided resume and inputs.",
     response_model=HiringAssistantResponse,
     tags=[
-        "Hiring Assistant",
         "V1",
     ],
 )
@@ -1931,10 +1935,10 @@ async def hiring_assistant(
 
 
 @app.post(
-    "/cold-mail-generator/",
+    "v1/cold-mail/generator/",
     response_model=ColdMailResponse,
+    description="Generates a cold email based on the provided resume and user inputs.",
     tags=[
-        "Cold Mail Generator",
         "V1",
     ],
 )
@@ -2050,10 +2054,10 @@ async def cold_mail_generator(
 
 
 @app.get(
-    "/resumes/",
+    "v1/resumes/",
     response_model=ResumeListResponse,
+    description="Fetch all resumes from the database.",
     tags=[
-        "Resume Fetcher",
         "V1",
     ],
 )
@@ -2073,10 +2077,10 @@ async def get_resumes():
 
 
 @app.get(
-    "/resumes/{category}",
+    "v1/resumes/{category}",
     response_model=ResumeCategoryResponse,
+    description="Fetch resumes by category. The category is the predicted field from the resume analysis.",
     tags=[
-        "Categorical Resume Fetcher",
         "V1",
     ],
 )
@@ -2098,10 +2102,10 @@ async def get_resumes_by_category(category: str):
 
 
 @app.post(
-    "/comprehensive-analysis/",
+    "v1/resume/comprehensive/analysis/",
     response_model=ComprehensiveAnalysisResponse,
+    description="Performs a comprehensive analysis of the uploaded resume using LLM.",
     tags=[
-        "Comprehensive Resume Analysis",
         "V1",
     ],
 )
@@ -2234,10 +2238,10 @@ class TipsRequest(BaseModel):
 
 
 @app.get(
-    "/tips/",
+    "v1/generate/tips/",
     response_model=TipsResponse,
+    description="Generates career & resume tips based on job category and skills.",
     tags=[
-        "Tips Generator",
         "V1",
     ],
 )
