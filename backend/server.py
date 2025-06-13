@@ -1575,8 +1575,20 @@ v1_router = APIRouter(
     },
 )
 
+v2_router = APIRouter(
+    prefix="/v2",
+    responses={
+        404: {
+            "description": "Not found",
+        },
+    },
+)
+
 
 # routes
+""" Router V1 """
+
+
 @v1_router.post(
     "resume/analysis",
     summary="Analyze Resume",
@@ -2361,11 +2373,28 @@ async def get_career_tips(
         )
 
 
+""" Router V2 """
+
+
 # comprehesive route inclusion
 app.include_router(
     v1_router,
     prefix="/api",
-    responses={404: {"description": "Not found"}},
+    responses={
+        404: {
+            "description": "Not found",
+        },
+    },
+)
+
+app.include_router(
+    v2_router,
+    prefix="/api",
+    responses={
+        404: {
+            "description": "Not found",
+        },
+    },
 )
 
 
