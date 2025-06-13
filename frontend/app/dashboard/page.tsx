@@ -130,6 +130,16 @@ export default function DashboardPage() {
 	const [coldMailsData, setColdMailsData] = useState<ColdMailSession[]>([]);
 	const [isLoadingInterviews, setIsLoadingInterviews] = useState(false);
 	const [isLoadingColdMails, setIsLoadingColdMails] = useState(false);
+	const [deletingInterview, setDeletingInterview] = useState<{
+		id: string;
+		role: string;
+		companyName: string;
+	} | null>(null);
+	const [deletingColdMail, setDeletingColdMail] = useState<{
+		id: string;
+		recipientName: string;
+		companyName: string;
+	} | null>(null);
 	const { toast } = useToast();
 
 	// Fetch dashboard data
@@ -268,6 +278,64 @@ export default function DashboardPage() {
 				title: "Error",
 				description:
 					error instanceof Error ? error.message : "Failed to delete resume",
+				variant: "destructive",
+			});
+		}
+	};
+
+	// Handle interview deletion
+	const handleDeleteInterview = async (interviewId: string) => {
+		try {
+			const response = await fetch(`/api/interviews?id=${interviewId}`, {
+				method: "DELETE",
+			});
+
+			const result = await response.json();
+
+			if (result.success) {
+				toast({
+					title: "Success",
+					description: "Interview session deleted successfully",
+				});
+				fetchDashboardData(); // Refresh dashboard stats
+				fetchInterviews(); // Refresh interviews list
+			} else {
+				throw new Error(result.message);
+			}
+		} catch (error) {
+			toast({
+				title: "Error",
+				description:
+					error instanceof Error ? error.message : "Failed to delete interview",
+				variant: "destructive",
+			});
+		}
+	};
+
+	// Handle cold mail deletion
+	const handleDeleteColdMail = async (coldMailId: string) => {
+		try {
+			const response = await fetch(`/api/cold-mails?id=${coldMailId}`, {
+				method: "DELETE",
+			});
+
+			const result = await response.json();
+
+			if (result.success) {
+				toast({
+					title: "Success",
+					description: "Cold mail session deleted successfully",
+				});
+				fetchDashboardData(); // Refresh dashboard stats
+				fetchColdMails(); // Refresh cold mails list
+			} else {
+				throw new Error(result.message);
+			}
+		} catch (error) {
+			toast({
+				title: "Error",
+				description:
+					error instanceof Error ? error.message : "Failed to delete cold mail",
 				variant: "destructive",
 			});
 		}
@@ -1117,12 +1185,28 @@ export default function DashboardPage() {
 													)}
 												</CardDescription>
 											</div>
-											<Badge
-												variant="secondary"
-												className="bg-green-500/20 text-green-300"
-											>
-												{session.questionsAndAnswers.length} Questions
-											</Badge>
+											<div className="flex items-center gap-2">
+												<Badge
+													variant="secondary"
+													className="bg-green-500/20 text-green-300"
+												>
+													{session.questionsAndAnswers.length} Questions
+												</Badge>
+												<Button
+													size="sm"
+													variant="ghost"
+													className="h-8 w-8 p-0 hover:bg-red-500/20 text-red-400 hover:text-red-300"
+													onClick={() =>
+														setDeletingInterview({
+															id: session.id,
+															role: session.role,
+															companyName: session.companyName,
+														})
+													}
+												>
+													<Trash2 className="h-4 w-4" />
+												</Button>
+											</div>
 										</div>
 									</CardHeader>
 									<CardContent>
@@ -1216,13 +1300,29 @@ export default function DashboardPage() {
 													)}
 												</CardDescription>
 											</div>
-											<Badge
-												variant="secondary"
-												className="bg-blue-500/20 text-blue-300"
-											>
-												{session.emails.length} Email
-												{session.emails.length > 1 ? "s" : ""}
-											</Badge>
+											<div className="flex items-center gap-2">
+												<Badge
+													variant="secondary"
+													className="bg-blue-500/20 text-blue-300"
+												>
+													{session.emails.length} Email
+													{session.emails.length > 1 ? "s" : ""}
+												</Badge>
+												<Button
+													size="sm"
+													variant="ghost"
+													className="h-8 w-8 p-0 hover:bg-red-500/20 text-red-400 hover:text-red-300"
+													onClick={() =>
+														setDeletingColdMail({
+															id: session.id,
+															recipientName: session.recipientName,
+															companyName: session.companyName,
+														})
+													}
+												>
+													<Trash2 className="h-4 w-4" />
+												</Button>
+											</div>
 										</div>
 									</CardHeader>
 									<CardContent>
@@ -1263,6 +1363,90 @@ export default function DashboardPage() {
 							))
 						)}
 					</div>
+				</DialogContent>
+			</Dialog>
+
+			{/* Delete Interview Confirmation Dialog */}
+			<Dialog
+				open={!!deletingInterview}
+				onOpenChange={() => setDeletingInterview(null)}
+			>
+				<DialogContent className="bg-[#31363F] border-slate-600/30 text-white">
+					<DialogHeader>
+						<DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
+							<Trash2 className="h-6 w-6 text-red-400" />
+							Delete Interview Session
+						</DialogTitle>
+						<DialogDescription className="text-slate-300">
+							Are you sure you want to delete the interview session for "
+							{deletingInterview?.role} at {deletingInterview?.companyName}"?
+							This action cannot be undone and will remove all questions and
+							answers.
+						</DialogDescription>
+					</DialogHeader>
+
+					<DialogFooter className="flex gap-2">
+						<Button
+							variant="outline"
+							onClick={() => setDeletingInterview(null)}
+							className="border-slate-500 text-slate-300 hover:bg-slate-600"
+						>
+							Cancel
+						</Button>
+						<Button
+							onClick={() => {
+								if (deletingInterview) {
+									handleDeleteInterview(deletingInterview.id);
+									setDeletingInterview(null);
+								}
+							}}
+							className="bg-red-600 hover:bg-red-700 text-white"
+						>
+							Delete Session
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			{/* Delete Cold Mail Confirmation Dialog */}
+			<Dialog
+				open={!!deletingColdMail}
+				onOpenChange={() => setDeletingColdMail(null)}
+			>
+				<DialogContent className="bg-[#31363F] border-slate-600/30 text-white">
+					<DialogHeader>
+						<DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
+							<Trash2 className="h-6 w-6 text-red-400" />
+							Delete Cold Mail Session
+						</DialogTitle>
+						<DialogDescription className="text-slate-300">
+							Are you sure you want to delete the cold mail session for "
+							{deletingColdMail?.recipientName} at{" "}
+							{deletingColdMail?.companyName}"? This action cannot be undone and
+							will remove all generated emails.
+						</DialogDescription>
+					</DialogHeader>
+
+					<DialogFooter className="flex gap-2">
+						<Button
+							variant="outline"
+							onClick={() => setDeletingColdMail(null)}
+							className="border-slate-500 text-slate-300 hover:bg-slate-600"
+						>
+							Cancel
+						</Button>
+						<Button
+							onClick={() => {
+								if (deletingColdMail) {
+									handleDeleteColdMail(deletingColdMail.id);
+									setDeletingColdMail(null);
+								}
+							}}
+							className="bg-red-600 hover:bg-red-700 text-white"
+						>
+							Delete Session
+						</Button>
+					</DialogFooter>
 				</DialogContent>
 			</Dialog>
 		</>

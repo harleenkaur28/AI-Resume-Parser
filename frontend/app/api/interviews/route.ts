@@ -67,3 +67,75 @@ export async function GET(request: NextRequest) {
 		);
 	}
 }
+
+export async function DELETE(request: NextRequest) {
+	try {
+		const session = await getServerSession(authOptions);
+
+		if (!session?.user?.email) {
+			return NextResponse.json(
+				{ success: false, message: "Authentication required" },
+				{ status: 401 }
+			);
+		}
+
+		// Get user from database
+		const user = await prisma.user.findUnique({
+			where: { email: session.user.email },
+		});
+
+		if (!user) {
+			return NextResponse.json(
+				{ success: false, message: "User not found" },
+				{ status: 404 }
+			);
+		}
+
+		// Get interview ID from query parameters
+		const { searchParams } = new URL(request.url);
+		const interviewId = searchParams.get("id");
+
+		if (!interviewId) {
+			return NextResponse.json(
+				{ success: false, message: "Interview ID is required" },
+				{ status: 400 }
+			);
+		}
+
+		// Check if interview belongs to user
+		const interview = await prisma.interviewRequest.findFirst({
+			where: {
+				id: interviewId,
+				userId: user.id,
+			},
+		});
+
+		if (!interview) {
+			return NextResponse.json(
+				{ success: false, message: "Interview not found or access denied" },
+				{ status: 404 }
+			);
+		}
+
+		// Delete interview and its answers (need to delete answers first due to foreign key constraint)
+		await prisma.$transaction([
+			prisma.interviewAnswer.deleteMany({
+				where: { requestId: interviewId },
+			}),
+			prisma.interviewRequest.delete({
+				where: { id: interviewId },
+			}),
+		]);
+
+		return NextResponse.json({
+			success: true,
+			message: "Interview session deleted successfully",
+		});
+	} catch (error) {
+		console.error("Failed to delete interview:", error);
+		return NextResponse.json(
+			{ success: false, message: "Failed to delete interview" },
+			{ status: 500 }
+		);
+	}
+}
