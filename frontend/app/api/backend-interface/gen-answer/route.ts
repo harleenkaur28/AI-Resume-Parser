@@ -62,9 +62,17 @@ function sanitizeResponseData(data: any): any {
     return data;
   }
   
+  // If the data is a string that looks like interview answers, parse it
+  if (typeof data === 'string') {
+    return parseInterviewAnswers(data);
+  }
+  
   const sanitized: any = {};
   for (const [key, value] of Object.entries(data)) {
-    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    if (typeof value === 'string' && value.length > 500) {
+      // Long strings that might be interview answers
+      sanitized[key] = parseInterviewAnswers(value);
+    } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       // Convert objects to arrays or strings for React rendering
       if (Object.keys(value).length === 1) {
         // If object has only one key, use the value
@@ -78,6 +86,80 @@ function sanitizeResponseData(data: any): any {
     }
   }
   return sanitized;
+}
+
+// Helper function to parse interview answers from text
+function parseInterviewAnswers(text: string): { [key: string]: string } {
+  const answers: { [key: string]: string } = {};
+  
+  // Try to split by common patterns like "Q1:", "Question 1:", "1.", etc.
+  const patterns = [
+    /\*\*\s*(.+?)\?\s*\*\*/g, // **Question?**
+    /\d+\.\s*(.+?)\?/g, // 1. Question?
+    /Q\d+[:\.]?\s*(.+?)\?/g, // Q1: Question?
+    /Question\s*\d+[:\.]?\s*(.+?)\?/g // Question 1: Question?
+  ];
+  
+  let questionAnswerPairs: Array<{question: string, answer: string}> = [];
+  
+  // Try to extract question-answer pairs
+  for (const pattern of patterns) {
+    const matches = Array.from(text.matchAll(pattern));
+    if (matches.length > 0) {
+      // Split text by questions to get answers
+      const parts = text.split(pattern);
+      for (let i = 0; i < matches.length; i++) {
+        const question = matches[i][1].trim();
+        const nextMatch = matches[i + 1];
+        const answerStart = matches[i].index! + matches[i][0].length;
+        const answerEnd = nextMatch ? nextMatch.index! : text.length;
+        const answer = text.substring(answerStart, answerEnd).trim();
+        
+        if (question && answer) {
+          questionAnswerPairs.push({ question: question + '?', answer });
+        }
+      }
+      break; // Use the first pattern that works
+    }
+  }
+  
+  // If no patterns worked, try to split by common answer indicators
+  if (questionAnswerPairs.length === 0) {
+    const lines = text.split('\n').filter(line => line.trim());
+    let currentQuestion = '';
+    let currentAnswer = '';
+    
+    for (const line of lines) {
+      if (line.includes('?') && !currentAnswer) {
+        // This looks like a question
+        if (currentQuestion && currentAnswer) {
+          answers[currentQuestion] = currentAnswer.trim();
+        }
+        currentQuestion = line.trim();
+        currentAnswer = '';
+      } else if (currentQuestion) {
+        // This is part of the answer
+        currentAnswer += (currentAnswer ? '\n' : '') + line.trim();
+      }
+    }
+    
+    // Add the last question-answer pair
+    if (currentQuestion && currentAnswer) {
+      answers[currentQuestion] = currentAnswer.trim();
+    }
+  } else {
+    // Use the parsed question-answer pairs
+    questionAnswerPairs.forEach((pair, index) => {
+      answers[`Question ${index + 1}: ${pair.question}`] = pair.answer;
+    });
+  }
+  
+  // If still no structured data, return the original text as a single answer
+  if (Object.keys(answers).length === 0) {
+    answers['Interview Response'] = text;
+  }
+  
+  return answers;
 }
 
 // Helper function to validate file type
