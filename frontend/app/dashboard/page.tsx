@@ -1,23 +1,8 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/naviga			{/* Back Button */}
-			<motion.div
-				initial={{ opacity: 0, x: -20 }}
-				animate={{ opacity: 1, x: 0 }}
-				transition={{ duration: 0.5 }}
-				className="absolute top-6 left-6 z-10"
-			>
-				<Link href="/">
-					<Button
-						variant="ghost"
-						className="text-[#EEEEEE] hover:text-[#76ABAE] hover:bg-[#31363F]/50 backdrop-blur-sm border border-[#31363F]/30"
-					>
-						<ArrowLeft className="mr-2 h-4 w-4" />
-						Back to Home
-					</Button>
-				</Link>
-			</motion.div>seEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,13 +45,13 @@ export default function DashboardPage() {
 	useEffect(() => {
 		const updateTime = () => {
 			const now = new Date();
-			const timeString = now.toLocaleTimeString([], { 
-				hour: '2-digit', 
-				minute: '2-digit' 
+			const timeString = now.toLocaleTimeString([], {
+				hour: "2-digit",
+				minute: "2-digit",
 			});
 			setCurrentTime(timeString);
 		};
-		
+
 		updateTime();
 		const interval = setInterval(updateTime, 1000);
 		return () => clearInterval(interval);
@@ -107,8 +92,8 @@ export default function DashboardPage() {
 		<div className="min-h-screen bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831] relative overflow-hidden">
 			{/* Animated background elements */}
 			<div className="absolute inset-0 overflow-hidden">
-				<div className="absolute -top-10 -left-10 w-72 h-72 bg-[#76ABAE]/20 rounded-full blur-3xl animate-pulse"></div>
-				<div className="absolute top-1/2 -right-20 w-96 h-96 bg-[#76ABAE]/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+				<div className="absolute -top-10 -left-10 w-72 h-72 bg-[#76ABAE]/10 rounded-full blur-3xl animate-pulse"></div>
+				<div className="absolute top-1/2 -right-20 w-96 h-96 bg-[#31363F]/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
 				<div className="absolute -bottom-20 left-1/3 w-80 h-80 bg-[#76ABAE]/15 rounded-full blur-3xl animate-pulse delay-2000"></div>
 			</div>
 
@@ -147,13 +132,16 @@ export default function DashboardPage() {
 							transition={{ duration: 0.6 }}
 							className="mb-4"
 						>
-							<Badge variant="secondary" className="bg-[#76ABAE]/30 text-[#76ABAE] border-[#76ABAE]/40 mb-4">
+							<Badge
+								variant="secondary"
+								className="bg-[#76ABAE]/30 text-[#76ABAE] border-[#76ABAE]/40 mb-4"
+							>
 								<Clock className="w-3 h-3 mr-1" />
 								{currentTime}
 							</Badge>
 						</motion.div>
-						
-						<motion.h1 
+
+						<motion.h1
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ duration: 0.6, delay: 0.1 }}
@@ -161,8 +149,8 @@ export default function DashboardPage() {
 						>
 							{getGreeting()}, {session?.user?.name || "User"}!
 						</motion.h1>
-						
-						<motion.p 
+
+						<motion.p
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ duration: 0.6, delay: 0.2 }}
@@ -187,7 +175,7 @@ export default function DashboardPage() {
 							</Button>
 						</Link>
 						<Link href="/dashboard/hiring-assistant">
-							<Button className="bg-gradient-to-r from-[#4C566A] to-[#5E6B7A] hover:from-[#5E6B7A] hover:to-[#4C566A] text-white px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 button-hover">
+							<Button className="bg-gradient-to-r from-[#31363F] to-[#4C566A] hover:from-[#4C566A] hover:to-[#31363F] text-white px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 button-hover border border-slate-600/50">
 								<Users className="h-5 w-5 mr-2" />
 								Hiring Assistant
 								<Target className="h-4 w-4 ml-2" />
@@ -202,13 +190,16 @@ export default function DashboardPage() {
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ duration: 0.5, delay: 0.1 }}
 						>
-							<Card className="backdrop-blur-sm bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-slate-700/50 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group">
+							<Card className="backdrop-blur-sm bg-gradient-to-br from-[#31363F]/90 to-[#222831]/90 border-slate-600/30 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group">
 								<CardContent className="p-6">
 									<div className="flex items-center justify-between mb-4">
 										<div className="p-3 bg-[#76ABAE]/30 rounded-xl group-hover:bg-[#76ABAE]/40 transition-colors">
 											<FileText className="h-6 w-6 text-[#76ABAE]" />
 										</div>
-										<Badge variant="secondary" className="bg-green-500/30 text-green-300 border-green-500/40">
+										<Badge
+											variant="secondary"
+											className="bg-green-500/30 text-green-300 border-green-500/40"
+										>
 											<TrendingUp className="w-3 h-3 mr-1" />
 											+0%
 										</Badge>
@@ -218,7 +209,7 @@ export default function DashboardPage() {
 											Total Resumes
 										</p>
 										<p className="text-3xl font-bold text-white mb-2">0</p>
-										<Progress value={0} className="h-2 bg-slate-700" />
+										<Progress value={0} className="h-2 bg-slate-600/50" />
 									</div>
 								</CardContent>
 							</Card>
@@ -229,13 +220,16 @@ export default function DashboardPage() {
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ duration: 0.5, delay: 0.2 }}
 						>
-							<Card className="backdrop-blur-sm bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-slate-700/50 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group">
+							<Card className="backdrop-blur-sm bg-gradient-to-br from-[#31363F]/90 to-[#222831]/90 border-slate-600/30 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group">
 								<CardContent className="p-6">
 									<div className="flex items-center justify-between mb-4">
 										<div className="p-3 bg-blue-500/30 rounded-xl group-hover:bg-blue-500/40 transition-colors">
 											<Briefcase className="h-6 w-6 text-blue-400" />
 										</div>
-										<Badge variant="secondary" className="bg-blue-500/30 text-blue-300 border-blue-500/40">
+										<Badge
+											variant="secondary"
+											className="bg-blue-500/30 text-blue-300 border-blue-500/40"
+										>
 											<Target className="w-3 h-3 mr-1" />
 											Active
 										</Badge>
@@ -245,7 +239,7 @@ export default function DashboardPage() {
 											Applications
 										</p>
 										<p className="text-3xl font-bold text-white mb-2">0</p>
-										<Progress value={0} className="h-2 bg-slate-700" />
+										<Progress value={0} className="h-2 bg-slate-600/50" />
 									</div>
 								</CardContent>
 							</Card>
@@ -256,13 +250,16 @@ export default function DashboardPage() {
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ duration: 0.5, delay: 0.3 }}
 						>
-							<Card className="backdrop-blur-sm bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-slate-700/50 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group">
+							<Card className="backdrop-blur-sm bg-gradient-to-br from-[#31363F]/90 to-[#222831]/90 border-slate-600/30 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group">
 								<CardContent className="p-6">
 									<div className="flex items-center justify-between mb-4">
 										<div className="p-3 bg-purple-500/30 rounded-xl group-hover:bg-purple-500/40 transition-colors">
 											<Mail className="h-6 w-6 text-purple-400" />
 										</div>
-										<Badge variant="secondary" className="bg-purple-500/30 text-purple-300 border-purple-500/40">
+										<Badge
+											variant="secondary"
+											className="bg-purple-500/30 text-purple-300 border-purple-500/40"
+										>
 											<MessageSquare className="w-3 h-3 mr-1" />
 											New
 										</Badge>
@@ -272,7 +269,7 @@ export default function DashboardPage() {
 											Messages
 										</p>
 										<p className="text-3xl font-bold text-white mb-2">0</p>
-										<Progress value={0} className="h-2 bg-slate-700" />
+										<Progress value={0} className="h-2 bg-slate-600/50" />
 									</div>
 								</CardContent>
 							</Card>
@@ -283,13 +280,16 @@ export default function DashboardPage() {
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ duration: 0.5, delay: 0.4 }}
 						>
-							<Card className="backdrop-blur-sm bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-slate-700/50 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group">
+							<Card className="backdrop-blur-sm bg-gradient-to-br from-[#31363F]/90 to-[#222831]/90 border-slate-600/30 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group">
 								<CardContent className="p-6">
 									<div className="flex items-center justify-between mb-4">
 										<div className="p-3 bg-yellow-500/30 rounded-xl group-hover:bg-yellow-500/40 transition-colors">
 											<Award className="h-6 w-6 text-yellow-400" />
 										</div>
-										<Badge variant="secondary" className="bg-yellow-500/30 text-yellow-300 border-yellow-500/40">
+										<Badge
+											variant="secondary"
+											className="bg-yellow-500/30 text-yellow-300 border-yellow-500/40"
+										>
 											<Star className="w-3 h-3 mr-1" />
 											Score
 										</Badge>
@@ -299,7 +299,7 @@ export default function DashboardPage() {
 											Profile Score
 										</p>
 										<p className="text-3xl font-bold text-white mb-2">--</p>
-										<Progress value={0} className="h-2 bg-slate-700" />
+										<Progress value={0} className="h-2 bg-slate-600/50" />
 									</div>
 								</CardContent>
 							</Card>
@@ -313,7 +313,7 @@ export default function DashboardPage() {
 							animate={{ opacity: 1, x: 0 }}
 							transition={{ duration: 0.5, delay: 0.5 }}
 						>
-							<Card className="backdrop-blur-sm bg-gradient-to-br from-slate-800/90 to-slate-900/90 border-slate-700/50 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group h-full">
+							<Card className="backdrop-blur-sm bg-gradient-to-br from-[#31363F]/95 to-[#222831]/95 border-slate-600/30 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group h-full">
 								<CardHeader className="pb-4">
 									<div className="flex items-center justify-between mb-2">
 										<CardTitle className="text-white flex items-center gap-3 text-xl">
@@ -327,7 +327,8 @@ export default function DashboardPage() {
 										</Badge>
 									</div>
 									<CardDescription className="text-slate-300 text-base">
-										Upload and analyze your resume to get AI-powered insights, suggestions, and optimization tips
+										Upload and analyze your resume to get AI-powered insights,
+										suggestions, and optimization tips
 									</CardDescription>
 								</CardHeader>
 								<CardContent className="pt-0">
@@ -361,7 +362,7 @@ export default function DashboardPage() {
 							animate={{ opacity: 1, x: 0 }}
 							transition={{ duration: 0.5, delay: 0.6 }}
 						>
-							<Card className="backdrop-blur-sm bg-gradient-to-br from-slate-800/90 to-slate-900/90 border-slate-700/50 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group h-full">
+							<Card className="backdrop-blur-sm bg-gradient-to-br from-[#31363F]/95 to-[#222831]/95 border-slate-600/30 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group h-full">
 								<CardHeader className="pb-4">
 									<div className="flex items-center justify-between mb-2">
 										<CardTitle className="text-white flex items-center gap-3 text-xl">
@@ -375,7 +376,8 @@ export default function DashboardPage() {
 										</Badge>
 									</div>
 									<CardDescription className="text-slate-300 text-base">
-										Find and analyze candidate profiles with AI assistance and advanced filtering options
+										Find and analyze candidate profiles with AI assistance and
+										advanced filtering options
 									</CardDescription>
 								</CardHeader>
 								<CardContent className="pt-0">
@@ -415,7 +417,7 @@ export default function DashboardPage() {
 						transition={{ duration: 0.5, delay: 0.7 }}
 						className="mb-12"
 					>
-						<Card className="backdrop-blur-sm bg-gradient-to-br from-slate-800/90 to-slate-900/90 border-slate-700/50 shadow-2xl">
+						<Card className="backdrop-blur-sm bg-gradient-to-br from-[#31363F]/95 to-[#222831]/95 border-slate-600/30 shadow-2xl">
 							<CardHeader>
 								<CardTitle className="text-white flex items-center gap-2">
 									<Zap className="h-5 w-5 text-yellow-400" />
@@ -430,16 +432,21 @@ export default function DashboardPage() {
 									<div className="p-4 rounded-lg bg-gradient-to-br from-[#76ABAE]/20 to-[#76ABAE]/10 border border-[#76ABAE]/30">
 										<div className="flex items-center mb-2">
 											<Target className="h-4 w-4 text-[#76ABAE] mr-2" />
-											<span className="text-sm font-medium text-white">Optimize Keywords</span>
+											<span className="text-sm font-medium text-white">
+												Optimize Keywords
+											</span>
 										</div>
 										<p className="text-xs text-slate-300">
-											Add industry-specific keywords to improve ATS compatibility
+											Add industry-specific keywords to improve ATS
+											compatibility
 										</p>
 									</div>
 									<div className="p-4 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-500/10 border border-blue-500/30">
 										<div className="flex items-center mb-2">
 											<Calendar className="h-4 w-4 text-blue-400 mr-2" />
-											<span className="text-sm font-medium text-white">Update Profile</span>
+											<span className="text-sm font-medium text-white">
+												Update Profile
+											</span>
 										</div>
 										<p className="text-xs text-slate-300">
 											Keep your profile fresh with recent achievements
@@ -448,7 +455,9 @@ export default function DashboardPage() {
 									<div className="p-4 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-500/10 border border-purple-500/30">
 										<div className="flex items-center mb-2">
 											<MessageSquare className="h-4 w-4 text-purple-400 mr-2" />
-											<span className="text-sm font-medium text-white">Network Smart</span>
+											<span className="text-sm font-medium text-white">
+												Network Smart
+											</span>
 										</div>
 										<p className="text-xs text-slate-300">
 											Use AI-generated cold emails to expand your network
@@ -465,7 +474,7 @@ export default function DashboardPage() {
 						animate={{ opacity: 1, y: 0 }}
 						transition={{ duration: 0.5, delay: 0.8 }}
 					>
-						<Card className="backdrop-blur-sm bg-gradient-to-br from-slate-800/90 to-slate-900/90 border-slate-700/50 shadow-2xl">
+						<Card className="backdrop-blur-sm bg-gradient-to-br from-[#31363F]/95 to-[#222831]/95 border-slate-600/30 shadow-2xl">
 							<CardHeader>
 								<div className="flex items-center justify-between">
 									<div>
@@ -495,7 +504,8 @@ export default function DashboardPage() {
 											Ready to Get Started?
 										</h3>
 										<p className="text-slate-300 mb-6">
-											Begin your journey by uploading a resume or exploring our AI-powered features
+											Begin your journey by uploading a resume or exploring our
+											AI-powered features
 										</p>
 										<div className="flex flex-col sm:flex-row gap-3 justify-center">
 											<Link href="/dashboard/seeker">
@@ -505,7 +515,10 @@ export default function DashboardPage() {
 												</Button>
 											</Link>
 											<Link href="/dashboard/cold-mail">
-												<Button variant="outline" className="border-[#76ABAE]/50 text-[#76ABAE] hover:bg-[#76ABAE]/10 hover:text-white px-6 py-2">
+												<Button
+													variant="outline"
+													className="border-[#76ABAE]/50 text-[#76ABAE] hover:bg-[#76ABAE]/10 hover:text-white px-6 py-2"
+												>
 													<Mail className="mr-2 h-4 w-4" />
 													Try Cold Mail
 												</Button>
