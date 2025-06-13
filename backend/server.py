@@ -1560,7 +1560,14 @@ def clean_resume(txt):
 
 
 # routes
-@app.post("/analyze-resume/", response_model=ResumeUploadResponse)
+@app.post(
+    "/analyze-resume/",
+    response_model=ResumeUploadResponse,
+    tags=[
+        "Resume Analysis",
+        "V1",
+    ],
+)
 async def analyze_resume(file: UploadFile = File(...)):
     # global pool
     try:
@@ -1773,7 +1780,14 @@ async def analyze_resume(file: UploadFile = File(...)):
         )
 
 
-@app.post("/hiring-assistant/", response_model=HiringAssistantResponse)
+@app.post(
+    "/hiring-assistant/",
+    response_model=HiringAssistantResponse,
+    tags=[
+        "Hiring Assistant",
+        "V1",
+    ],
+)
 async def hiring_assistant(
     file: UploadFile = File(...),
     role: str = Form(...),
@@ -1916,7 +1930,14 @@ async def hiring_assistant(
         )
 
 
-@app.post("/cold-mail-generator/", response_model=ColdMailResponse)
+@app.post(
+    "/cold-mail-generator/",
+    response_model=ColdMailResponse,
+    tags=[
+        "Cold Mail Generator",
+        "V1",
+    ],
+)
 async def cold_mail_generator(
     file: UploadFile = File(...),
     recipient_name: str = Form(...),
@@ -2028,34 +2049,62 @@ async def cold_mail_generator(
         )
 
 
-@app.get("/resumes/", response_model=ResumeListResponse)
+@app.get(
+    "/resumes/",
+    response_model=ResumeListResponse,
+    tags=[
+        "Resume Fetcher",
+        "V1",
+    ],
+)
 async def get_resumes():
-    global pool
-    async with pool.acquire() as connection:
-        rows = await connection.fetch(
-            "SELECT id, name, email, contact, predicted_field, college, work_experience, skills, upload_date FROM resumes;"
-        )
+    ...
+    # global pool
+    # async with pool.acquire() as connection:
+    #     rows = await connection.fetch(
+    #         "SELECT id, name, email, contact, predicted_field, college, work_experience, skills, upload_date FROM resumes;"
+    #     )
 
-        resumes = [ResumeAnalysis(**dict(row)) for row in rows]
-        return ResumeListResponse(data=resumes, count=len(resumes))
+    #     resumes = [ResumeAnalysis(**dict(row)) for row in rows]
+    #     return ResumeListResponse(
+    #         data=resumes,
+    #         count=len(resumes),
+    #     )
 
 
-@app.get("/resumes/{category}", response_model=ResumeCategoryResponse)
+@app.get(
+    "/resumes/{category}",
+    response_model=ResumeCategoryResponse,
+    tags=[
+        "Categorical Resume Fetcher",
+        "V1",
+    ],
+)
 async def get_resumes_by_category(category: str):
-    global pool
-    async with pool.acquire() as connection:
-        rows = await connection.fetch(
-            "SELECT id, name, email, contact, predicted_field, college, work_experience, skills, upload_date FROM resumes WHERE predicted_field = $1;",
-            category,
-        )
+    ...
+    # global pool
+    # async with pool.acquire() as connection:
+    #     rows = await connection.fetch(
+    #         "SELECT id, name, email, contact, predicted_field, college, work_experience, skills, upload_date FROM resumes WHERE predicted_field = $1;",
+    #         category,
+    #     )
 
-        resumes = [ResumeAnalysis(**dict(row)) for row in rows]
-        return ResumeCategoryResponse(
-            data=resumes, count=len(resumes), category=category
-        )
+    #     resumes = [ResumeAnalysis(**dict(row)) for row in rows]
+    #     return ResumeCategoryResponse(
+    #         data=resumes,
+    #         count=len(resumes),
+    #         category=category,
+    #     )
 
 
-@app.post("/comprehensive-analysis/", response_model=ComprehensiveAnalysisResponse)
+@app.post(
+    "/comprehensive-analysis/",
+    response_model=ComprehensiveAnalysisResponse,
+    tags=[
+        "Comprehensive Resume Analysis",
+        "V1",
+    ],
+)
 async def comprehensive_resume_analysis(file: UploadFile = File(...)):
     if not llm:
         raise HTTPException(status_code=503, detail="LLM service is not available.")
@@ -2136,9 +2185,7 @@ async def comprehensive_resume_analysis(file: UploadFile = File(...)):
                 analysis_dict["name"] = name
             if "email" not in analysis_dict or not analysis_dict["email"]:
                 analysis_dict["email"] = email
-            if (
-                "contact" not in analysis_dict and contact
-            ):  # only add if contact was found
+            if "contact" not in analysis_dict and contact:
                 analysis_dict["contact"] = contact
 
             comprehensive_data = ComprehensiveAnalysisData(**analysis_dict)
@@ -2186,13 +2233,22 @@ class TipsRequest(BaseModel):
     skills: Optional[str] = None
 
 
-@app.get("/tips/", response_model=TipsResponse)
+@app.get(
+    "/tips/",
+    response_model=TipsResponse,
+    tags=[
+        "Tips Generator",
+        "V1",
+    ],
+)
 async def get_career_tips(
     job_category: Optional[str] = Query(
-        None, description="Job category for tailored tips"
+        None,
+        description="Job category for tailored tips",
     ),
     skills: Optional[str] = Query(
-        None, description="Comma-separated skills for tailored tips"
+        None,
+        description="Comma-separated skills for tailored tips",
     ),
 ):
     if not llm:
