@@ -2,13 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
-import { writeFile, mkdir, unlink } from 'fs/promises';
-import path from 'path';
-import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
-  let filePath: string | null = null;
-  
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
@@ -39,24 +34,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid file type. Only PDF and Word documents are allowed.' }, { status: 400 });
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    try {
-      await mkdir(uploadsDir, { recursive: true });
-    } catch (error) {
-      // Directory might already exist, continue
-    }
-
-    // Generate unique filename
-    const fileExtension = path.extname(file.name);
-    const uniqueFilename = `${crypto.randomUUID()}${fileExtension}`;
-    filePath = path.join(uploadsDir, uniqueFilename);
-    const fileUrl = `/uploads/${uniqueFilename}`;
-
-    // Save file to disk
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(filePath, new Uint8Array(buffer));
-
     // Create form data for backend
     const backendFormData = new FormData();
     backendFormData.append('file', file);
@@ -84,13 +61,14 @@ export async function POST(request: NextRequest) {
     }
 
     const data = analysisResult.data;
+    const cleanedText = analysisResult.cleaned_text || '';
 
-    // Store file information and analysis results in database
+    // Store resume information and analysis results in database
     const resume = await prisma.resume.create({
       data: {
         userId: userId,
         customName: customName,
-        fileUrl: fileUrl,
+        rawText: cleanedText,
         showInCentral: showInCentral,
         analysis: {
           create: {
@@ -118,21 +96,12 @@ export async function POST(request: NextRequest) {
       data: {
         resumeId: resume.id,
         analysis: resume.analysis,
-        cleanedText: analysisResult.cleaned_text || ''
+        cleanedText: cleanedText
       }
     });
 
   } catch (error) {
     console.error('Error in resume analysis:', error);
-    
-    // Clean up uploaded file if it exists and there was an error
-    if (filePath) {
-      try {
-        await unlink(filePath);
-      } catch (unlinkError) {
-        console.error('Error cleaning up file:', unlinkError);
-      }
-    }
     
     return NextResponse.json({ 
       error: 'Internal server error', 

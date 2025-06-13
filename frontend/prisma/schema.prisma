@@ -62,7 +62,7 @@ model Resume {
     id            String   @id @default(uuid())
     userId        String
     customName    String
-    fileUrl       String
+    rawText       String   @db.Text
     uploadDate    DateTime @default(now())
     showInCentral Boolean  @default(false)
 

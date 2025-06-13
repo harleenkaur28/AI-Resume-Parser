@@ -59,6 +59,8 @@ interface AnalysisResult {
 
 export function FileUpload() {
 	const [file, setFile] = useState<File | null>(null);
+	const [customName, setCustomName] = useState<string>("");
+	const [showInCentral, setShowInCentral] = useState<boolean>(false);
 	const [isUploading, setIsUploading] = useState(false);
 	const [isGettingDetailedAnalysis, setIsGettingDetailedAnalysis] =
 		useState(false);
@@ -72,6 +74,9 @@ export function FileUpload() {
 		const selectedFile = acceptedFiles[0];
 		if (selectedFile) {
 			setFile(selectedFile);
+			// Set default custom name to file name without extension
+			const nameWithoutExt = selectedFile.name.replace(/\.[^/.]+$/, "");
+			setCustomName(nameWithoutExt);
 			setError(null);
 			setAnalysisResult(null);
 		}
@@ -90,7 +95,7 @@ export function FileUpload() {
 	});
 
 	const handleUpload = async () => {
-		if (!file) return;
+		if (!file || !customName.trim()) return;
 
 		setIsUploading(true);
 		setError(null);
@@ -98,8 +103,8 @@ export function FileUpload() {
 		try {
 			const formData = new FormData();
 			formData.append("file", file);
-			formData.append("customName", file.name.replace(/\.[^/.]+$/, "")); // Remove extension for custom name
-			formData.append("showInCentral", "false"); // Default to false
+			formData.append("customName", customName.trim());
+			formData.append("showInCentral", showInCentral.toString());
 
 			const response = await fetch(`/api/backend-interface/analysis`, {
 				method: "POST",
@@ -120,15 +125,15 @@ export function FileUpload() {
 	};
 
 	const handleDetailedAnalysis = async () => {
-		if (!file) return;
+		if (!file || !customName.trim()) return;
 
 		setIsGettingDetailedAnalysis(true);
 
 		try {
 			const formData = new FormData();
 			formData.append("file", file);
-			formData.append("customName", file.name.replace(/\.[^/.]+$/, "")); // Remove extension for custom name
-			formData.append("showInCentral", "false"); // Default to false
+			formData.append("customName", customName.trim());
+			formData.append("showInCentral", showInCentral.toString());
 
 			const response = await fetch(`/api/backend-interface/analysis`, {
 				method: "POST",
@@ -290,7 +295,7 @@ export function FileUpload() {
 								<motion.div
 									initial={{ opacity: 0, y: 20 }}
 									animate={{ opacity: 1, y: 0 }}
-									className="mt-4 p-4 bg-white/5 rounded-lg"
+									className="mt-4 p-4 bg-white/5 rounded-lg space-y-4"
 								>
 									<div className="flex items-center space-x-3">
 										<FileText className="h-8 w-8 text-[#76ABAE]" />
@@ -301,10 +306,44 @@ export function FileUpload() {
 											</p>
 										</div>
 									</div>
+
+									{/* Custom Name Input */}
+									<div>
+										<label className="block text-[#EEEEEE]/80 text-sm font-medium mb-2">
+											Custom Name *
+										</label>
+										<input
+											type="text"
+											value={customName}
+											onChange={(e) => setCustomName(e.target.value)}
+											placeholder="Enter a custom name for this resume"
+											className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-[#EEEEEE] placeholder-[#EEEEEE]/50 focus:outline-none focus:ring-2 focus:ring-[#76ABAE] focus:border-transparent"
+											disabled={isUploading}
+										/>
+									</div>
+
+									{/* Show in Central Checkbox */}
+									<div className="flex items-center space-x-2">
+										<input
+											type="checkbox"
+											id="showInCentral"
+											checked={showInCentral}
+											onChange={(e) => setShowInCentral(e.target.checked)}
+											className="w-4 h-4 text-[#76ABAE] bg-white/10 border-white/30 rounded focus:ring-[#76ABAE] focus:ring-2"
+											disabled={isUploading}
+										/>
+										<label
+											htmlFor="showInCentral"
+											className="text-[#EEEEEE]/80 text-sm"
+										>
+											Show in central repository
+										</label>
+									</div>
+
 									<Button
 										onClick={handleUpload}
-										disabled={isUploading}
-										className="w-full mt-4 bg-[#76ABAE] hover:bg-[#76ABAE]/90"
+										disabled={isUploading || !customName.trim()}
+										className="w-full bg-[#76ABAE] hover:bg-[#76ABAE]/90 disabled:opacity-50"
 									>
 										{isUploading ? (
 											<div className="flex items-center space-x-2">
