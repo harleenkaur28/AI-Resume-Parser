@@ -184,7 +184,7 @@ export default function DashboardPage() {
 					</motion.div>
 
 					{/* Enhanced Quick Stats */}
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
 						<motion.div
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
@@ -223,12 +223,12 @@ export default function DashboardPage() {
 							<Card className="backdrop-blur-sm bg-gradient-to-br from-[#31363F]/90 to-[#222831]/90 border-slate-600/30 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group">
 								<CardContent className="p-6">
 									<div className="flex items-center justify-between mb-4">
-										<div className="p-3 bg-blue-500/30 rounded-xl group-hover:bg-blue-500/40 transition-colors">
-											<Briefcase className="h-6 w-6 text-blue-400" />
+										<div className="p-3 bg-[#76ABAE]/30 rounded-xl group-hover:bg-[#76ABAE]/40 transition-colors">
+											<Briefcase className="h-6 w-6 text-[#76ABAE]" />
 										</div>
 										<Badge
 											variant="secondary"
-											className="bg-blue-500/30 text-blue-300 border-blue-500/40"
+											className="bg-[#76ABAE]/30 text-[#76ABAE] border-[#76ABAE]/40"
 										>
 											<Target className="w-3 h-3 mr-1" />
 											Active
@@ -239,66 +239,6 @@ export default function DashboardPage() {
 											Applications
 										</p>
 										<p className="text-3xl font-bold text-white mb-2">0</p>
-										<Progress value={0} className="h-2 bg-slate-600/50" />
-									</div>
-								</CardContent>
-							</Card>
-						</motion.div>
-
-						<motion.div
-							initial={{ opacity: 0, y: 20 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.5, delay: 0.3 }}
-						>
-							<Card className="backdrop-blur-sm bg-gradient-to-br from-[#31363F]/90 to-[#222831]/90 border-slate-600/30 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group">
-								<CardContent className="p-6">
-									<div className="flex items-center justify-between mb-4">
-										<div className="p-3 bg-purple-500/30 rounded-xl group-hover:bg-purple-500/40 transition-colors">
-											<Mail className="h-6 w-6 text-purple-400" />
-										</div>
-										<Badge
-											variant="secondary"
-											className="bg-purple-500/30 text-purple-300 border-purple-500/40"
-										>
-											<MessageSquare className="w-3 h-3 mr-1" />
-											New
-										</Badge>
-									</div>
-									<div>
-										<p className="text-slate-300 text-sm font-medium mb-1">
-											Messages
-										</p>
-										<p className="text-3xl font-bold text-white mb-2">0</p>
-										<Progress value={0} className="h-2 bg-slate-600/50" />
-									</div>
-								</CardContent>
-							</Card>
-						</motion.div>
-
-						<motion.div
-							initial={{ opacity: 0, y: 20 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.5, delay: 0.4 }}
-						>
-							<Card className="backdrop-blur-sm bg-gradient-to-br from-[#31363F]/90 to-[#222831]/90 border-slate-600/30 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group">
-								<CardContent className="p-6">
-									<div className="flex items-center justify-between mb-4">
-										<div className="p-3 bg-yellow-500/30 rounded-xl group-hover:bg-yellow-500/40 transition-colors">
-											<Award className="h-6 w-6 text-yellow-400" />
-										</div>
-										<Badge
-											variant="secondary"
-											className="bg-yellow-500/30 text-yellow-300 border-yellow-500/40"
-										>
-											<Star className="w-3 h-3 mr-1" />
-											Score
-										</Badge>
-									</div>
-									<div>
-										<p className="text-slate-300 text-sm font-medium mb-1">
-											Profile Score
-										</p>
-										<p className="text-3xl font-bold text-white mb-2">--</p>
 										<Progress value={0} className="h-2 bg-slate-600/50" />
 									</div>
 								</CardContent>
@@ -366,12 +306,12 @@ export default function DashboardPage() {
 								<CardHeader className="pb-4">
 									<div className="flex items-center justify-between mb-2">
 										<CardTitle className="text-white flex items-center gap-3 text-xl">
-											<div className="p-2 bg-blue-500/30 rounded-lg group-hover:bg-blue-500/40 transition-colors">
-												<Users className="h-6 w-6 text-blue-400" />
+											<div className="p-2 bg-slate-500/30 rounded-lg group-hover:bg-slate-500/40 transition-colors">
+												<Users className="h-6 w-6 text-slate-300" />
 											</div>
 											For Recruiters
 										</CardTitle>
-										<Badge className="bg-blue-500/30 text-blue-400 border-blue-500/40">
+										<Badge className="bg-slate-500/30 text-slate-300 border-slate-500/40">
 											Pro Tools
 										</Badge>
 									</div>
@@ -383,22 +323,22 @@ export default function DashboardPage() {
 								<CardContent className="pt-0">
 									<div className="mb-6 space-y-2">
 										<div className="flex items-center text-sm text-slate-300">
-											<CheckCircle className="h-4 w-4 mr-2 text-blue-400" />
+											<CheckCircle className="h-4 w-4 mr-2 text-green-400" />
 											Smart Candidate Matching
 										</div>
 										<div className="flex items-center text-sm text-slate-300">
-											<CheckCircle className="h-4 w-4 mr-2 text-blue-400" />
+											<CheckCircle className="h-4 w-4 mr-2 text-green-400" />
 											Bulk Resume Processing
 										</div>
 										<div className="flex items-center text-sm text-slate-300">
-											<CheckCircle className="h-4 w-4 mr-2 text-blue-400" />
+											<CheckCircle className="h-4 w-4 mr-2 text-green-400" />
 											Interview Question Generator
 										</div>
 									</div>
 									<Link href="/dashboard/recruiter">
 										<Button
 											variant="outline"
-											className="w-full border-blue-400/30 text-blue-400 hover:bg-blue-400/10 hover:text-white group text-lg py-3 shadow-lg hover:shadow-xl transition-all duration-300 button-hover"
+											className="w-full border-slate-500/30 text-slate-300 hover:bg-slate-500/10 hover:text-white group text-lg py-3 shadow-lg hover:shadow-xl transition-all duration-300 button-hover"
 										>
 											<BarChart3 className="mr-2 h-5 w-5" />
 											Explore Tools
@@ -420,7 +360,7 @@ export default function DashboardPage() {
 						<Card className="backdrop-blur-sm bg-gradient-to-br from-[#31363F]/95 to-[#222831]/95 border-slate-600/30 shadow-2xl">
 							<CardHeader>
 								<CardTitle className="text-white flex items-center gap-2">
-									<Zap className="h-5 w-5 text-yellow-400" />
+									<Zap className="h-5 w-5 text-[#76ABAE]" />
 									Quick Tips for Today
 								</CardTitle>
 								<CardDescription className="text-slate-300">
@@ -441,9 +381,9 @@ export default function DashboardPage() {
 											compatibility
 										</p>
 									</div>
-									<div className="p-4 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-500/10 border border-blue-500/30">
+									<div className="p-4 rounded-lg bg-gradient-to-br from-slate-500/20 to-slate-500/10 border border-slate-500/30">
 										<div className="flex items-center mb-2">
-											<Calendar className="h-4 w-4 text-blue-400 mr-2" />
+											<Calendar className="h-4 w-4 text-slate-300 mr-2" />
 											<span className="text-sm font-medium text-white">
 												Update Profile
 											</span>
@@ -452,9 +392,9 @@ export default function DashboardPage() {
 											Keep your profile fresh with recent achievements
 										</p>
 									</div>
-									<div className="p-4 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-500/10 border border-purple-500/30">
+									<div className="p-4 rounded-lg bg-gradient-to-br from-[#76ABAE]/20 to-[#76ABAE]/10 border border-[#76ABAE]/30">
 										<div className="flex items-center mb-2">
-											<MessageSquare className="h-4 w-4 text-purple-400 mr-2" />
+											<MessageSquare className="h-4 w-4 text-[#76ABAE] mr-2" />
 											<span className="text-sm font-medium text-white">
 												Network Smart
 											</span>
