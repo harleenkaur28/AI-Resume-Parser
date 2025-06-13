@@ -33,15 +33,176 @@ import {
 	PlusCircle,
 	Zap,
 	Award,
+	Edit,
+	Trash2,
+	Eye,
 } from "lucide-react";
 import Link from "next/link";
 import { Loader, LoaderOverlay } from "@/components/ui/loader";
+import { useToast } from "@/hooks/use-toast";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+interface DashboardData {
+	user: {
+		name: string;
+		email: string;
+		image?: string;
+	};
+	stats: {
+		totalResumes: number;
+		totalColdMails: number;
+		totalInterviews: number;
+	};
+	recentActivity: Array<{
+		id: string;
+		type: "resume" | "cold_mail" | "interview";
+		title: string;
+		description: string;
+		date: string;
+	}>;
+	resumes: Array<{
+		id: string;
+		customName: string;
+		uploadDate: string;
+		predictedField?: string;
+		candidateName?: string;
+	}>;
+}
 
 export default function DashboardPage() {
 	const { data: session, status } = useSession();
 	const router = useRouter();
 	const [isPageLoading, setIsPageLoading] = useState(true);
 	const [currentTime, setCurrentTime] = useState("");
+	const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+		null
+	);
+	const [isLoadingData, setIsLoadingData] = useState(true);
+	const [showResumesModal, setShowResumesModal] = useState(false);
+	const [editingResume, setEditingResume] = useState<{
+		id: string;
+		name: string;
+	} | null>(null);
+	const [newResumeName, setNewResumeName] = useState("");
+	const [deletingResume, setDeletingResume] = useState<{
+		id: string;
+		name: string;
+	} | null>(null);
+	const { toast } = useToast();
+
+	// Fetch dashboard data
+	const fetchDashboardData = async () => {
+		try {
+			setIsLoadingData(true);
+			const response = await fetch("/api/dashboard");
+			const result = await response.json();
+
+			if (result.success) {
+				setDashboardData(result.data);
+			} else {
+				toast({
+					title: "Error",
+					description: "Failed to load dashboard data",
+					variant: "destructive",
+				});
+			}
+		} catch (error) {
+			console.error("Failed to fetch dashboard data:", error);
+			toast({
+				title: "Error",
+				description: "Failed to load dashboard data",
+				variant: "destructive",
+			});
+		} finally {
+			setIsLoadingData(false);
+		}
+	};
+
+	// Handle resume deletion
+	const handleDeleteResume = async (resumeId: string) => {
+		try {
+			const response = await fetch(`/api/resumes?id=${resumeId}`, {
+				method: "DELETE",
+			});
+
+			const result = await response.json();
+
+			if (result.success) {
+				toast({
+					title: "Success",
+					description: "Resume deleted successfully",
+				});
+				fetchDashboardData(); // Refresh data
+			} else {
+				throw new Error(result.message);
+			}
+		} catch (error) {
+			toast({
+				title: "Error",
+				description:
+					error instanceof Error ? error.message : "Failed to delete resume",
+				variant: "destructive",
+			});
+		}
+	};
+
+	// Handle resume rename
+	const handleRenameResume = async (resumeId: string, newName: string) => {
+		try {
+			const response = await fetch(`/api/resumes?id=${resumeId}`, {
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ customName: newName }),
+			});
+
+			const result = await response.json();
+
+			if (result.success) {
+				toast({
+					title: "Success",
+					description: "Resume renamed successfully",
+				});
+				setEditingResume(null);
+				setNewResumeName("");
+				fetchDashboardData(); // Refresh data
+			} else {
+				throw new Error(result.message);
+			}
+		} catch (error) {
+			toast({
+				title: "Error",
+				description:
+					error instanceof Error ? error.message : "Failed to rename resume",
+				variant: "destructive",
+			});
+		}
+	};
+
+	// Get activity icon
+	const getActivityIcon = (type: string) => {
+		switch (type) {
+			case "resume":
+				return <FileText className="h-4 w-4 text-[#76ABAE]" />;
+			case "cold_mail":
+				return <Mail className="h-4 w-4 text-blue-400" />;
+			case "interview":
+				return <Users className="h-4 w-4 text-green-400" />;
+			default:
+				return <Star className="h-4 w-4 text-gray-400" />;
+		}
+	};
 
 	// Get current time
 	useEffect(() => {
@@ -74,11 +235,17 @@ export default function DashboardPage() {
 		}
 	}, [status, router]);
 
-	// Simulate page load
+	// Simulate page load and fetch data
 	useEffect(() => {
 		const timer = setTimeout(() => setIsPageLoading(false), 100);
-		return () => clearInterval(timer);
-	}, []);
+
+		// Fetch dashboard data when component mounts
+		if (status === "authenticated") {
+			fetchDashboardData();
+		}
+
+		return () => clearTimeout(timer);
+	}, [status]);
 
 	if (status === "loading") {
 		return <LoaderOverlay variant="dots" size="xl" text="Loading session..." />;
@@ -163,7 +330,8 @@ export default function DashboardPage() {
 									transition={{ duration: 0.6, delay: 0.1 }}
 									className="text-5xl font-bold text-white mb-3 bg-gradient-to-r from-white to-[#76ABAE] bg-clip-text text-transparent"
 								>
-									{getGreeting()}, {session?.user?.name || "User"}!
+									{getGreeting()},{" "}
+									{dashboardData?.user?.name || session?.user?.name || "User"}!
 								</motion.h1>
 
 								<motion.p
@@ -200,13 +368,16 @@ export default function DashboardPage() {
 							</motion.div>
 
 							{/* Enhanced Quick Stats */}
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+							<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
 								<motion.div
 									initial={{ opacity: 0, y: 20 }}
 									animate={{ opacity: 1, y: 0 }}
 									transition={{ duration: 0.5, delay: 0.1 }}
 								>
-									<Card className="backdrop-blur-sm bg-gradient-to-br from-[#31363F]/90 to-[#222831]/90 border-slate-600/30 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group">
+									<Card
+										className="backdrop-blur-sm bg-gradient-to-br from-[#31363F]/90 to-[#222831]/90 border-slate-600/30 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group cursor-pointer"
+										onClick={() => setShowResumesModal(true)}
+									>
 										<CardContent className="p-6">
 											<div className="flex items-center justify-between mb-4">
 												<div className="p-3 bg-[#76ABAE]/30 rounded-xl group-hover:bg-[#76ABAE]/40 transition-colors">
@@ -216,16 +387,26 @@ export default function DashboardPage() {
 													variant="secondary"
 													className="bg-green-500/30 text-green-300 border-green-500/40"
 												>
-													<TrendingUp className="w-3 h-3 mr-1" />
-													+0%
+													<Eye className="w-3 h-3 mr-1" />
+													View
 												</Badge>
 											</div>
 											<div>
 												<p className="text-slate-300 text-sm font-medium mb-1">
 													Total Resumes
 												</p>
-												<p className="text-3xl font-bold text-white mb-2">0</p>
-												<Progress value={0} className="h-2 bg-slate-600/50" />
+												<p className="text-3xl font-bold text-white mb-2">
+													{isLoadingData
+														? "..."
+														: dashboardData?.stats.totalResumes || 0}
+												</p>
+												<Progress
+													value={Math.min(
+														(dashboardData?.stats.totalResumes || 0) * 10,
+														100
+													)}
+													className="h-2 bg-slate-600/50"
+												/>
 											</div>
 										</CardContent>
 									</Card>
@@ -239,23 +420,73 @@ export default function DashboardPage() {
 									<Card className="backdrop-blur-sm bg-gradient-to-br from-[#31363F]/90 to-[#222831]/90 border-slate-600/30 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group">
 										<CardContent className="p-6">
 											<div className="flex items-center justify-between mb-4">
-												<div className="p-3 bg-[#76ABAE]/30 rounded-xl group-hover:bg-[#76ABAE]/40 transition-colors">
-													<Briefcase className="h-6 w-6 text-[#76ABAE]" />
+												<div className="p-3 bg-blue-500/30 rounded-xl group-hover:bg-blue-500/40 transition-colors">
+													<Mail className="h-6 w-6 text-blue-400" />
 												</div>
 												<Badge
 													variant="secondary"
-													className="bg-[#76ABAE]/30 text-[#76ABAE] border-[#76ABAE]/40"
+													className="bg-blue-500/30 text-blue-300 border-blue-500/40"
 												>
 													<Target className="w-3 h-3 mr-1" />
-													Active
+													Generated
 												</Badge>
 											</div>
 											<div>
 												<p className="text-slate-300 text-sm font-medium mb-1">
-													Applications
+													Cold Emails
 												</p>
-												<p className="text-3xl font-bold text-white mb-2">0</p>
-												<Progress value={0} className="h-2 bg-slate-600/50" />
+												<p className="text-3xl font-bold text-white mb-2">
+													{isLoadingData
+														? "..."
+														: dashboardData?.stats.totalColdMails || 0}
+												</p>
+												<Progress
+													value={Math.min(
+														(dashboardData?.stats.totalColdMails || 0) * 5,
+														100
+													)}
+													className="h-2 bg-slate-600/50"
+												/>
+											</div>
+										</CardContent>
+									</Card>
+								</motion.div>
+
+								<motion.div
+									initial={{ opacity: 0, y: 20 }}
+									animate={{ opacity: 1, y: 0 }}
+									transition={{ duration: 0.5, delay: 0.3 }}
+								>
+									<Card className="backdrop-blur-sm bg-gradient-to-br from-[#31363F]/90 to-[#222831]/90 border-slate-600/30 shadow-2xl hover:shadow-3xl transition-all duration-300 card-hover group">
+										<CardContent className="p-6">
+											<div className="flex items-center justify-between mb-4">
+												<div className="p-3 bg-green-500/30 rounded-xl group-hover:bg-green-500/40 transition-colors">
+													<Users className="h-6 w-6 text-green-400" />
+												</div>
+												<Badge
+													variant="secondary"
+													className="bg-green-500/30 text-green-300 border-green-500/40"
+												>
+													<Target className="w-3 h-3 mr-1" />
+													Practiced
+												</Badge>
+											</div>
+											<div>
+												<p className="text-slate-300 text-sm font-medium mb-1">
+													Interview Sessions
+												</p>
+												<p className="text-3xl font-bold text-white mb-2">
+													{isLoadingData
+														? "..."
+														: dashboardData?.stats.totalInterviews || 0}
+												</p>
+												<Progress
+													value={Math.min(
+														(dashboardData?.stats.totalInterviews || 0) * 10,
+														100
+													)}
+													className="h-2 bg-slate-600/50"
+												/>
 											</div>
 										</CardContent>
 									</Card>
@@ -448,40 +679,80 @@ export default function DashboardPage() {
 										</div>
 									</CardHeader>
 									<CardContent>
-										<div className="flex items-center justify-center py-12">
-											<div className="text-center max-w-md">
-												<div className="relative mb-6">
-													<div className="absolute inset-0 flex items-center justify-center">
-														<div className="w-24 h-24 bg-gradient-to-r from-[#76ABAE]/30 to-[#76ABAE]/20 rounded-full animate-pulse"></div>
+										{isLoadingData ? (
+											<div className="flex items-center justify-center py-12">
+												<Loader
+													variant="spinner"
+													size="lg"
+													className="text-[#76ABAE]"
+												/>
+											</div>
+										) : dashboardData?.recentActivity &&
+										  dashboardData.recentActivity.length > 0 ? (
+											<div className="space-y-4">
+												{dashboardData.recentActivity.map((activity, index) => (
+													<motion.div
+														key={activity.id}
+														initial={{ opacity: 0, x: -20 }}
+														animate={{ opacity: 1, x: 0 }}
+														transition={{ duration: 0.3, delay: index * 0.1 }}
+														className="flex items-center space-x-4 p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+													>
+														<div className="flex-shrink-0">
+															{getActivityIcon(activity.type)}
+														</div>
+														<div className="flex-1 min-w-0">
+															<p className="text-white font-medium text-sm">
+																{activity.title}
+															</p>
+															<p className="text-slate-400 text-xs truncate">
+																{activity.description}
+															</p>
+														</div>
+														<div className="flex-shrink-0">
+															<p className="text-slate-500 text-xs">
+																{new Date(activity.date).toLocaleDateString()}
+															</p>
+														</div>
+													</motion.div>
+												))}
+											</div>
+										) : (
+											<div className="flex items-center justify-center py-12">
+												<div className="text-center max-w-md">
+													<div className="relative mb-6">
+														<div className="absolute inset-0 flex items-center justify-center">
+															<div className="w-24 h-24 bg-gradient-to-r from-[#76ABAE]/30 to-[#76ABAE]/20 rounded-full animate-pulse"></div>
+														</div>
+														<MessageSquare className="relative h-12 w-12 text-[#76ABAE] mx-auto" />
 													</div>
-													<MessageSquare className="relative h-12 w-12 text-[#76ABAE] mx-auto" />
-												</div>
-												<h3 className="text-xl font-semibold text-white mb-2">
-													Ready to Get Started?
-												</h3>
-												<p className="text-slate-300 mb-6">
-													Begin your journey by uploading a resume or exploring
-													our AI-powered features
-												</p>
-												<div className="flex flex-col sm:flex-row gap-3 justify-center">
-													<Link href="/dashboard/seeker">
-														<Button className="bg-gradient-to-r from-[#76ABAE] to-[#5A8B8F] hover:from-[#5A8B8F] hover:to-[#76ABAE] text-white px-6 py-2">
-															<FileText className="mr-2 h-4 w-4" />
-															Upload Resume
-														</Button>
-													</Link>
-													<Link href="/dashboard/cold-mail">
-														<Button
-															variant="outline"
-															className="border-[#76ABAE]/50 text-[#76ABAE] hover:bg-[#76ABAE]/10 hover:text-white px-6 py-2"
-														>
-															<Mail className="mr-2 h-4 w-4" />
-															Try Cold Mail
-														</Button>
-													</Link>
+													<h3 className="text-xl font-semibold text-white mb-2">
+														Ready to Get Started?
+													</h3>
+													<p className="text-slate-300 mb-6">
+														Begin your journey by uploading a resume or
+														exploring our AI-powered features
+													</p>
+													<div className="flex flex-col sm:flex-row gap-3 justify-center">
+														<Link href="/dashboard/seeker">
+															<Button className="bg-gradient-to-r from-[#76ABAE] to-[#5A8B8F] hover:from-[#5A8B8F] hover:to-[#76ABAE] text-white px-6 py-2">
+																<FileText className="mr-2 h-4 w-4" />
+																Upload Resume
+															</Button>
+														</Link>
+														<Link href="/dashboard/cold-mail">
+															<Button
+																variant="outline"
+																className="border-[#76ABAE]/50 text-[#76ABAE] hover:bg-[#76ABAE]/10 hover:text-white px-6 py-2"
+															>
+																<Mail className="mr-2 h-4 w-4" />
+																Try Cold Mail
+															</Button>
+														</Link>
+													</div>
 												</div>
 											</div>
-										</div>
+										)}
 									</CardContent>
 								</Card>
 							</motion.div>
@@ -489,6 +760,188 @@ export default function DashboardPage() {
 					</div>
 				</div>
 			)}
+
+			{/* Resumes Management Modal */}
+			<Dialog open={showResumesModal} onOpenChange={setShowResumesModal}>
+				<DialogContent className="sm:max-w-4xl bg-[#31363F] border-slate-600/30 text-white">
+					<DialogHeader>
+						<DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
+							<FileText className="h-6 w-6 text-[#76ABAE]" />
+							Your Resumes ({dashboardData?.resumes.length || 0})
+						</DialogTitle>
+						<DialogDescription className="text-slate-300">
+							Manage your uploaded resumes - rename or delete them as needed.
+						</DialogDescription>
+					</DialogHeader>
+
+					<div className="max-h-[60vh] overflow-y-auto">
+						{isLoadingData ? (
+							<div className="flex items-center justify-center py-12">
+								<Loader
+									variant="spinner"
+									size="lg"
+									className="text-[#76ABAE]"
+								/>
+							</div>
+						) : dashboardData?.resumes && dashboardData.resumes.length > 0 ? (
+							<div className="space-y-4">
+								{dashboardData.resumes.map((resume, index) => (
+									<motion.div
+										key={resume.id}
+										initial={{ opacity: 0, y: 20 }}
+										animate={{ opacity: 1, y: 0 }}
+										transition={{ duration: 0.3, delay: index * 0.1 }}
+										className="flex items-center justify-between p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/10"
+									>
+										<div className="flex-1 min-w-0">
+											{editingResume?.id === resume.id ? (
+												<div className="flex items-center space-x-2">
+													<Input
+														value={newResumeName}
+														onChange={(e) => setNewResumeName(e.target.value)}
+														className="bg-white/10 border-white/20 text-white"
+														placeholder="Enter new name"
+													/>
+													<Button
+														size="sm"
+														onClick={() =>
+															handleRenameResume(resume.id, newResumeName)
+														}
+														className="bg-green-600 hover:bg-green-700"
+													>
+														Save
+													</Button>
+													<Button
+														size="sm"
+														variant="outline"
+														onClick={() => {
+															setEditingResume(null);
+															setNewResumeName("");
+														}}
+														className="border-slate-500 text-slate-300"
+													>
+														Cancel
+													</Button>
+												</div>
+											) : (
+												<div>
+													<h3 className="font-medium text-white truncate">
+														{resume.customName}
+													</h3>
+													<div className="flex items-center space-x-4 mt-1">
+														{resume.candidateName && (
+															<span className="text-xs text-slate-400">
+																{resume.candidateName}
+															</span>
+														)}
+														{resume.predictedField && (
+															<Badge className="bg-[#76ABAE]/20 text-[#76ABAE] border-[#76ABAE]/30 text-xs">
+																{resume.predictedField}
+															</Badge>
+														)}
+														<span className="text-xs text-slate-500">
+															{new Date(resume.uploadDate).toLocaleDateString()}
+														</span>
+													</div>
+												</div>
+											)}
+										</div>
+
+										{editingResume?.id !== resume.id && (
+											<div className="flex items-center space-x-2 ml-4">
+												<Button
+													size="sm"
+													variant="ghost"
+													onClick={() => {
+														setEditingResume({
+															id: resume.id,
+															name: resume.customName,
+														});
+														setNewResumeName(resume.customName);
+													}}
+													className="text-slate-400 hover:text-white hover:bg-white/10"
+												>
+													<Edit className="h-4 w-4" />
+												</Button>
+												<Button
+													size="sm"
+													variant="ghost"
+													onClick={() =>
+														setDeletingResume({
+															id: resume.id,
+															name: resume.customName,
+														})
+													}
+													className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+												>
+													<Trash2 className="h-4 w-4" />
+												</Button>
+											</div>
+										)}
+									</motion.div>
+								))}
+							</div>
+						) : (
+							<div className="text-center py-12">
+								<FileText className="h-16 w-16 text-slate-500 mx-auto mb-4" />
+								<h3 className="text-lg font-medium text-white mb-2">
+									No resumes uploaded yet
+								</h3>
+								<p className="text-slate-400 mb-6">
+									Upload your first resume to get started with AI-powered
+									analysis
+								</p>
+								<Link href="/dashboard/seeker">
+									<Button className="bg-gradient-to-r from-[#76ABAE] to-[#5A8B8F] hover:from-[#5A8B8F] hover:to-[#76ABAE]">
+										<FileText className="mr-2 h-4 w-4" />
+										Upload Resume
+									</Button>
+								</Link>
+							</div>
+						)}
+					</div>
+				</DialogContent>
+			</Dialog>
+
+			{/* Delete Confirmation Dialog */}
+			<Dialog
+				open={!!deletingResume}
+				onOpenChange={() => setDeletingResume(null)}
+			>
+				<DialogContent className="bg-[#31363F] border-slate-600/30 text-white">
+					<DialogHeader>
+						<DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
+							<Trash2 className="h-6 w-6 text-red-400" />
+							Delete Resume
+						</DialogTitle>
+						<DialogDescription className="text-slate-300">
+							Are you sure you want to delete "{deletingResume?.name}"? This
+							action cannot be undone.
+						</DialogDescription>
+					</DialogHeader>
+
+					<DialogFooter className="flex gap-2">
+						<Button
+							variant="outline"
+							onClick={() => setDeletingResume(null)}
+							className="border-slate-500 text-slate-300 hover:bg-slate-600"
+						>
+							Cancel
+						</Button>
+						<Button
+							onClick={() => {
+								if (deletingResume) {
+									handleDeleteResume(deletingResume.id);
+									setDeletingResume(null);
+								}
+							}}
+							className="bg-red-600 hover:bg-red-700 text-white"
+						>
+							Delete
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</>
 	);
 }
