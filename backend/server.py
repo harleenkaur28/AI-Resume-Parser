@@ -2737,9 +2737,6 @@ format_analyse_prompt = PromptTemplate(
 )
 
 
-# Ensure ComprehensiveAnalysisData is available, e.g.:
-# from backend.schemas.resume import ComprehensiveAnalysisData
-# If not already defined or imported, and other response models are here:
 class FormattedAndAnalyzedResumeResponse(BaseModel):
     success: bool = True
     message: str = "Resume formatted and analyzed successfully"
@@ -2784,7 +2781,11 @@ async def format_and_analyze_resume_v2(file: UploadFile = File(...)):
 
         name, email = extract_name_and_email(raw_resume_text)
         contact = extract_contact_number_from_resume(raw_resume_text)
-        basic_info = {"name": name, "email": email, "contact": contact}
+        basic_info = {
+            "name": name,
+            "email": email,
+            "contact": contact,
+        }
         basic_info_json_str = json.dumps(basic_info)
 
         formatted_prompt_str = format_analyse_prompt.format_prompt(
@@ -3021,6 +3022,200 @@ async def analyze_resume(
             status_code=500,
             detail=ErrorResponse(
                 message="Failed to perform V2 resume analysis due to an unexpected error",
+                error_detail=str(e),
+            ).model_dump(),
+        )
+
+
+@v2_router.post(
+    "/hiring-assistant/",
+    description="Generates answers to interview questions based on the provided resume text and inputs.",
+    response_model=HiringAssistantResponse,
+)
+async def hiring_assistant2(
+    resume_text: str = Form(...),
+    role: str = Form(...),
+    questions: str = Form(...),  # JSON string: '["q1", "q2"]'
+    company_name: str = Form(...),
+    user_knowledge: Optional[str] = Form(""),
+    company_url: Optional[str] = Form(None),
+    word_limit: Optional[int] = Form(150),
+):
+    if not llm:
+        raise HTTPException(
+            status_code=503,
+            detail=ErrorResponse(
+                message="LLM service is not available.",
+            ).model_dump(),
+        )
+
+    try:
+        try:
+            questions_list = json.loads(questions)
+            if (
+                not isinstance(questions_list, list)
+                or not all(isinstance(q, str) for q in questions_list)
+                or not questions_list
+            ):
+                raise ValueError("Questions must be a non-empty list of strings.")
+        except (json.JSONDecodeError, ValueError) as e:
+            raise HTTPException(
+                status_code=422,
+                detail=ErrorResponse(
+                    message="Invalid format for questions. Expected a JSON string representing a non-empty list of strings.",
+                    error_detail=str(e),
+                ).model_dump(),
+            )
+
+        # The resume_text is now a direct input, so we can validate it immediately.
+        if not is_valid_resume(resume_text):
+            raise HTTPException(
+                status_code=400,
+                detail=ErrorResponse(
+                    message="Invalid resume format or content. Text seems too short."
+                ).model_dump(),
+            )
+
+        company_research_info = ""
+        if company_url:
+            company_research_info = get_company_research(company_name, company_url)
+
+        generated_answers_list = generate_answers_for_geting_hired(
+            resume_text=resume_text,
+            role=role,
+            company=company_name,
+            questions_list=questions_list,
+            word_limit=word_limit,
+            user_company_knowledge=user_knowledge,
+            company_research=company_research_info,
+        )
+
+        answers_data = {}
+        for item in generated_answers_list:
+            if "Error:" in item["answer"] or "Configuration Error:" in item["answer"]:
+                raise HTTPException(
+                    status_code=500,
+                    detail=ErrorResponse(
+                        message="Failed to generate one or more answers due to an internal error.",
+                        error_detail=item["answer"],
+                    ).model_dump(),
+                )
+            answers_data[item["question"]] = item["answer"]
+
+        if not answers_data:
+            raise HTTPException(
+                status_code=500,
+                detail=ErrorResponse(message="No answers were generated.").model_dump(),
+            )
+
+        return HiringAssistantResponse(data=answers_data)
+
+    except HTTPException:
+        raise
+
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=422,
+            detail=ErrorResponse(
+                message="Input validation error.", error_detail=str(e.errors())
+            ).model_dump(),
+        )
+
+    except Exception as e:
+        print(f"Error in /hiring-assistant/: {e}")
+        import traceback
+
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=ErrorResponse(
+                message="Failed to generate hiring assistance.",
+                error_detail=str(e),
+            ).model_dump(),
+        )
+
+
+@v2_router.post(
+    "/cold-mail/generator/",
+    response_model=ColdMailResponse,
+    description="Generates a cold email based on the provided resume text and user inputs.",
+)
+async def cold_mail_generator_v2(
+    resume_text: str = Form(...),
+    recipient_name: str = Form(...),
+    recipient_designation: str = Form(...),
+    company_name: str = Form(...),
+    sender_name: str = Form(...),
+    sender_role_or_goal: str = Form(...),
+    key_points_to_include: str = Form(...),
+    additional_info_for_llm: Optional[str] = Form(""),
+    company_url: Optional[str] = Form(None),
+):
+    if not llm:
+        raise HTTPException(
+            status_code=503,
+            detail=ErrorResponse(message="LLM service is not available.").model_dump(),
+        )
+
+    try:
+        # The resume_text is now a direct input, so we can validate it immediately.
+        if not is_valid_resume(resume_text):
+            raise HTTPException(
+                status_code=400,
+                detail=ErrorResponse(
+                    message="Invalid resume content. Text seems too short or malformed."
+                ).model_dump(),
+            )
+
+        company_research_info = ""
+        if company_url:
+            company_research_info = get_company_research(company_name, company_url)
+
+        email_content = generate_cold_mail_content(
+            resume_text=resume_text,
+            recipient_name=recipient_name,
+            recipient_designation=recipient_designation,
+            company_name=company_name,
+            sender_name=sender_name,
+            sender_role_or_goal=sender_role_or_goal,
+            key_points_to_include=key_points_to_include,
+            additional_info_for_llm=additional_info_for_llm,
+            company_research=company_research_info,
+        )
+
+        if "Error:" in email_content["subject"] or "Error:" in email_content["body"]:
+            raise HTTPException(
+                status_code=500,
+                detail=ErrorResponse(
+                    message="Failed to generate email content due to an LLM or parsing error.",
+                    error_detail=f"Subject: {email_content['subject']}, Body: {email_content['body'][:200]}...",
+                ).model_dump(),
+            )
+
+        return ColdMailResponse(
+            subject=email_content["subject"], body=email_content["body"]
+        )
+
+    except HTTPException:
+        raise
+
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=422,
+            detail=ErrorResponse(
+                message="Input validation error.", error_detail=str(e.errors())
+            ).model_dump(),
+        )
+
+    except Exception as e:
+        print(f"Error in /cold-mail-generator/: {e}")
+        import traceback
+
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=ErrorResponse(
+                message="Failed to generate cold mail content.",
                 error_detail=str(e),
             ).model_dump(),
         )
