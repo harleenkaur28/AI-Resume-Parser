@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Avatar } from "@/components/ui/avatar";
 import {
 	FileText,
 	Users,
@@ -13,9 +14,21 @@ import {
 	Menu,
 	X,
 	Info,
+	User,
+	LogOut,
+	Settings,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useSession, signOut } from "next-auth/react";
+// Temporarily remove dropdown menu until component is fixed
+// import {
+// 	DropdownMenu,
+// 	DropdownMenuContent,
+// 	DropdownMenuItem,
+// 	DropdownMenuTrigger,
+// 	DropdownMenuSeparator,
+// } from "@/components/ui/dropdown-menu";
 import banner from "@/public/banner-dark.svg";
 
 const navItems = [
@@ -44,6 +57,46 @@ const navItems = [
 export function Navbar() {
 	const pathname = usePathname();
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+	const { data: session, status } = useSession();
+
+	const handleSignOut = async () => {
+		await signOut({ callbackUrl: "/" });
+	};
+
+	const UserMenu = () => (
+		<div className="flex items-center space-x-3">
+			<div className="flex items-center space-x-2 text-[#EEEEEE]/90">
+				<Avatar src={session?.user?.image} alt="Profile" size="sm" />
+				<div className="hidden md:block">
+					<div className="text-sm font-medium">
+						{session?.user?.name || session?.user?.email || "Account"}
+					</div>
+					<div className="text-xs text-[#76ABAE]">
+						{(session?.user as any)?.role === "Admin"
+							? "Recruiter"
+							: (session?.user as any)?.role || "No role"}
+					</div>
+				</div>
+			</div>
+			<Link href="/account">
+				<Button
+					variant="ghost"
+					className="text-[#EEEEEE]/90 hover:text-[#76ABAE] hover:bg-[#76ABAE]/10 px-3"
+				>
+					<User className="h-4 w-4 mr-1" />
+					Account
+				</Button>
+			</Link>
+			<Button
+				onClick={handleSignOut}
+				variant="ghost"
+				className="text-[#EEEEEE]/90 hover:text-red-400 hover:bg-red-500/10 px-3"
+			>
+				<LogOut className="h-4 w-4 mr-1" />
+				Sign Out
+			</Button>
+		</div>
+	);
 
 	return (
 		<motion.div
@@ -55,11 +108,7 @@ export function Navbar() {
 				<div className="container mx-auto px-4 sm:px-6">
 					<div className="flex items-center justify-between h-16 sm:h-20">
 						<Link href="/" className="flex items-center space-x-3">
-							{/* <FileText className="h-6 w-6 sm:h-7 sm:w-7 text-[#76ABAE]" />
-							<span className="text-[#EEEEEE] font-bold text-xl sm:text-2xl tracking-tight">
-								ResumeAI
-							</span> */}
-							<Image src={banner} alt="TalemtSync AI" width={200} />
+							<Image src={banner} alt="TalentSync AI" width={200} />
 						</Link>
 
 						<nav className="hidden md:flex items-center space-x-2">
@@ -86,21 +135,29 @@ export function Navbar() {
 						</nav>
 
 						<div className="hidden md:flex items-center space-x-5">
-							<Link href="/auth">
-								<Button
-									variant="ghost"
-									className="text-[#EEEEEE]/90 hover:text-[#76ABAE] hover:bg-[#76ABAE]/10 px-5"
-								>
-									<LogIn className="h-4 w-4 mr-2.5" />
-									Sign In
-								</Button>
-							</Link>
-							<div className="h-5 w-px bg-white/10" />
-							<Link href="/auth?tab=register">
-								<Button className="bg-[#76ABAE] hover:bg-[#76ABAE]/90 px-6 font-medium shadow-lg shadow-[#76ABAE]/20">
-									Get Started
-								</Button>
-							</Link>
+							{status === "loading" ? (
+								<div className="text-[#EEEEEE]/60">Loading...</div>
+							) : session ? (
+								<UserMenu />
+							) : (
+								<>
+									<Link href="/auth">
+										<Button
+											variant="ghost"
+											className="text-[#EEEEEE]/90 hover:text-[#76ABAE] hover:bg-[#76ABAE]/10 px-5"
+										>
+											<LogIn className="h-4 w-4 mr-2.5" />
+											Sign In
+										</Button>
+									</Link>
+									<div className="h-5 w-px bg-white/10" />
+									<Link href="/auth?tab=register">
+										<Button className="bg-[#76ABAE] hover:bg-[#76ABAE]/90 px-6 font-medium shadow-lg shadow-[#76ABAE]/20">
+											Get Started
+										</Button>
+									</Link>
+								</>
+							)}
 						</div>
 
 						<button
@@ -145,20 +202,57 @@ export function Navbar() {
 									);
 								})}
 								<div className="pt-3 flex flex-col space-y-3">
-									<Link href="/auth">
-										<Button
-											variant="ghost"
-											className="w-full text-[#EEEEEE]/90 hover:text-[#76ABAE] hover:bg-[#76ABAE]/10"
-										>
-											<LogIn className="h-4 w-4 mr-2.5" />
-											Sign In
-										</Button>
-									</Link>
-									<Link href="/auth?tab=register">
-										<Button className="w-full bg-[#76ABAE] hover:bg-[#76ABAE]/90 font-medium">
-											Get Started
-										</Button>
-									</Link>
+									{session ? (
+										<>
+											<div className="px-4 py-2 text-[#EEEEEE]/90">
+												<div className="text-sm font-medium">
+													{session?.user?.name ||
+														session?.user?.email ||
+														"Account"}
+												</div>
+												<div className="text-xs text-[#76ABAE]">
+													{(session?.user as any)?.role === "Admin"
+														? "Recruiter"
+														: (session?.user as any)?.role || "No role"}
+												</div>
+											</div>
+											<Link href="/account">
+												<Button
+													variant="ghost"
+													className="w-full text-[#EEEEEE]/90 hover:text-[#76ABAE] hover:bg-[#76ABAE]/10 justify-start"
+													onClick={() => setIsMobileMenuOpen(false)}
+												>
+													<User className="h-4 w-4 mr-2.5" />
+													My Account
+												</Button>
+											</Link>
+											<Button
+												onClick={handleSignOut}
+												variant="ghost"
+												className="w-full text-[#EEEEEE]/90 hover:text-red-400 hover:bg-red-500/10 justify-start"
+											>
+												<LogOut className="h-4 w-4 mr-2.5" />
+												Sign Out
+											</Button>
+										</>
+									) : (
+										<>
+											<Link href="/auth">
+												<Button
+													variant="ghost"
+													className="w-full text-[#EEEEEE]/90 hover:text-[#76ABAE] hover:bg-[#76ABAE]/10"
+												>
+													<LogIn className="h-4 w-4 mr-2.5" />
+													Sign In
+												</Button>
+											</Link>
+											<Link href="/auth?tab=register">
+												<Button className="w-full bg-[#76ABAE] hover:bg-[#76ABAE]/90 font-medium">
+													Get Started
+												</Button>
+											</Link>
+										</>
+									)}
 								</div>
 							</div>
 						</motion.div>

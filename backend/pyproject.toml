@@ -19,6 +19,11 @@ dependencies = [
     "python-multipart>=0.0.20",
     "scikit-learn>=1.7.0",
     "spacy>=3.8.7",
+    "pydantic-settings>=2.0.0",
+    "pip>=25.1.1",
+    "pydantic[email]>=2.11.5",
+    "python-jose[cryptography]>=3.5.0",
+    "passlib[bcrypt]>=1.7.4",
 ]
 
 [dependency-groups]

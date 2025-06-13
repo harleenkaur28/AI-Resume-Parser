@@ -1,0 +1,198 @@
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+model Role {
+    id    String @id @default(uuid())
+    name  String @unique
+    users User[]
+}
+
+model User {
+    id            String    @id @default(cuid())
+    name          String?
+    email         String?   @unique
+    emailVerified DateTime?
+    image         String?
+    passwordHash  String? // Made optional for OAuth
+    isVerified    Boolean   @default(false)
+    roleId        String? // Made optional
+    role          Role?     @relation(fields: [roleId], references: [id])
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+
+    // relations
+    resumes             Resume[]
+    bulkUploads         BulkUpload[]
+    recruiter           Recruiter?
+    coldMailRequests    ColdMailRequest[]
+    interviewRequests   InterviewRequest[]
+    emailTokens         EmailVerificationToken[]
+    passwordResetTokens PasswordResetToken[]
+    accounts            Account[]
+    sessions            Session[]
+}
+
+model EmailVerificationToken {
+    id          String    @id @default(uuid())
+    token       String    @unique
+    expiresAt   DateTime
+    userId      String
+    user        User      @relation(fields: [userId], references: [id])
+    createdAt   DateTime  @default(now())
+    confirmedAt DateTime?
+}
+
+model PasswordResetToken {
+    id        String    @id @default(uuid())
+    token     String    @unique
+    expiresAt DateTime
+    userId    String
+    user      User      @relation(fields: [userId], references: [id])
+    createdAt DateTime  @default(now())
+    usedAt    DateTime?
+}
+
+model Resume {
+    id            String   @id @default(uuid())
+    userId        String
+    customName    String
+    fileUrl       String
+    uploadDate    DateTime @default(now())
+    showInCentral Boolean  @default(false)
+
+    user     User      @relation(fields: [userId], references: [id])
+    analysis Analysis?
+}
+
+model Analysis {
+    id               String   @id @default(uuid())
+    resumeId         String   @unique
+    name             String?
+    email            String?
+    contact          String?
+    predictedField   String?
+    skillsAnalysis   Json?
+    recommendedRoles String[] @default([])
+    languages        Json?
+    education        Json?
+    workExperience   Json?
+    projects         Json?
+    uploadedAt       DateTime @default(now())
+
+    resume Resume @relation(fields: [resumeId], references: [id])
+}
+
+model BulkUpload {
+    id         String   @id @default(uuid())
+    adminId    String
+    fileUrl    String
+    totalFiles Int
+    succeeded  Int      @default(0)
+    failed     Int      @default(0)
+    uploadedAt DateTime @default(now())
+
+    admin User @relation(fields: [adminId], references: [id])
+}
+
+model Recruiter {
+    id          String   @id @default(uuid())
+    adminId     String   @unique
+    email       String
+    companyName String
+    createdAt   DateTime @default(now())
+
+    admin User @relation(fields: [adminId], references: [id])
+}
+
+model ColdMailRequest {
+    id                   String   @id @default(uuid())
+    userId               String
+    recipientName        String
+    recipientDesignation String
+    companyName          String
+    senderName           String
+    senderRoleOrGoal     String
+    keyPoints            String
+    additionalInfo       String?
+    companyUrl           String?
+    createdAt            DateTime @default(now())
+
+    user      User               @relation(fields: [userId], references: [id])
+    responses ColdMailResponse[]
+}
+
+model ColdMailResponse {
+    id        String   @id @default(uuid())
+    requestId String
+    subject   String
+    body      String
+    createdAt DateTime @default(now())
+
+    request ColdMailRequest @relation(fields: [requestId], references: [id])
+}
+
+model InterviewRequest {
+    id            String   @id @default(uuid())
+    userId        String
+    role          String
+    questions     Json
+    companyName   String
+    userKnowledge String?
+    companyUrl    String?
+    wordLimit     Int
+    createdAt     DateTime @default(now())
+
+    user    User              @relation(fields: [userId], references: [id])
+    answers InterviewAnswer[]
+}
+
+model InterviewAnswer {
+    id        String   @id @default(uuid())
+    requestId String
+    question  String
+    answer    String
+    createdAt DateTime @default(now())
+
+    request InterviewRequest @relation(fields: [requestId], references: [id])
+}
+
+model Account {
+    id                String  @id @default(cuid())
+    userId            String
+    type              String
+    provider          String
+    providerAccountId String
+    refresh_token     String? @db.Text
+    access_token      String? @db.Text
+    expires_at        Int?
+    token_type        String?
+    scope             String?
+    id_token          String? @db.Text
+    session_state     String?
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([provider, providerAccountId])
+}
+
+model Session {
+    id           String   @id @default(cuid())
+    sessionToken String   @unique
+    userId       String
+    expires      DateTime
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+    identifier String
+    token      String   @unique
+    expires    DateTime
+
+    @@unique([identifier, token])
+}
