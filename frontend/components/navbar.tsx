@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Avatar } from "@/components/ui/avatar";
 import {
 	FileText,
 	Users,
@@ -65,15 +66,11 @@ export function Navbar() {
 	const UserMenu = () => (
 		<div className="flex items-center space-x-3">
 			<div className="flex items-center space-x-2 text-[#EEEEEE]/90">
-				{session?.user?.image ? (
-					<img
-						src={session.user.image}
-						alt="Profile"
-						className="w-6 h-6 rounded-full"
-					/>
-				) : (
-					<User className="h-4 w-4" />
-				)}
+				<Avatar 
+					src={session?.user?.image} 
+					alt="Profile" 
+					size="sm"
+				/>
 				<div className="hidden md:block">
 					<div className="text-sm font-medium">
 						{session?.user?.name || session?.user?.email || "Account"}

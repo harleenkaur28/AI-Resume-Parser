@@ -77,16 +77,35 @@ export const authOptions = {
   },
   callbacks: {
     async signIn({ user, account, profile }: any) {
+      if (process.env.NODE_ENV === "development") {
+        console.log("SignIn callback:", { user: { ...user, image: user.image }, account: account?.provider, profile: profile?.picture });
+      }
+      
+      // For OAuth providers, ensure image is captured
+      if (account?.provider !== "credentials" && profile?.picture && !user.image) {
+        user.image = profile.picture;
+      }
+      
       return true;
     },
     async session({ session, token }: any) {
+      if (process.env.NODE_ENV === "development") {
+        console.log("Session callback:", { session, token });
+      }
       if (token.sub && session.user) {
         (session.user as { id: string }).id = token.sub;
         (session.user as { role?: string }).role = token.role as string;
+        // Ensure image is properly passed from token to session
+        if (token.picture) {
+          session.user.image = token.picture;
+        }
       }
       return session;
     },
     async jwt({ token, user, account, trigger }: any) {
+      if (process.env.NODE_ENV === "development") {
+        console.log("JWT callback:", { token, user, account, trigger });
+      }
       // If this is a token refresh or update, fetch the latest user data
       if (trigger === "update" || (token.sub && !user)) {
         const dbUser = await prisma.user.findUnique({
@@ -95,6 +114,10 @@ export const authOptions = {
         });
         if (dbUser) {
           token.role = dbUser.role?.name;
+          // Preserve the image from the database
+          if (dbUser.image) {
+            token.picture = dbUser.image;
+          }
         }
       } else if (user) {
         // For OAuth users, check if they have a role
@@ -104,8 +127,16 @@ export const authOptions = {
             include: { role: true }
           });
           token.role = dbUser?.role?.name;
+          // Preserve the image for OAuth users
+          if (user.image) {
+            token.picture = user.image;
+          }
         } else {
           token.role = (user as { role?: string }).role;
+          // For credentials users, preserve image if available
+          if (user.image) {
+            token.picture = user.image;
+          }
         }
       }
       return token;

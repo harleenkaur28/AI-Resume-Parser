@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Avatar } from "@/components/ui/avatar";
 import {
 	Card,
 	CardContent,
@@ -95,13 +96,11 @@ export default function AccountPage() {
 							</CardHeader>
 							<CardContent className="space-y-4">
 								<div className="flex items-center space-x-4">
-									{session.user?.image && (
-										<img
-											src={session.user.image}
-											alt="Profile"
-											className="w-16 h-16 rounded-full border-2 border-[#76ABAE]/30"
-										/>
-									)}
+									<Avatar 
+										src={session.user?.image} 
+										alt="Profile" 
+										size="lg"
+									/>
 									<div className="flex-1">
 										<div className="space-y-2">
 											<div className="flex items-center space-x-2">
