@@ -62,14 +62,16 @@ export default function HiringAssistant() {
 	const [resumeText, setResumeText] = useState("");
 	const [isPreloaded, setIsPreloaded] = useState(false);
 	const [questions, setQuestions] = useState<string[]>([""]);
-	
+
 	// Resume selection states
 	const [userResumes, setUserResumes] = useState<UserResume[]>([]);
 	const [selectedResumeId, setSelectedResumeId] = useState<string>("");
 	const [isLoadingResumes, setIsLoadingResumes] = useState(false);
 	const [showResumeDropdown, setShowResumeDropdown] = useState(false);
-	const [resumeSelectionMode, setResumeSelectionMode] = useState<'existing' | 'upload'>('existing');
-	
+	const [resumeSelectionMode, setResumeSelectionMode] = useState<
+		"existing" | "upload"
+	>("existing");
+
 	const { toast } = useToast();
 
 	const [formData, setFormData] = useState({
@@ -124,11 +126,11 @@ export default function HiringAssistant() {
 		};
 
 		if (showResumeDropdown) {
-			document.addEventListener('mousedown', handleClickOutside);
+			document.addEventListener("mousedown", handleClickOutside);
 		}
 
 		return () => {
-			document.removeEventListener('mousedown', handleClickOutside);
+			document.removeEventListener("mousedown", handleClickOutside);
 		};
 	}, [showResumeDropdown]);
 
@@ -155,7 +157,7 @@ export default function HiringAssistant() {
 					)} KB) - Pre-loaded from analysis`
 				);
 				setIsPreloaded(true);
-				setResumeSelectionMode('upload'); // Switch to upload mode if preloaded
+				setResumeSelectionMode("upload"); // Switch to upload mode if preloaded
 
 				// Pre-populate form with analysis data
 				setFormData((prev) => ({
@@ -234,7 +236,7 @@ export default function HiringAssistant() {
 
 	const generateAnswers = async () => {
 		// Validation for resume selection
-		if (resumeSelectionMode === 'existing') {
+		if (resumeSelectionMode === "existing") {
 			if (!selectedResumeId) {
 				toast({
 					title: "Resume Required",
@@ -286,14 +288,14 @@ export default function HiringAssistant() {
 
 		try {
 			const formDataToSend = new FormData();
-			
+
 			// Add resume data based on selection mode
-			if (resumeSelectionMode === 'existing') {
+			if (resumeSelectionMode === "existing") {
 				formDataToSend.append("resumeId", selectedResumeId);
 			} else {
 				formDataToSend.append("file", resumeFile!);
 			}
-			
+
 			formDataToSend.append("role", formData.role);
 			formDataToSend.append("company_name", formData.company);
 			formDataToSend.append("word_limit", formData.word_limit.toString());
@@ -500,21 +502,21 @@ export default function HiringAssistant() {
 										{/* Resume Selection Mode Toggle */}
 										<div className="flex space-x-1 bg-white/5 p-1 rounded-lg">
 											<button
-												onClick={() => setResumeSelectionMode('existing')}
+												onClick={() => setResumeSelectionMode("existing")}
 												className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all duration-300 ${
-													resumeSelectionMode === 'existing'
-														? 'bg-[#76ABAE] text-white shadow-lg'
-														: 'text-[#EEEEEE]/70 hover:text-[#EEEEEE] hover:bg-white/10'
+													resumeSelectionMode === "existing"
+														? "bg-[#76ABAE] text-white shadow-lg"
+														: "text-[#EEEEEE]/70 hover:text-[#EEEEEE] hover:bg-white/10"
 												}`}
 											>
 												Use Existing Resume
 											</button>
 											<button
-												onClick={() => setResumeSelectionMode('upload')}
+												onClick={() => setResumeSelectionMode("upload")}
 												className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all duration-300 ${
-													resumeSelectionMode === 'upload'
-														? 'bg-[#76ABAE] text-white shadow-lg'
-														: 'text-[#EEEEEE]/70 hover:text-[#EEEEEE] hover:bg-white/10'
+													resumeSelectionMode === "upload"
+														? "bg-[#76ABAE] text-white shadow-lg"
+														: "text-[#EEEEEE]/70 hover:text-[#EEEEEE] hover:bg-white/10"
 												}`}
 											>
 												Upload New Resume
@@ -522,7 +524,7 @@ export default function HiringAssistant() {
 										</div>
 
 										{/* Resume Selection */}
-										{resumeSelectionMode === 'existing' ? (
+										{resumeSelectionMode === "existing" ? (
 											<div>
 												<Label className="text-[#EEEEEE] mb-3 flex items-center font-medium text-sm">
 													<FileText className="mr-2 h-4 w-4 text-[#76ABAE]" />
@@ -530,7 +532,9 @@ export default function HiringAssistant() {
 												</Label>
 												<div className="relative">
 													<button
-														onClick={() => setShowResumeDropdown(!showResumeDropdown)}
+														onClick={() =>
+															setShowResumeDropdown(!showResumeDropdown)
+														}
 														className="relative flex items-center justify-between w-full h-12 px-4 border border-white/20 rounded-xl bg-gradient-to-br from-white/5 to-white/10 hover:from-[#76ABAE]/10 hover:to-[#76ABAE]/5 transition-all duration-300 cursor-pointer group"
 													>
 														<div className="flex items-center space-x-3">
@@ -539,20 +543,32 @@ export default function HiringAssistant() {
 																{selectedResumeId ? (
 																	<div>
 																		<p className="text-[#EEEEEE] text-sm font-medium">
-																			{userResumes.find(r => r.id === selectedResumeId)?.customName}
+																			{
+																				userResumes.find(
+																					(r) => r.id === selectedResumeId
+																				)?.customName
+																			}
 																		</p>
 																		<p className="text-[#EEEEEE]/60 text-xs">
-																			{userResumes.find(r => r.id === selectedResumeId)?.predictedField || 'Resume Selected'}
+																			{userResumes.find(
+																				(r) => r.id === selectedResumeId
+																			)?.predictedField || "Resume Selected"}
 																		</p>
 																	</div>
 																) : (
 																	<p className="text-[#EEEEEE]/50 text-sm">
-																		{isLoadingResumes ? 'Loading resumes...' : 'Choose a resume'}
+																		{isLoadingResumes
+																			? "Loading resumes..."
+																			: "Choose a resume"}
 																	</p>
 																)}
 															</div>
 														</div>
-														<ChevronDown className={`h-4 w-4 text-[#EEEEEE]/60 transition-transform duration-200 ${showResumeDropdown ? 'rotate-180' : ''}`} />
+														<ChevronDown
+															className={`h-4 w-4 text-[#EEEEEE]/60 transition-transform duration-200 ${
+																showResumeDropdown ? "rotate-180" : ""
+															}`}
+														/>
 													</button>
 
 													{/* Dropdown */}
@@ -567,7 +583,11 @@ export default function HiringAssistant() {
 															>
 																{isLoadingResumes ? (
 																	<div className="p-4 text-center">
-																		<Loader variant="spinner" size="sm" className="text-[#76ABAE]" />
+																		<Loader
+																			variant="spinner"
+																			size="sm"
+																			className="text-[#76ABAE]"
+																		/>
 																	</div>
 																) : userResumes.length > 0 ? (
 																	<div className="max-h-64 overflow-y-auto">
@@ -578,10 +598,13 @@ export default function HiringAssistant() {
 																					setSelectedResumeId(resume.id);
 																					setShowResumeDropdown(false);
 																					// Auto-populate role if available
-																					if (resume.predictedField && !formData.role) {
-																						setFormData(prev => ({
+																					if (
+																						resume.predictedField &&
+																						!formData.role
+																					) {
+																						setFormData((prev) => ({
 																							...prev,
-																							role: resume.predictedField || ""
+																							role: resume.predictedField || "",
 																						}));
 																					}
 																				}}
@@ -611,7 +634,9 @@ export default function HiringAssistant() {
 																						<div className="flex items-center space-x-1 mt-1">
 																							<Calendar className="h-3 w-3 text-[#EEEEEE]/40" />
 																							<span className="text-[#EEEEEE]/40 text-xs">
-																								{new Date(resume.uploadDate).toLocaleDateString()}
+																								{new Date(
+																									resume.uploadDate
+																								).toLocaleDateString()}
 																							</span>
 																						</div>
 																					</div>
@@ -622,8 +647,13 @@ export default function HiringAssistant() {
 																) : (
 																	<div className="p-4 text-center">
 																		<FileText className="h-8 w-8 text-[#EEEEEE]/30 mx-auto mb-2" />
-																		<p className="text-[#EEEEEE]/60 text-sm">No resumes found</p>
-																		<p className="text-[#EEEEEE]/40 text-xs mt-1">Upload a resume first in the analysis section</p>
+																		<p className="text-[#EEEEEE]/60 text-sm">
+																			No resumes found
+																		</p>
+																		<p className="text-[#EEEEEE]/40 text-xs mt-1">
+																			Upload a resume first in the analysis
+																			section
+																		</p>
 																	</div>
 																)}
 															</motion.div>
@@ -851,7 +881,9 @@ export default function HiringAssistant() {
 												onClick={generateAnswers}
 												disabled={
 													isGenerating ||
-													!resumeFile ||
+													(resumeSelectionMode === "existing"
+														? !selectedResumeId
+														: !resumeFile && !isPreloaded) ||
 													!formData.role ||
 													!formData.company
 												}

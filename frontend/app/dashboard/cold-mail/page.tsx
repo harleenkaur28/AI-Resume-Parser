@@ -60,14 +60,16 @@ export default function ColdMailGenerator() {
 	const [resumeFile, setResumeFile] = useState<File | null>(null);
 	const [resumeText, setResumeText] = useState("");
 	const [isPreloaded, setIsPreloaded] = useState(false);
-	
+
 	// Resume selection states
 	const [userResumes, setUserResumes] = useState<UserResume[]>([]);
 	const [selectedResumeId, setSelectedResumeId] = useState<string>("");
 	const [isLoadingResumes, setIsLoadingResumes] = useState(false);
 	const [showResumeDropdown, setShowResumeDropdown] = useState(false);
-	const [resumeSelectionMode, setResumeSelectionMode] = useState<'existing' | 'upload'>('existing');
-	
+	const [resumeSelectionMode, setResumeSelectionMode] = useState<
+		"existing" | "upload"
+	>("existing");
+
 	const { toast } = useToast();
 
 	const [formData, setFormData] = useState({
@@ -111,11 +113,11 @@ export default function ColdMailGenerator() {
 		};
 
 		if (showResumeDropdown) {
-			document.addEventListener('mousedown', handleClickOutside);
+			document.addEventListener("mousedown", handleClickOutside);
 		}
 
 		return () => {
-			document.removeEventListener('mousedown', handleClickOutside);
+			document.removeEventListener("mousedown", handleClickOutside);
 		};
 	}, [showResumeDropdown]);
 
@@ -142,7 +144,7 @@ export default function ColdMailGenerator() {
 					)} KB) - Pre-loaded from analysis`
 				);
 				setIsPreloaded(true);
-				setResumeSelectionMode('upload'); // Switch to upload mode if preloaded
+				setResumeSelectionMode("upload"); // Switch to upload mode if preloaded
 
 				// Pre-populate form with analysis data
 				setFormData((prev) => ({
@@ -201,7 +203,7 @@ export default function ColdMailGenerator() {
 
 	const generateColdMail = async () => {
 		// Validation for resume selection
-		if (resumeSelectionMode === 'existing') {
+		if (resumeSelectionMode === "existing") {
 			if (!selectedResumeId) {
 				toast({
 					title: "Resume Required",
@@ -223,7 +225,8 @@ export default function ColdMailGenerator() {
 			if (isPreloaded && !resumeFile) {
 				toast({
 					title: "Resume File Needed",
-					description: "Please re-upload your resume file to generate the email.",
+					description:
+						"Please re-upload your resume file to generate the email.",
 					variant: "destructive",
 				});
 				return;
@@ -248,14 +251,14 @@ export default function ColdMailGenerator() {
 
 		try {
 			const formDataToSend = new FormData();
-			
+
 			// Add resume data based on selection mode
-			if (resumeSelectionMode === 'existing') {
+			if (resumeSelectionMode === "existing") {
 				formDataToSend.append("resumeId", selectedResumeId);
 			} else {
 				formDataToSend.append("file", resumeFile!);
 			}
-			
+
 			formDataToSend.append("recipient_name", formData.recipient_name);
 			formDataToSend.append(
 				"recipient_designation",
@@ -464,21 +467,21 @@ export default function ColdMailGenerator() {
 											{/* Resume Selection Mode Toggle */}
 											<div className="flex space-x-1 bg-white/5 p-1 rounded-lg">
 												<button
-													onClick={() => setResumeSelectionMode('existing')}
+													onClick={() => setResumeSelectionMode("existing")}
 													className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all duration-300 ${
-														resumeSelectionMode === 'existing'
-															? 'bg-[#76ABAE] text-white shadow-lg'
-															: 'text-[#EEEEEE]/70 hover:text-[#EEEEEE] hover:bg-white/10'
+														resumeSelectionMode === "existing"
+															? "bg-[#76ABAE] text-white shadow-lg"
+															: "text-[#EEEEEE]/70 hover:text-[#EEEEEE] hover:bg-white/10"
 													}`}
 												>
 													Use Existing Resume
 												</button>
 												<button
-													onClick={() => setResumeSelectionMode('upload')}
+													onClick={() => setResumeSelectionMode("upload")}
 													className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all duration-300 ${
-														resumeSelectionMode === 'upload'
-															? 'bg-[#76ABAE] text-white shadow-lg'
-															: 'text-[#EEEEEE]/70 hover:text-[#EEEEEE] hover:bg-white/10'
+														resumeSelectionMode === "upload"
+															? "bg-[#76ABAE] text-white shadow-lg"
+															: "text-[#EEEEEE]/70 hover:text-[#EEEEEE] hover:bg-white/10"
 													}`}
 												>
 													Upload New Resume
@@ -486,7 +489,7 @@ export default function ColdMailGenerator() {
 											</div>
 
 											{/* Resume Selection */}
-											{resumeSelectionMode === 'existing' ? (
+											{resumeSelectionMode === "existing" ? (
 												<div className="space-y-3">
 													<Label className="text-[#EEEEEE] text-sm font-medium flex items-center">
 														<FileText className="h-4 w-4 mr-2 text-[#76ABAE]" />
@@ -494,7 +497,9 @@ export default function ColdMailGenerator() {
 													</Label>
 													<div className="relative">
 														<button
-															onClick={() => setShowResumeDropdown(!showResumeDropdown)}
+															onClick={() =>
+																setShowResumeDropdown(!showResumeDropdown)
+															}
 															className="relative flex items-center justify-between w-full h-12 px-4 border border-white/20 rounded-xl bg-gradient-to-br from-white/5 to-white/10 hover:from-[#76ABAE]/10 hover:to-[#76ABAE]/5 transition-all duration-300 cursor-pointer group"
 														>
 															<div className="flex items-center space-x-3">
@@ -503,20 +508,32 @@ export default function ColdMailGenerator() {
 																	{selectedResumeId ? (
 																		<div>
 																			<p className="text-[#EEEEEE] text-sm font-medium">
-																				{userResumes.find(r => r.id === selectedResumeId)?.customName}
+																				{
+																					userResumes.find(
+																						(r) => r.id === selectedResumeId
+																					)?.customName
+																				}
 																			</p>
 																			<p className="text-[#EEEEEE]/60 text-xs">
-																				{userResumes.find(r => r.id === selectedResumeId)?.predictedField || 'Resume Selected'}
+																				{userResumes.find(
+																					(r) => r.id === selectedResumeId
+																				)?.predictedField || "Resume Selected"}
 																			</p>
 																		</div>
 																	) : (
 																		<p className="text-[#EEEEEE]/50 text-sm">
-																			{isLoadingResumes ? 'Loading resumes...' : 'Choose a resume'}
+																			{isLoadingResumes
+																				? "Loading resumes..."
+																				: "Choose a resume"}
 																		</p>
 																	)}
 																</div>
 															</div>
-															<ChevronDown className={`h-4 w-4 text-[#EEEEEE]/60 transition-transform duration-200 ${showResumeDropdown ? 'rotate-180' : ''}`} />
+															<ChevronDown
+																className={`h-4 w-4 text-[#EEEEEE]/60 transition-transform duration-200 ${
+																	showResumeDropdown ? "rotate-180" : ""
+																}`}
+															/>
 														</button>
 
 														{/* Dropdown */}
@@ -531,7 +548,11 @@ export default function ColdMailGenerator() {
 																>
 																	{isLoadingResumes ? (
 																		<div className="p-4 text-center">
-																			<Loader variant="spinner" size="sm" className="text-[#76ABAE]" />
+																			<Loader
+																				variant="spinner"
+																				size="sm"
+																				className="text-[#76ABAE]"
+																			/>
 																		</div>
 																	) : userResumes.length > 0 ? (
 																		<div className="max-h-64 overflow-y-auto">
@@ -542,17 +563,25 @@ export default function ColdMailGenerator() {
 																						setSelectedResumeId(resume.id);
 																						setShowResumeDropdown(false);
 																						// Auto-populate sender name if available
-																						if (resume.candidateName && !formData.sender_name) {
-																							setFormData(prev => ({
+																						if (
+																							resume.candidateName &&
+																							!formData.sender_name
+																						) {
+																							setFormData((prev) => ({
 																								...prev,
-																								sender_name: resume.candidateName || ""
+																								sender_name:
+																									resume.candidateName || "",
 																							}));
 																						}
 																						// Auto-populate role/goal if available
-																						if (resume.predictedField && !formData.sender_role_or_goal) {
-																							setFormData(prev => ({
+																						if (
+																							resume.predictedField &&
+																							!formData.sender_role_or_goal
+																						) {
+																							setFormData((prev) => ({
 																								...prev,
-																								sender_role_or_goal: resume.predictedField || ""
+																								sender_role_or_goal:
+																									resume.predictedField || "",
 																							}));
 																						}
 																					}}
@@ -582,7 +611,9 @@ export default function ColdMailGenerator() {
 																							<div className="flex items-center space-x-1 mt-1">
 																								<Calendar className="h-3 w-3 text-[#EEEEEE]/40" />
 																								<span className="text-[#EEEEEE]/40 text-xs">
-																									{new Date(resume.uploadDate).toLocaleDateString()}
+																									{new Date(
+																										resume.uploadDate
+																									).toLocaleDateString()}
 																								</span>
 																							</div>
 																						</div>
@@ -593,8 +624,13 @@ export default function ColdMailGenerator() {
 																	) : (
 																		<div className="p-4 text-center">
 																			<FileText className="h-8 w-8 text-[#EEEEEE]/30 mx-auto mb-2" />
-																			<p className="text-[#EEEEEE]/60 text-sm">No resumes found</p>
-																			<p className="text-[#EEEEEE]/40 text-xs mt-1">Upload a resume first in the analysis section</p>
+																			<p className="text-[#EEEEEE]/60 text-sm">
+																				No resumes found
+																			</p>
+																			<p className="text-[#EEEEEE]/40 text-xs mt-1">
+																				Upload a resume first in the analysis
+																				section
+																			</p>
 																		</div>
 																	)}
 																</motion.div>
@@ -872,7 +908,15 @@ export default function ColdMailGenerator() {
 											>
 												<Button
 													onClick={generateColdMail}
-													disabled={isGenerating}
+													disabled={
+														isGenerating ||
+														(resumeSelectionMode === "existing"
+															? !selectedResumeId
+															: !resumeFile && !isPreloaded) ||
+														!formData.recipient_name ||
+														!formData.company_name ||
+														!formData.sender_name
+													}
 													className="relative w-full h-14 bg-gradient-to-r from-[#76ABAE] to-[#76ABAE]/80 hover:from-[#76ABAE]/90 hover:to-[#76ABAE]/70 text-white font-semibold rounded-xl transition-all duration-300 overflow-hidden group disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
 												>
 													{/* Animated background for loading state */}
