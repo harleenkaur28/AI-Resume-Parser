@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
     // Parse form data
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
+    const resumeId = formData.get('resumeId') as string | null;
     
     // Extract form fields
     const requestData = {
@@ -123,6 +124,7 @@ export async function POST(request: NextRequest) {
     console.log('Cold Mail API - Request data:', { 
       hasFile: !!file, 
       fileName: file?.name, 
+      resumeId,
       formData: Object.keys(requestData) 
     });
 
@@ -134,6 +136,27 @@ export async function POST(request: NextRequest) {
           success: false, 
           message: "Validation failed", 
           errors: validation.errors 
+        },
+        { status: 400 }
+      );
+    }
+
+    // Validate resume source
+    if (!file && !resumeId) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: "Either upload a resume file or select an existing resume" 
+        },
+        { status: 400 }
+      );
+    }
+
+    if (file && resumeId) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: "Please either upload a file or select an existing resume, not both" 
         },
         { status: 400 }
       );
@@ -166,37 +189,53 @@ export async function POST(request: NextRequest) {
           // Add timeout and other fetch options
           signal: AbortSignal.timeout(30000), // 30 second timeout
         });
-      } else {
+      } else if (resumeId) {
         // Scenario 2: Use existing resume from database - use v2 endpoint
         console.log('Cold Mail API - Using v2 endpoint (existing resume)');
         
-        // Get user's most recent resume from database
+        // Get the specific resume from database
         const user = await prisma.user.findUnique({
           where: { email: session.user.email },
-          include: {
-            resumes: {
-              orderBy: { uploadDate: 'desc' },
-              take: 1
-            }
-          }
+          include: { role: true }
         });
 
-        if (!user || !user.resumes || user.resumes.length === 0) {
+        if (!user) {
           return NextResponse.json(
-            { 
-              success: false, 
-              message: "No resume found. Please upload a resume first." 
-            },
-            { status: 400 }
+            { success: false, message: "User not found" },
+            { status: 404 }
           );
         }
 
-        const resumeText = user.resumes[0].rawText;
+        const resume = await prisma.resume.findUnique({
+          where: { id: resumeId },
+          include: { user: true }
+        });
+
+        if (!resume) {
+          return NextResponse.json(
+            { success: false, message: "Resume not found" },
+            { status: 404 }
+          );
+        }
+
+        // Check if user owns the resume or has admin/recruiter access
+        const canAccess = resume.userId === user.id || 
+                         user.role?.name === 'Admin' || 
+                         user.role?.name === 'Recruiter';
+
+        if (!canAccess) {
+          return NextResponse.json(
+            { success: false, message: "Access denied to this resume" },
+            { status: 403 }
+          );
+        }
+
+        const resumeText = resume.rawText;
         if (!resumeText || resumeText.trim().length < 100) {
           return NextResponse.json(
             { 
               success: false, 
-              message: "Resume text is too short or invalid. Please upload a new resume." 
+              message: "Resume text is too short or invalid. Please select a different resume." 
             },
             { status: 400 }
           );
@@ -221,6 +260,15 @@ export async function POST(request: NextRequest) {
           // Add timeout and other fetch options
           signal: AbortSignal.timeout(30000), // 30 second timeout
         });
+      } else {
+        // This should not happen due to earlier validation, but handle it just in case
+        return NextResponse.json(
+          { 
+            success: false, 
+            message: "Invalid request: no resume source provided" 
+          },
+          { status: 400 }
+        );
       }
 
       if (!backendResponse.ok) {
@@ -435,5 +483,59 @@ export async function POST(request: NextRequest) {
     );
   } finally {
     await prisma.$disconnect();
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    // Check authentication
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get user's resumes for selection
+    const resumes = await prisma.resume.findMany({
+      where: {
+        userId: (session.user as any).id
+      },
+      select: {
+        id: true,
+        customName: true,
+        uploadDate: true,
+        analysis: {
+          select: {
+            name: true,
+            predictedField: true
+          }
+        }
+      },
+      orderBy: {
+        uploadDate: 'desc'
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'User resumes retrieved successfully',
+      data: {
+        resumes: resumes.map(resume => ({
+          id: resume.id,
+          customName: resume.customName,
+          uploadDate: resume.uploadDate,
+          candidateName: resume.analysis?.name,
+          predictedField: resume.analysis?.predictedField
+        })),
+        total: resumes.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching user resumes:', error);
+    return NextResponse.json({ 
+      error: 'Internal server error', 
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
