@@ -43,42 +43,27 @@ function VerifyEmailContent() {
 		setSuccess(null);
 		setMessage("Verifying your email, please wait...");
 
-		// TODO: Implement API call to verify email with the token
-		// Example:
-		// try {
-		//   const response = await fetch("/api/auth/verify-email", {
-		//     method: "POST",
-		//     headers: { "Content-Type": "application/json" },
-		//     body: JSON.stringify({ token: tokenToVerify }),
-		//   });
-		//   const data = await response.json();
-		//   if (!response.ok) throw new Error(data.message || "Verification failed");
-		//   setSuccess("Email verified successfully! You can now login.");
-		//   setMessage("Email verified successfully! Redirecting to login...");
-		//   setTimeout(() => router.push("/auth"), 3000);
-		// } catch (err: any) {
-		//   setError(err.message || "An unexpected error occurred.");
-		//   setMessage(err.message || "An unexpected error occurred.");
-		// } finally {
-		//   setIsLoading(false);
-		// }
+		try {
+			const response = await fetch("/api/auth/verify-email", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ token: tokenToVerify }),
+			});
+			const data = await response.json();
 
-		// Mock API call
-		setTimeout(() => {
-			if (tokenToVerify === "valid-token") {
-				setSuccess("Email verified successfully! Redirecting to login...");
-				setMessage("Email verified successfully! Redirecting to login...");
-				setTimeout(() => router.push("/auth"), 3000);
-			} else {
-				setError(
-					"Invalid or expired token. Please try again or request a new verification email."
-				);
-				setMessage(
-					"Invalid or expired token. Please try again or request a new verification email."
-				);
+			if (!response.ok) {
+				throw new Error(data.error || "Verification failed");
 			}
+
+			setSuccess("Email verified successfully! You can now login.");
+			setMessage("Email verified successfully! Redirecting to login...");
+			setTimeout(() => router.push("/auth"), 3000);
+		} catch (err: any) {
+			setError(err.message || "An unexpected error occurred.");
+			setMessage(err.message || "An unexpected error occurred.");
+		} finally {
 			setIsLoading(false);
-		}, 1500);
+		}
 	};
 
 	return (

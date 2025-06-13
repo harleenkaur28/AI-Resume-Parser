@@ -48,7 +48,7 @@ export default function AuthPage() {
 	const [showPassword, setShowPassword] = useState(false);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 	const [roles, setRoles] = useState<Role[]>([]);
-	const [error, setError] = useState("");
+	const [error, setError] = useState<string | React.ReactNode>("");
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const defaultTab =
@@ -120,6 +120,24 @@ export default function AuthPage() {
 		}
 	}, [session, router]);
 
+	// Handle URL error parameters
+	useEffect(() => {
+		const errorParam = searchParams.get("error");
+		if (errorParam === "unverified") {
+			setError(
+				<div>
+					Please verify your email before signing in.{" "}
+					<Link
+						href="/auth/resend-verification"
+						className="text-[#76ABAE] hover:underline font-medium"
+					>
+						Resend verification email
+					</Link>
+				</div>
+			);
+		}
+	}, [searchParams]);
+
 	const handleOAuthSignIn = async (provider: string) => {
 		setIsLoading(true);
 		await signIn(provider, { callbackUrl: "/dashboard" });
@@ -138,7 +156,22 @@ export default function AuthPage() {
 		});
 
 		if (result?.error) {
-			setError("Invalid email or password");
+			// Check if error is related to email verification
+			if (result.error.includes("verify your email")) {
+				setError(
+					<div>
+						Please verify your email before signing in.{" "}
+						<Link
+							href="/auth/resend-verification"
+							className="text-[#76ABAE] hover:underline font-medium"
+						>
+							Resend verification email
+						</Link>
+					</div>
+				);
+			} else {
+				setError("Invalid email or password");
+			}
 		} else if (result?.ok) {
 			router.push("/dashboard");
 		}
@@ -192,20 +225,36 @@ export default function AuthPage() {
 			const data = await response.json();
 
 			if (response.ok) {
-				// Registration successful, now sign in
-				const result = await signIn("credentials", {
-					email: registerForm.email,
-					password: registerForm.password,
-					redirect: false,
-				});
+				// Registration successful - show email verification message
+				setError(
+					<div className="text-green-400 text-center">
+						<div className="font-medium mb-2">Registration Successful!</div>
+						<div className="text-sm">
+							A verification email has been sent to {registerForm.email}. Please
+							check your inbox and click the verification link to activate your
+							account.
+						</div>
+						<div className="mt-3">
+							<Link
+								href="/auth/resend-verification"
+								className="text-[#76ABAE] hover:underline font-medium text-sm"
+							>
+								Didn't receive the email? Resend verification
+							</Link>
+						</div>
+					</div>
+				);
 
-				if (result?.ok) {
-					router.push("/dashboard");
-				} else {
-					setError(
-						"Registration successful but login failed. Please try logging in."
-					);
-				}
+				// Clear the form
+				setRegisterForm({
+					name: "",
+					email: "",
+					password: "",
+					confirmPassword: "",
+					roleId: "",
+					avatarUrl: "",
+				});
+				setAvatarPreview("");
 			} else {
 				setError(data.error || "Registration failed");
 			}
@@ -278,7 +327,12 @@ export default function AuthPage() {
 							<motion.div
 								initial={{ opacity: 0, y: -10 }}
 								animate={{ opacity: 1, y: 0 }}
-								className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-200 text-sm"
+								className={`mb-4 p-3 rounded-lg text-sm ${
+									typeof error === "string" &&
+									error.includes("Registration Successful")
+										? "bg-green-500/20 border border-green-500/30 text-green-200"
+										: "bg-red-500/20 border border-red-500/30 text-red-200"
+								}`}
 							>
 								{error}
 							</motion.div>
@@ -437,21 +491,24 @@ export default function AuthPage() {
 												Profile Picture (Optional)
 											</Label>
 											<div className="flex items-center space-x-4">
-												<Avatar 
-													src={avatarPreview} 
-													alt="Avatar Preview" 
-													size="md" 
+												<Avatar
+													src={avatarPreview}
+													alt="Avatar Preview"
+													size="md"
 												/>
 												<div className="flex-1 space-y-2">
 													<Input
 														type="url"
 														placeholder="https://example.com/your-avatar.jpg"
 														value={registerForm.avatarUrl}
-														onChange={(e) => handleAvatarUrlChange(e.target.value)}
+														onChange={(e) =>
+															handleAvatarUrlChange(e.target.value)
+														}
 														className="bg-white/10 border-white/20 text-[#EEEEEE] placeholder:text-[#EEEEEE]/40 focus:bg-white/15 transition-all duration-300"
 													/>
 													<p className="text-xs text-[#EEEEEE]/60">
-														Paste a URL to your profile picture (JPG, PNG, GIF, WebP)
+														Paste a URL to your profile picture (JPG, PNG, GIF,
+														WebP)
 													</p>
 													{avatarError && (
 														<div className="flex items-center space-x-1 text-red-400 text-xs">

@@ -36,6 +36,11 @@ export const authOptions = {
           return null;
         }
 
+        // Check if user is verified for email-based accounts
+        if (!user.isVerified) {
+          throw new Error("Please verify your email before signing in. Check your inbox for a verification link.");
+        }
+
         const isPasswordValid = await compare(credentials.password, user.passwordHash);
 
         if (!isPasswordValid) {
@@ -75,10 +80,61 @@ export const authOptions = {
   session: {
     strategy: "jwt" as const,
   },
+  events: {
+    async createUser({ user }: { user: any }) {
+      // Set isVerified to true for OAuth users (they don't have passwordHash)
+      if (!user.email) return;
+      
+      const dbUser = await prisma.user.findUnique({
+        where: { email: user.email }
+      });
+      
+      if (dbUser && !dbUser.passwordHash && !dbUser.isVerified) {
+        await prisma.user.update({
+          where: { id: dbUser.id },
+          data: { isVerified: true }
+        });
+      }
+    },
+  },
   callbacks: {
     async signIn({ user, account, profile }: any) {
       if (process.env.NODE_ENV === "development") {
         console.log("SignIn callback:", { user: { ...user, image: user.image }, account: account?.provider, profile: profile?.picture });
+      }
+      
+      // For OAuth providers (Google, GitHub), automatically mark as verified
+      if (account?.provider && account.provider !== "credentials" && account.provider !== "email") {
+        try {
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email }
+          });
+          
+          if (existingUser && !existingUser.isVerified) {
+            await prisma.user.update({
+              where: { id: existingUser.id },
+              data: { isVerified: true }
+            });
+          }
+        } catch (error) {
+          console.error("Error updating OAuth user verification status:", error);
+        }
+      }
+      
+      // For credentials provider, check if user is verified
+      if (account?.provider === "credentials") {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: user.email }
+          });
+          
+          if (dbUser && !dbUser.isVerified) {
+            return "/auth/verify-email?error=unverified";
+          }
+        } catch (error) {
+          console.error("Error checking user verification status:", error);
+          return false;
+        }
       }
       
       // For OAuth providers, ensure image is captured

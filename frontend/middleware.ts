@@ -36,6 +36,8 @@ export default withAuth(
         if (
           pathname === "/" || 
           pathname === "/auth" || 
+          pathname.startsWith("/auth/verify-email") ||
+          pathname.startsWith("/auth/resend-verification") ||
           pathname.startsWith("/api/") ||
           pathname.startsWith("/_next/") ||
           pathname.includes(".")

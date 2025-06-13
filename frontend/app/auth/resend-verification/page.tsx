@@ -32,31 +32,26 @@ export default function ResendVerificationPage() {
 		setSuccess(null);
 
 		// TODO: Implement API call to resend verification email
-		// Example:
-		// try {
-		//   const response = await fetch("/api/auth/resend-verification", {
-		//     method: "POST",
-		//     headers: { "Content-Type": "application/json" },
-		//     body: JSON.stringify({ email }),
-		//   });
-		//   const data = await response.json();
-		//   if (!response.ok) throw new Error(data.message || "Failed to resend email");
-		//   setSuccess("Verification email sent! Please check your inbox.");
-		// } catch (err: any) {
-		//   setError(err.message || "An unexpected error occurred.");
-		// } finally {
-		//   setIsLoading(false);
-		// }
+		try {
+			const response = await fetch("/api/auth/resend-verification", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ email }),
+			});
+			const data = await response.json();
 
-		// Mock API call
-		setTimeout(() => {
-			// Simulate API call success
+			if (!response.ok) {
+				throw new Error(data.error || "Failed to resend email");
+			}
+
 			setSuccess(
-				`Verification email sent to ${email}! Please check your inbox (and spam folder).`
+				"Verification email sent! Please check your inbox (and spam folder)."
 			);
-			// setEmail(""); // Optionally clear email field
+		} catch (err: any) {
+			setError(err.message || "An unexpected error occurred.");
+		} finally {
 			setIsLoading(false);
-		}, 1500);
+		}
 	};
 
 	return (
