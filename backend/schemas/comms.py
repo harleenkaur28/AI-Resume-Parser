@@ -1,4 +1,3 @@
-# /Users/taf/Projects/Resume Portal/backend/schemas/comms.py
 import uuid
 from datetime import datetime
 from pydantic import BaseModel
@@ -13,9 +12,9 @@ class ColdMailRequestDB(BaseModel):
     company_name: str
     sender_name: str
     sender_role_or_goal: str
-    key_points: str  # Could be JSON or structured text
+    key_points: str
     additional_info: Optional[str] = None
-    company_url: Optional[str] = None  # Optional, for LLM context
+    company_url: Optional[str] = None
     created_at: datetime
 
     class Config:
@@ -24,9 +23,9 @@ class ColdMailRequestDB(BaseModel):
 
 class ColdMailResponseDB(BaseModel):
     id: uuid.UUID
-    request_id: uuid.UUID  # Foreign key to ColdMailRequestDB
+    request_id: uuid.UUID
     subject: str
-    body: str  # The generated email body
+    body: str
     created_at: datetime
 
     class Config:

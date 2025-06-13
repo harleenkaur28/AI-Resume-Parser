@@ -1,4 +1,3 @@
-# /Users/taf/Projects/Resume Portal/backend/api/v1/endpoints/auth.py
 from fastapi import APIRouter, Depends, HTTPException, status, Form
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Any
@@ -7,16 +6,15 @@ from schemas.user import (
     UserCreate,
     UserPublic,
     Token,
-)  # Assuming these are in schemas.user
+)
 from security.auth import (
     create_access_token,
     get_password_hash,
     verify_password,
-)  # Assuming these are in security.auth
+)
 
-# You'll need CRUD operations for users, e.g., from a db.crud_user module
-# from db.crud_user import get_user_by_email, create_user_db
-from db.session import get_db_connection  # For database operations
+
+from db.session import get_db_connection
 import asyncpg
 import uuid
 from datetime import timedelta
@@ -28,30 +26,32 @@ router = APIRouter()
 async def register_user(
     user_data: UserCreate, conn: asyncpg.Connection = Depends(get_db_connection)
 ):
-    # Check if user already exists
+
     existing_user = await conn.fetchrow(
         'SELECT email FROM auth."user" WHERE email = $1', user_data.email
     )
+
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered",
         )
 
-    # Get role_id for the given role_name
     role_record = await conn.fetchrow(
-        "SELECT id FROM auth.role WHERE name = $1", user_data.role_name
+        "SELECT id FROM auth.role WHERE name = $1",
+        user_data.role_name,
     )
+
     if not role_record:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Role '{user_data.role_name}' not found.",
         )
+
     role_id = role_record["id"]
 
     hashed_password = get_password_hash(user_data.password)
 
-    # Create user
     try:
         new_user_id = await conn.fetchval(
             """INSERT INTO auth."user" (email, hashed_password, role_id) 
@@ -61,14 +61,13 @@ async def register_user(
             role_id,
         )
 
-        # Fetch the created user to return UserPublic model (including role info)
-        # This requires a join or a subsequent query for the role name
         created_user_record = await conn.fetchrow(
             """SELECT u.id, u.email, u.role_id, u.is_verified, u.created_at, u.updated_at, r.name as role_name 
                FROM auth."user" u JOIN auth.role r ON u.role_id = r.id 
                WHERE u.id = $1""",
             new_user_id,
         )
+
         if not created_user_record:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -93,8 +92,8 @@ async def register_user(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered (race condition).",
         )
+
     except Exception as e:
-        # Log the error e
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error creating user",
@@ -108,7 +107,7 @@ async def login_for_access_token(
 ):
     user = await conn.fetchrow(
         'SELECT id, email, hashed_password, role_id, is_verified FROM auth."user" WHERE email = $1',
-        form_data.username,  # OAuth2PasswordRequestForm uses 'username' for the email field
+        form_data.username,
     )
     if not user or not verify_password(form_data.password, user["hashed_password"]):
         raise HTTPException(
@@ -117,22 +116,21 @@ async def login_for_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Add more checks if needed, e.g., if user.is_verified == False
-    # if not user['is_verified']:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_400_BAD_REQUEST,
-    #         detail="Email not verified"
-    #     )
+    if not user["is_verified"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email not verified"
+        )
 
-    access_token_expires = timedelta(minutes=30)  # Or from config
+    access_token_expires = timedelta(minutes=30)
     access_token = create_access_token(
         data={
             "sub": user["email"],
             "id": str(user["id"]),
-        },  # Store email in 'sub', user_id in 'id'
+        },
         expires_delta=access_token_expires,
     )
-    return {"access_token": access_token, "token_type": "bearer"}
 
-
-# You would add more endpoints here, e.g., for password recovery, email verification, etc.
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+    }

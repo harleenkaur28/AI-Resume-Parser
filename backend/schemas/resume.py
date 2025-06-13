@@ -1,9 +1,8 @@
-# /Users/taf/Projects/Resume Portal/backend/schemas/resume.py
 import uuid
 from datetime import datetime
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional
-from .common import WorkExperienceEntry, ProjectEntry  # Relative import
+from .common import WorkExperienceEntry, ProjectEntry
 
 
 class ResumeMetadataDB(BaseModel):
@@ -18,7 +17,7 @@ class ResumeMetadataDB(BaseModel):
         orm_mode = True
 
 
-class AnalysisDB(BaseModel):  # Represents resumes.analysis table structure
+class AnalysisDB(BaseModel):
     id: uuid.UUID
     resume_id: uuid.UUID
     name: str
@@ -48,10 +47,9 @@ class BulkUploadDB(BaseModel):
         orm_mode = True
 
 
-# For the initial LLM-based analysis from the prompt
 class ResumeAnalysisPrompt(BaseModel):
     name: str
-    email: EmailStr  # Changed from str to EmailStr
+    email: EmailStr
     contact: Optional[str] = None
     predicted_field: str
     college: Optional[str] = None
@@ -61,7 +59,6 @@ class ResumeAnalysisPrompt(BaseModel):
     upload_date: datetime = Field(default_factory=datetime.utcnow)
 
 
-# Pydantic models for comprehensive UI analysis
 class SkillProficiency(BaseModel):
     skill_name: str
     percentage: int
@@ -106,7 +103,6 @@ class ComprehensiveAnalysisResponse(BaseModel):
     data: ComprehensiveAnalysisData
 
 
-# Pydantic models for tips
 class Tip(BaseModel):
     category: str
     advice: str
