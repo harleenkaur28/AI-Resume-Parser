@@ -49,9 +49,12 @@ export default function SelectRolePage() {
 			});
 
 			if (response.ok) {
-				// Update the session
-				await update();
-				router.push("/dashboard");
+				// Update the session with trigger to force token refresh
+				await update({ trigger: "update" });
+				// Small delay to ensure session is updated
+				setTimeout(() => {
+					router.push("/dashboard");
+				}, 100);
 			} else {
 				const errorData = await response.json();
 				setError(errorData.error || "Failed to update role");

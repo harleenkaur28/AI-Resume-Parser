@@ -9,7 +9,7 @@ import { compare } from "bcrypt";
 
 const prisma = new PrismaClient();
 
-const handler = NextAuth({
+export const authOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
@@ -73,21 +73,30 @@ const handler = NextAuth({
   ],
   secret: process.env.NEXTAUTH_SECRET,
   session: {
-    strategy: "jwt",
+    strategy: "jwt" as const,
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account, profile }: any) {
       return true;
     },
-    async session({ session, token }) {
+    async session({ session, token }: any) {
       if (token.sub && session.user) {
         (session.user as { id: string }).id = token.sub;
         (session.user as { role?: string }).role = token.role as string;
       }
       return session;
     },
-    async jwt({ token, user, account }) {
-      if (user) {
+    async jwt({ token, user, account, trigger }: any) {
+      // If this is a token refresh or update, fetch the latest user data
+      if (trigger === "update" || (token.sub && !user)) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.sub },
+          include: { role: true }
+        });
+        if (dbUser) {
+          token.role = dbUser.role?.name;
+        }
+      } else if (user) {
         // For OAuth users, check if they have a role
         if (account?.provider !== "credentials") {
           const dbUser = await prisma.user.findUnique({
@@ -106,6 +115,8 @@ const handler = NextAuth({
     signIn: "/auth", 
   },
   debug: process.env.NODE_ENV === "development",
-});
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
