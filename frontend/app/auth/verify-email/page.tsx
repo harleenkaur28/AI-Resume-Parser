@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -13,16 +13,24 @@ import {
 } from "@/components/ui/card";
 import { ArrowLeft, MailCheck, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { Loader } from "@/components/ui/loader";
 
 function VerifyEmailContent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
+	const [isPageLoading, setIsPageLoading] = useState(true);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState<string | null>(null);
 	const [message, setMessage] = useState<string | null>(
 		"Verifying your email, please wait..."
 	);
+
+	// Simulate page load
+	useEffect(() => {
+		const timer = setTimeout(() => setIsPageLoading(false), 600);
+		return () => clearTimeout(timer);
+	}, []);
 
 	useEffect(() => {
 		const tokenFromUrl = searchParams.get("token");
@@ -67,7 +75,25 @@ function VerifyEmailContent() {
 	};
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831] flex flex-col items-center justify-center p-4">
+		<>
+			<AnimatePresence>
+				{isPageLoading && (
+					<motion.div
+						initial={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						className="fixed inset-0 bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831] flex items-center justify-center z-50"
+					>
+						<Loader
+							variant="pulse"
+							size="xl"
+							text="Loading email verification..."
+						/>
+					</motion.div>
+				)}
+			</AnimatePresence>
+
+			{!isPageLoading && (
+				<div className="min-h-screen bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831] flex flex-col items-center justify-center p-4">
 			<motion.div
 				initial={{ opacity: 0, x: -20 }}
 				animate={{ opacity: 1, x: 0 }}
@@ -138,7 +164,9 @@ function VerifyEmailContent() {
 					</CardContent>
 				</Card>
 			</motion.div>
-		</div>
+			</div>
+			)}
+		</>
 	);
 }
 

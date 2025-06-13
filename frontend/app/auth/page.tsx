@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar } from "@/components/ui/avatar";
@@ -36,6 +36,7 @@ import {
 	AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { Loader } from "@/components/ui/loader";
 
 interface Role {
 	id: string;
@@ -44,6 +45,7 @@ interface Role {
 
 export default function AuthPage() {
 	const { data: session, status } = useSession();
+	const [isPageLoading, setIsPageLoading] = useState(true);
 	const [isLoading, setIsLoading] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -111,6 +113,12 @@ export default function AuthPage() {
 		};
 
 		fetchRoles();
+	}, []);
+
+	// Simulate page load
+	useEffect(() => {
+		const timer = setTimeout(() => setIsPageLoading(false), 800);
+		return () => clearTimeout(timer);
 	}, []);
 
 	// Redirect if session exists
@@ -289,7 +297,25 @@ export default function AuthPage() {
 	}
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831] flex items-center justify-center">
+		<>
+			<AnimatePresence>
+				{isPageLoading && (
+					<motion.div
+						initial={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						className="fixed inset-0 bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831] flex items-center justify-center z-50"
+					>
+						<Loader
+							variant="pulse"
+							size="xl"
+							text="Loading authentication..."
+						/>
+					</motion.div>
+				)}
+			</AnimatePresence>
+
+			{!isPageLoading && (
+				<div className="min-h-screen bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831] flex items-center justify-center">
 			<motion.div
 				initial={{ opacity: 0, x: -20 }}
 				animate={{ opacity: 1, x: 0 }}
@@ -415,9 +441,12 @@ export default function AuthPage() {
 										</div>
 										<Button
 											type="submit"
-											className="w-full bg-[#76ABAE] hover:bg-[#76ABAE]/90 backdrop-blur-sm shadow-lg transition-all duration-300"
+											className="w-full bg-[#76ABAE] hover:bg-[#76ABAE]/90 backdrop-blur-sm shadow-lg transition-all duration-300 flex items-center justify-center gap-2"
 											disabled={isLoading}
 										>
+											{isLoading && (
+												<Loader variant="spinner" size="sm" />
+											)}
 											{isLoading ? "Signing in..." : "Sign In"}
 										</Button>
 									</form>
@@ -449,7 +478,11 @@ export default function AuthPage() {
 											type="button"
 											className="w-full bg-[#4285F4] hover:bg-[#3578E5] text-white py-3 text-lg flex items-center justify-center gap-2"
 										>
-											<Chrome className="h-5 w-5" />
+											{isLoading ? (
+												<Loader variant="spinner" size="sm" className="mr-2" />
+											) : (
+												<Chrome className="h-5 w-5" />
+											)}
 											Continue with Google
 										</Button>
 										<Button
@@ -458,7 +491,11 @@ export default function AuthPage() {
 											type="button"
 											className="w-full bg-[#333] hover:bg-[#444] text-white py-3 text-lg flex items-center justify-center gap-2"
 										>
-											<Github className="h-5 w-5" />
+											{isLoading ? (
+												<Loader variant="spinner" size="sm" className="mr-2" />
+											) : (
+												<Github className="h-5 w-5" />
+											)}
 											Continue with GitHub
 										</Button>
 									</div>
@@ -695,9 +732,12 @@ export default function AuthPage() {
 										</div>
 										<Button
 											type="submit"
-											className="w-full bg-[#76ABAE] hover:bg-[#76ABAE]/90 backdrop-blur-sm shadow-lg transition-all duration-300 mt-2"
+											className="w-full bg-[#76ABAE] hover:bg-[#76ABAE]/90 backdrop-blur-sm shadow-lg transition-all duration-300 mt-2 flex items-center justify-center gap-2"
 											disabled={isLoading}
 										>
+											{isLoading && (
+												<Loader variant="spinner" size="sm" />
+											)}
 											{isLoading ? "Creating Account..." : "Create Account"}
 										</Button>
 									</form>
@@ -720,7 +760,11 @@ export default function AuthPage() {
 											type="button"
 											className="w-full bg-[#4285F4] hover:bg-[#3578E5] text-white py-3 text-lg flex items-center justify-center gap-2"
 										>
-											<Chrome className="h-5 w-5" />
+											{isLoading ? (
+												<Loader variant="spinner" size="sm" className="mr-2" />
+											) : (
+												<Chrome className="h-5 w-5" />
+											)}
 											Sign up with Google
 										</Button>
 										<Button
@@ -729,7 +773,11 @@ export default function AuthPage() {
 											type="button"
 											className="w-full bg-[#333] hover:bg-[#444] text-white py-3 text-lg flex items-center justify-center gap-2"
 										>
-											<Github className="h-5 w-5" />
+											{isLoading ? (
+												<Loader variant="spinner" size="sm" className="mr-2" />
+											) : (
+												<Github className="h-5 w-5" />
+											)}
 											Sign up with GitHub
 										</Button>
 									</div>
@@ -739,6 +787,8 @@ export default function AuthPage() {
 					</Tabs>
 				</motion.div>
 			</div>
-		</div>
+			</div>
+			)}
+		</>
 	);
 }

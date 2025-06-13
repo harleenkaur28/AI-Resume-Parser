@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,10 +22,12 @@ import {
 	CheckCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { Loader } from "@/components/ui/loader";
 
 function ResetPasswordContent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
+	const [isPageLoading, setIsPageLoading] = useState(true);
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
@@ -34,6 +36,12 @@ function ResetPasswordContent() {
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState<string | null>(null);
 	const [token, setToken] = useState<string | null>(null);
+
+	// Simulate page load
+	useEffect(() => {
+		const timer = setTimeout(() => setIsPageLoading(false), 600);
+		return () => clearTimeout(timer);
+	}, []);
 
 	useEffect(() => {
 		const tokenFromUrl = searchParams.get("token");
@@ -93,7 +101,25 @@ function ResetPasswordContent() {
 	}
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831] flex flex-col items-center justify-center p-4">
+		<>
+			<AnimatePresence>
+				{isPageLoading && (
+					<motion.div
+						initial={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						className="fixed inset-0 bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831] flex items-center justify-center z-50"
+					>
+						<Loader
+							variant="pulse"
+							size="xl"
+							text="Loading password reset..."
+						/>
+					</motion.div>
+				)}
+			</AnimatePresence>
+
+			{!isPageLoading && (
+				<div className="min-h-screen bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831] flex flex-col items-center justify-center p-4">
 			<motion.div
 				initial={{ opacity: 0, x: -20 }}
 				animate={{ opacity: 1, x: 0 }}
@@ -221,9 +247,12 @@ function ResetPasswordContent() {
 
 								<Button
 									type="submit"
-									className="w-full bg-[#76ABAE] hover:bg-[#76ABAE]/90"
+									className="w-full bg-[#76ABAE] hover:bg-[#76ABAE]/90 flex items-center justify-center gap-2"
 									disabled={isLoading}
 								>
+									{isLoading && (
+										<Loader variant="spinner" size="sm" />
+									)}
 									{isLoading ? "Resetting..." : "Reset Password"}
 								</Button>
 							</form>
@@ -239,7 +268,9 @@ function ResetPasswordContent() {
 					</CardContent>
 				</Card>
 			</motion.div>
-		</div>
+			</div>
+			)}
+		</>
 	);
 }
 

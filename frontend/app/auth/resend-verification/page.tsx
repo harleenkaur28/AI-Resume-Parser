@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,13 +15,21 @@ import {
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Mail, Send, AlertCircle, CheckCircle } from "lucide-react";
 import Link from "next/link";
+import { Loader } from "@/components/ui/loader";
 
 export default function ResendVerificationPage() {
 	const searchParams = useSearchParams();
+	const [isPageLoading, setIsPageLoading] = useState(true);
 	const [email, setEmail] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState<string | null>(null);
+
+	// Simulate page load
+	useEffect(() => {
+		const timer = setTimeout(() => setIsPageLoading(false), 600);
+		return () => clearTimeout(timer);
+	}, []);
 
 	// Get email from URL parameters on component mount
 	useEffect(() => {
@@ -71,7 +79,25 @@ export default function ResendVerificationPage() {
 	};
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831] flex flex-col items-center justify-center p-4">
+		<>
+			<AnimatePresence>
+				{isPageLoading && (
+					<motion.div
+						initial={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						className="fixed inset-0 bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831] flex items-center justify-center z-50"
+					>
+						<Loader
+							variant="pulse"
+							size="xl"
+							text="Loading verification..."
+						/>
+					</motion.div>
+				)}
+			</AnimatePresence>
+
+			{!isPageLoading && (
+				<div className="min-h-screen bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831] flex flex-col items-center justify-center p-4">
 			<motion.div
 				initial={{ opacity: 0, x: -20 }}
 				animate={{ opacity: 1, x: 0 }}
@@ -177,9 +203,12 @@ export default function ResendVerificationPage() {
 								</div>
 								<Button
 									type="submit"
-									className="w-full bg-[#76ABAE] hover:bg-[#76ABAE]/90"
+									className="w-full bg-[#76ABAE] hover:bg-[#76ABAE]/90 flex items-center justify-center gap-2"
 									disabled={isLoading}
 								>
+									{isLoading && (
+										<Loader variant="spinner" size="sm" />
+									)}
 									{isLoading ? "Sending..." : "Resend Email"}
 								</Button>
 							</form>
@@ -204,6 +233,8 @@ export default function ResendVerificationPage() {
 					</CardContent>
 				</Card>
 			</motion.div>
-		</div>
+			</div>
+			)}
+		</>
 	);
 }
