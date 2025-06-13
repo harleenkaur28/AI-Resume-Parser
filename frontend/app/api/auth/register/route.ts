@@ -3,15 +3,18 @@ import { hash } from "bcrypt";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { randomBytes } from "crypto";
-// @ts-ignore - nodemailer types not available
-const nodemailer = require("nodemailer");
+import nodemailer from "nodemailer";
 
 const registerSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email format"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   roleId: z.string().min(1, "Role is required"),
-  avatarUrl: z.string().url("Invalid avatar URL").optional().or(z.literal("")),
+  avatarUrl: z.union([
+    z.string().url("Invalid avatar URL"),
+    z.literal(""),
+    z.null()
+  ]).optional(),
 });
 
 // Create email transporter
