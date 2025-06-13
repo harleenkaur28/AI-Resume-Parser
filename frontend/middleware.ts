@@ -38,6 +38,8 @@ export default withAuth(
           pathname === "/auth" || 
           pathname.startsWith("/auth/verify-email") ||
           pathname.startsWith("/auth/resend-verification") ||
+          pathname.startsWith("/auth/forgot-password") ||
+          pathname.startsWith("/auth/reset-password") ||
           pathname.startsWith("/api/") ||
           pathname.startsWith("/_next/") ||
           pathname.includes(".")

@@ -22,6 +22,9 @@ import {
 	LogOut,
 	Shield,
 	Upload,
+	Key,
+	CheckCircle,
+	AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -29,6 +32,11 @@ export default function AccountPage() {
 	const { data: session, status } = useSession();
 	const router = useRouter();
 	const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+	const [isResettingPassword, setIsResettingPassword] = useState(false);
+	const [resetMessage, setResetMessage] = useState<{
+		type: "success" | "error";
+		text: string;
+	} | null>(null);
 
 	// Check if user is using email authentication (not OAuth)
 	const isEmailUser =
@@ -46,6 +54,47 @@ export default function AccountPage() {
 
 	const handleSignOut = async () => {
 		await signOut({ callbackUrl: "/" });
+	};
+
+	const handlePasswordReset = async () => {
+		if (!session?.user?.email) {
+			setResetMessage({
+				type: "error",
+				text: "No email address found for this account.",
+			});
+			return;
+		}
+
+		setIsResettingPassword(true);
+		setResetMessage(null);
+
+		try {
+			const response = await fetch("/api/auth/reset-password", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ email: session.user.email }),
+			});
+
+			const data = await response.json();
+
+			if (!response.ok) {
+				throw new Error(data.error || "Failed to send reset email");
+			}
+
+			setResetMessage({
+				type: "success",
+				text: "Password reset link has been sent to your email address. Please check your inbox.",
+			});
+		} catch (error: any) {
+			setResetMessage({
+				type: "error",
+				text:
+					error.message ||
+					"Failed to send password reset email. Please try again.",
+			});
+		} finally {
+			setIsResettingPassword(false);
+		}
 	};
 
 	if (status === "loading") {
@@ -176,6 +225,25 @@ export default function AccountPage() {
 								</CardDescription>
 							</CardHeader>
 							<CardContent className="space-y-4">
+								{resetMessage && (
+									<motion.div
+										initial={{ opacity: 0, y: -10 }}
+										animate={{ opacity: 1, y: 0 }}
+										className={`p-3 rounded-lg text-sm flex items-center space-x-2 ${
+											resetMessage.type === "success"
+												? "bg-green-500/20 border border-green-500/30 text-green-200"
+												: "bg-red-500/20 border border-red-500/30 text-red-200"
+										}`}
+									>
+										{resetMessage.type === "success" ? (
+											<CheckCircle className="h-4 w-4 flex-shrink-0" />
+										) : (
+											<AlertCircle className="h-4 w-4 flex-shrink-0" />
+										)}
+										<span>{resetMessage.text}</span>
+									</motion.div>
+								)}
+
 								<div className="space-y-3">
 									<div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
 										<div>
@@ -192,6 +260,36 @@ export default function AccountPage() {
 										</div>
 										<div className="text-green-400 text-sm">Active</div>
 									</div>
+
+									{/* Password Reset Section - only show for email users */}
+									{isEmailUser && (
+										<div className="p-3 bg-white/5 rounded-lg space-y-3">
+											<div className="flex items-center justify-between">
+												<div>
+													<p className="text-[#EEEEEE] font-medium">Password</p>
+													<p className="text-[#EEEEEE]/60 text-sm">
+														Reset your account password
+													</p>
+												</div>
+												<Button
+													onClick={handlePasswordReset}
+													disabled={isResettingPassword}
+													variant="outline"
+													size="sm"
+													className="border-[#76ABAE]/30 text-[#76ABAE] hover:bg-[#76ABAE]/10 hover:text-[#76ABAE]"
+												>
+													<Key className="mr-2 h-4 w-4" />
+													{isResettingPassword
+														? "Sending..."
+														: "Reset Password"}
+												</Button>
+											</div>
+											<p className="text-[#EEEEEE]/50 text-xs">
+												A password reset link will be sent to your email
+												address.
+											</p>
+										</div>
+									)}
 								</div>
 							</CardContent>
 						</Card>
@@ -212,6 +310,20 @@ export default function AccountPage() {
 											Go to Dashboard
 										</Button>
 									</Link>
+
+									{/* Password Management for Email Users */}
+									{isEmailUser && (
+										<Link href="/auth/forgot-password" className="block">
+											<Button
+												variant="outline"
+												className="w-full border-[#76ABAE]/30 text-[#76ABAE] hover:bg-[#76ABAE]/10 hover:text-[#76ABAE]"
+											>
+												<Key className="mr-2 h-4 w-4" />
+												Change Password
+											</Button>
+										</Link>
+									)}
+
 									<Button
 										onClick={handleSignOut}
 										variant="outline"

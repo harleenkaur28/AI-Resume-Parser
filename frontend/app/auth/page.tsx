@@ -422,6 +422,15 @@ export default function AuthPage() {
 										</Button>
 									</form>
 
+									<div className="text-center">
+										<Link
+											href="/auth/forgot-password"
+											className="text-sm text-[#76ABAE] hover:underline hover:text-[#76ABAE]/80 transition-colors"
+										>
+											Forgot your password?
+										</Link>
+									</div>
+
 									<div className="relative">
 										<div className="absolute inset-0 flex items-center">
 											<span className="w-full border-t border-white/20" />

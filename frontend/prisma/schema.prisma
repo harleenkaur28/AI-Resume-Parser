@@ -21,20 +21,21 @@ model User {
     image         String?
     passwordHash  String? // Made optional for OAuth
     isVerified    Boolean   @default(false)
-    roleId        String?   // Made optional
+    roleId        String? // Made optional
     role          Role?     @relation(fields: [roleId], references: [id])
     createdAt     DateTime  @default(now())
     updatedAt     DateTime  @updatedAt
 
     // relations
-    resumes           Resume[]
-    bulkUploads       BulkUpload[]
-    recruiter         Recruiter?
-    coldMailRequests  ColdMailRequest[]
-    interviewRequests InterviewRequest[]
-    emailTokens       EmailVerificationToken[]
-    accounts          Account[]
-    sessions          Session[]
+    resumes             Resume[]
+    bulkUploads         BulkUpload[]
+    recruiter           Recruiter?
+    coldMailRequests    ColdMailRequest[]
+    interviewRequests   InterviewRequest[]
+    emailTokens         EmailVerificationToken[]
+    passwordResetTokens PasswordResetToken[]
+    accounts            Account[]
+    sessions            Session[]
 }
 
 model EmailVerificationToken {
@@ -45,6 +46,16 @@ model EmailVerificationToken {
     user        User      @relation(fields: [userId], references: [id])
     createdAt   DateTime  @default(now())
     confirmedAt DateTime?
+}
+
+model PasswordResetToken {
+    id        String    @id @default(uuid())
+    token     String    @unique
+    expiresAt DateTime
+    userId    String
+    user      User      @relation(fields: [userId], references: [id])
+    createdAt DateTime  @default(now())
+    usedAt    DateTime?
 }
 
 model Resume {
