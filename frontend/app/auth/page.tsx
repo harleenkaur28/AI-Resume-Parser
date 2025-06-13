@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -43,7 +43,7 @@ interface Role {
 	name: string;
 }
 
-export default function AuthPage() {
+function AuthContent() {
 	const { data: session, status } = useSession();
 	const [isPageLoading, setIsPageLoading] = useState(true);
 	const [isLoading, setIsLoading] = useState(false);
@@ -813,5 +813,30 @@ export default function AuthPage() {
 				</div>
 			)}
 		</>
+	);
+}
+
+export default function AuthPage() {
+	return (
+		<Suspense
+			fallback={
+				<div className="min-h-screen bg-gradient-to-br from-[#222831] via-[#393E46] to-[#76ABAE] flex items-center justify-center p-6">
+					<div className="w-full max-w-md">
+						<Card className="border-[#76ABAE]/20 bg-[#222831]/90 backdrop-blur-sm shadow-2xl">
+							<CardHeader className="text-center">
+								<CardTitle className="text-2xl font-bold text-[#EEEEEE]">
+									Loading...
+								</CardTitle>
+							</CardHeader>
+							<CardContent className="flex justify-center">
+								<Loader variant="spinner" size="lg" />
+							</CardContent>
+						</Card>
+					</div>
+				</div>
+			}
+		>
+			<AuthContent />
+		</Suspense>
 	);
 }

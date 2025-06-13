@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ import { ArrowLeft, Mail, Send, AlertCircle, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { Loader } from "@/components/ui/loader";
 
-export default function ResendVerificationPage() {
+function ResendVerificationContent() {
 	const searchParams = useSearchParams();
 	const [isPageLoading, setIsPageLoading] = useState(true);
 	const [email, setEmail] = useState("");
@@ -230,5 +230,30 @@ export default function ResendVerificationPage() {
 				</div>
 			)}
 		</>
+	);
+}
+
+export default function ResendVerificationPage() {
+	return (
+		<Suspense
+			fallback={
+				<div className="min-h-screen bg-gradient-to-br from-[#222831] via-[#393E46] to-[#76ABAE] flex items-center justify-center p-6">
+					<div className="w-full max-w-md">
+						<Card className="border-[#76ABAE]/20 bg-[#222831]/90 backdrop-blur-sm shadow-2xl">
+							<CardHeader className="text-center">
+								<CardTitle className="text-2xl font-bold text-[#EEEEEE]">
+									Loading...
+								</CardTitle>
+							</CardHeader>
+							<CardContent className="flex justify-center">
+								<Loader variant="spinner" size="lg" />
+							</CardContent>
+						</Card>
+					</div>
+				</div>
+			}
+		>
+			<ResendVerificationContent />
+		</Suspense>
 	);
 }
