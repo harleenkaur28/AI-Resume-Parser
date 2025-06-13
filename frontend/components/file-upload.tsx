@@ -23,18 +23,44 @@ interface AnalysisResult {
 	success: boolean;
 	message: string;
 	data: {
-		name: string;
-		email: string;
-		contact?: string;
-		predicted_field: string;
-		college?: string;
-		skills: string[];
-		upload_date: string;
+		resumeId: string;
+		analysis: {
+			id: string;
+			name: string;
+			email: string;
+			contact?: string;
+			predictedField: string;
+			skillsAnalysis: Array<{
+				skill_name: string;
+				percentage: number;
+			}>;
+			recommendedRoles: string[];
+			languages: Array<{
+				language: string;
+			}>;
+			education: Array<{
+				education_detail: string;
+			}>;
+			workExperience: Array<{
+				role: string;
+				company_and_duration: string;
+				bullet_points: string[];
+			}>;
+			projects: Array<{
+				title: string;
+				technologies_used: string[];
+				description: string;
+			}>;
+			uploadedAt: string;
+		};
+		cleanedText: string;
 	};
 }
 
 export function FileUpload() {
 	const [file, setFile] = useState<File | null>(null);
+	const [customName, setCustomName] = useState<string>("");
+	const [showInCentral, setShowInCentral] = useState<boolean>(false);
 	const [isUploading, setIsUploading] = useState(false);
 	const [isGettingDetailedAnalysis, setIsGettingDetailedAnalysis] =
 		useState(false);
@@ -48,6 +74,9 @@ export function FileUpload() {
 		const selectedFile = acceptedFiles[0];
 		if (selectedFile) {
 			setFile(selectedFile);
+			// Set default custom name to file name without extension
+			const nameWithoutExt = selectedFile.name.replace(/\.[^/.]+$/, "");
+			setCustomName(nameWithoutExt);
 			setError(null);
 			setAnalysisResult(null);
 		}
@@ -66,7 +95,7 @@ export function FileUpload() {
 	});
 
 	const handleUpload = async () => {
-		if (!file) return;
+		if (!file || !customName.trim()) return;
 
 		setIsUploading(true);
 		setError(null);
@@ -74,14 +103,13 @@ export function FileUpload() {
 		try {
 			const formData = new FormData();
 			formData.append("file", file);
+			formData.append("customName", customName.trim());
+			formData.append("showInCentral", showInCentral.toString());
 
-			const response = await fetch(
-				`${process.env.NEXT_PUBLIC_BACKEND_URL}/analyze-resume/`,
-				{
-					method: "POST",
-					body: formData,
-				}
-			);
+			const response = await fetch(`/api/backend-interface/analysis`, {
+				method: "POST",
+				body: formData,
+			});
 
 			if (!response.ok) {
 				throw new Error(`HTTP error! status: ${response.status}`);
@@ -97,21 +125,20 @@ export function FileUpload() {
 	};
 
 	const handleDetailedAnalysis = async () => {
-		if (!file) return;
+		if (!file || !customName.trim()) return;
 
 		setIsGettingDetailedAnalysis(true);
 
 		try {
 			const formData = new FormData();
 			formData.append("file", file);
+			formData.append("customName", customName.trim());
+			formData.append("showInCentral", showInCentral.toString());
 
-			const response = await fetch(
-				`${process.env.NEXT_PUBLIC_BACKEND_URL}/comprehensive-analysis/`,
-				{
-					method: "POST",
-					body: formData,
-				}
-			);
+			const response = await fetch(`/api/backend-interface/analysis`, {
+				method: "POST",
+				body: formData,
+			});
 
 			if (!response.ok) {
 				throw new Error(`HTTP error! status: ${response.status}`);
@@ -120,7 +147,10 @@ export function FileUpload() {
 			const result = await response.json();
 
 			// Store the analysis data in localStorage to pass to the analysis page
-			localStorage.setItem("analysisData", JSON.stringify(result.data));
+			localStorage.setItem(
+				"analysisData",
+				JSON.stringify(result.data.analysis)
+			);
 			router.push("/dashboard/analysis/detailed");
 		} catch (err) {
 			setError(
@@ -131,8 +161,11 @@ export function FileUpload() {
 	};
 
 	const handleGetTips = () => {
-		const jobCategory = analysisResult?.data.predicted_field || "";
-		const skills = analysisResult?.data.skills.join(",") || "";
+		const jobCategory = analysisResult?.data.analysis.predictedField || "";
+		const skills =
+			analysisResult?.data.analysis.skillsAnalysis
+				.map((s) => s.skill_name)
+				.join(",") || "";
 		router.push(
 			`/dashboard/tips?category=${encodeURIComponent(
 				jobCategory
@@ -152,7 +185,10 @@ export function FileUpload() {
 					lastModified: file.lastModified,
 				})
 			);
-			localStorage.setItem("analysisData", JSON.stringify(analysisResult.data));
+			localStorage.setItem(
+				"analysisData",
+				JSON.stringify(analysisResult.data.analysis)
+			);
 		}
 		router.push("/dashboard/cold-mail");
 	};
@@ -169,7 +205,10 @@ export function FileUpload() {
 					lastModified: file.lastModified,
 				})
 			);
-			localStorage.setItem("analysisData", JSON.stringify(analysisResult.data));
+			localStorage.setItem(
+				"analysisData",
+				JSON.stringify(analysisResult.data.analysis)
+			);
 		}
 		router.push("/dashboard/hiring-assistant");
 	};
@@ -256,7 +295,7 @@ export function FileUpload() {
 								<motion.div
 									initial={{ opacity: 0, y: 20 }}
 									animate={{ opacity: 1, y: 0 }}
-									className="mt-4 p-4 bg-white/5 rounded-lg"
+									className="mt-4 p-4 bg-white/5 rounded-lg space-y-4"
 								>
 									<div className="flex items-center space-x-3">
 										<FileText className="h-8 w-8 text-[#76ABAE]" />
@@ -267,10 +306,44 @@ export function FileUpload() {
 											</p>
 										</div>
 									</div>
+
+									{/* Custom Name Input */}
+									<div>
+										<label className="block text-[#EEEEEE]/80 text-sm font-medium mb-2">
+											Custom Name *
+										</label>
+										<input
+											type="text"
+											value={customName}
+											onChange={(e) => setCustomName(e.target.value)}
+											placeholder="Enter a custom name for this resume"
+											className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-[#EEEEEE] placeholder-[#EEEEEE]/50 focus:outline-none focus:ring-2 focus:ring-[#76ABAE] focus:border-transparent"
+											disabled={isUploading}
+										/>
+									</div>
+
+									{/* Show in Central Checkbox */}
+									<div className="flex items-center space-x-2">
+										<input
+											type="checkbox"
+											id="showInCentral"
+											checked={showInCentral}
+											onChange={(e) => setShowInCentral(e.target.checked)}
+											className="w-4 h-4 text-[#76ABAE] bg-white/10 border-white/30 rounded focus:ring-[#76ABAE] focus:ring-2"
+											disabled={isUploading}
+										/>
+										<label
+											htmlFor="showInCentral"
+											className="text-[#EEEEEE]/80 text-sm"
+										>
+											Show in central repository
+										</label>
+									</div>
+
 									<Button
 										onClick={handleUpload}
-										disabled={isUploading}
-										className="w-full mt-4 bg-[#76ABAE] hover:bg-[#76ABAE]/90"
+										disabled={isUploading || !customName.trim()}
+										className="w-full bg-[#76ABAE] hover:bg-[#76ABAE]/90 disabled:opacity-50"
 									>
 										{isUploading ? (
 											<div className="flex items-center space-x-2">
@@ -317,50 +390,54 @@ export function FileUpload() {
 									<div>
 										<p className="text-[#EEEEEE]/60 text-sm">Name</p>
 										<p className="text-[#EEEEEE] font-medium">
-											{analysisResult.data.name}
+											{analysisResult.data.analysis.name}
 										</p>
 									</div>
 									<div>
 										<p className="text-[#EEEEEE]/60 text-sm">Email</p>
 										<p className="text-[#EEEEEE] font-medium">
-											{analysisResult.data.email}
+											{analysisResult.data.analysis.email}
 										</p>
 									</div>
 									<div>
 										<p className="text-[#EEEEEE]/60 text-sm">Predicted Field</p>
 										<Badge className="bg-[#76ABAE]/20 text-[#76ABAE] hover:bg-[#76ABAE]/30">
-											{analysisResult.data.predicted_field}
+											{analysisResult.data.analysis.predictedField}
 										</Badge>
 									</div>
-									{analysisResult.data.contact && (
+									{analysisResult.data.analysis.contact && (
 										<div>
 											<p className="text-[#EEEEEE]/60 text-sm">Contact</p>
 											<p className="text-[#EEEEEE] font-medium">
-												{analysisResult.data.contact}
+												{analysisResult.data.analysis.contact}
 											</p>
 										</div>
 									)}
 								</div>
 
-								{analysisResult.data.skills.length > 0 && (
+								{analysisResult.data.analysis.skillsAnalysis.length > 0 && (
 									<div className="mb-6">
 										<p className="text-[#EEEEEE]/60 text-sm mb-2">
 											Skills Detected
 										</p>
 										<div className="flex flex-wrap gap-2">
-											{analysisResult.data.skills
+											{analysisResult.data.analysis.skillsAnalysis
 												.slice(0, 6)
-												.map((skill, index) => (
+												.map((skillObj, index) => (
 													<Badge
 														key={index}
 														className="bg-[#76ABAE]/10 text-[#76ABAE] border border-[#76ABAE]/30"
 													>
-														{skill}
+														{skillObj.skill_name} ({skillObj.percentage}%)
 													</Badge>
 												))}
-											{analysisResult.data.skills.length > 6 && (
+											{analysisResult.data.analysis.skillsAnalysis.length >
+												6 && (
 												<Badge className="bg-white/10 text-[#EEEEEE]/60">
-													+{analysisResult.data.skills.length - 6} more
+													+
+													{analysisResult.data.analysis.skillsAnalysis.length -
+														6}{" "}
+													more
 												</Badge>
 											)}
 										</div>

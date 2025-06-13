@@ -229,7 +229,7 @@ export default function HiringAssistant() {
 				formDataToSend.append("company_url", formData.company_url);
 			}
 
-			const response = await fetch("http://localhost:8000/hiring-assistant/", {
+			const response = await fetch("/api/backend-interface/gen-answer", {
 				method: "POST",
 				body: formDataToSend,
 			});

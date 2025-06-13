@@ -5,6 +5,7 @@ from fastapi import (
     HTTPException,
     Query,
     Form,
+    APIRouter,
 )
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -48,7 +49,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-app = FastAPI()
+app = FastAPI(
+    title="Resume Analysis API",
+    description="API for analyzing resumes, extracting structured data, and providing tips for improvement.",
+    version="1.4.3",
+)
 
 
 app.add_middleware(
@@ -207,6 +212,7 @@ class ComprehensiveAnalysisResponse(BaseModel):
     success: bool = True
     message: str = "Comprehensive analysis successful"
     data: ComprehensiveAnalysisData
+    cleaned_text: Optional[str] = None
 
 
 class Tip(BaseModel):
@@ -353,11 +359,246 @@ Output:
 Return ONLY a single JSON object that would successfully instantiate `TipsData(...)`.
 """
 
+
+comprehensive_analysis_prompt = PromptTemplate(
+    input_variables=[
+        "extracted_resume_text",
+        "predicted_category",
+        "basic_info_json",
+    ],
+    template=comprehensive_analysis_prompt_template_str,
+)
+
+
+comprehensive_analysis_prompt_template_str_v2 = """
+You are an expert resume analyzer. Your task is to extract and structure information from the provided resume text to populate a JSON object conforming to the Pydantic models below. The goal is to generate data that can be used to render a UI similar to the provided example.
+
+Pydantic Models:
+```python
+from typing import List, Optional
+from pydantic import BaseModel, Field
+
+class SkillProficiency(BaseModel):
+    skill_name: str
+    percentage: int  # e.g., 90 for 90 %. Infer this based on experience, project mentions, and skill prominence. Max 5-7 skills.
+
+class UIDetailedWorkExperienceEntry(BaseModel):
+    role: str
+    company_and_duration: str  # Format “Company Name | Start Year – End Year” or “Company Name | Start Year – Present”
+    bullet_points: List[str] # Each bullet point as a separate string
+
+class UIProjectEntry(BaseModel):
+    title: str
+    technologies_used: List[str] = Field(default_factory=list)
+    description: str
+
+class LanguageEntry(BaseModel):
+    language: str  # e.g., “English (Native)”, “Spanish (Professional)”
+
+class EducationEntry(BaseModel):
+    education_detail: str  # e.g., “M.S. in Computer Science”, “B.Tech in ECE – XYZ University”
+
+class ComprehensiveAnalysisData(BaseModel):
+    skills_analysis: List[SkillProficiency] = Field(default_factory=list)
+    recommended_roles: List[str] = Field(default_factory=list)  # Suggest 3-4 relevant roles based on skills and experience.
+    languages: List[LanguageEntry] = Field(default_factory=list)
+    education: List[EducationEntry] = Field(default_factory=list)
+    work_experience: List[UIDetailedWorkExperienceEntry] = Field(default_factory=list)
+    projects: List[UIProjectEntry] = Field(default_factory=list)
+    name: Optional[str] = None
+    email: Optional[str] = None
+    contact: Optional[str] = None
+    predicted_field: Optional[str] = None  # MUST be inferred from the resume
+```
+
+Input:
+- Raw Resume Text:
+```text
+{extracted_resume_text}
+```
+- Basic Extracted Info (Name, Email, Contact – use these if provided, otherwise extract):
+```json
+{basic_info_json}
+```
+
+Instructions:
+1. Name, Email, Contact: Populate from `basic_info_json`; if missing, extract from `extracted_resume_text`.
+2. Predicted Field:
+   - Examine the resume’s skills, projects, job titles, and domain-specific keywords.
+   - Infer the candidate’s primary professional field (e.g., “Software Engineering”, “Data Science”, “Mechanical Engineering”, “Digital Marketing”, “Finance”, “Product Management”, etc.).
+   - If the field is ambiguous, choose the closest match and append “(inferred)”.
+3. Skills Analysis:
+   - Identify the top 5-7 key technical and/or soft skills.
+   - Assign `percentage` (0-100) based on frequency, context, and depth.
+   - If the resume lists very few skills, infer common ones for the predicted field and tag with “(inferred)”.
+4. Recommended Roles:
+   - Suggest 3-4 job titles aligned with the inferred field, skills, and experience level.
+5. Languages:
+   - Extract all languages and proficiency levels.
+   - If none are provided, add “English (Professional) (inferred)”.
+6. Education:
+   - List each distinct qualification.
+   - If absent, infer a typical qualification for the predicted field and tag “(inferred)”.
+7. Work Experience:
+   - For every significant experience, populate `role`, `company_and_duration`, and 2-5 concise bullet points.
+8. Projects:
+   - For each project, extract `title`, `technologies_used`, and `description`.
+   - If no projects are mentioned, create 1-2 typical projects for the predicted field and mark “(inferred)”.
+9. General Inference Rule:
+   - Always prefer direct extraction.
+   - Any inferred value must have “(inferred)” appended.
+10. Output:
+   - Return ONLY a single JSON object that successfully instantiates `ComprehensiveAnalysisData(...)`.
+   - Use empty lists for missing list-type data and null for optional scalars when truly unavailable.
+"""
+
+
+comprehensive_analysis_prompt_v2 = PromptTemplate(
+    input_variables=[
+        "extracted_resume_text",
+        "basic_info_json",
+    ],
+    template=comprehensive_analysis_prompt_template_str_v2,
+)
+
+
+tips_generator_prompt_template_str = """
+You are a helpful career advisor. Generate practical and actionable tips for resume improvement and interview preparation.
+
+Context (Optional):
+- Job Category: {job_category}
+- Key Skills: {skills_list_str}
+
+Instructions:
+1.  **Resume Tips**: Provide 3-5 distinct tips for improving a resume. These can cover content, formatting, tailoring, and common mistakes to avoid. If `job_category` or `skills_list_str` are provided, try to make 1-2 tips relevant to them.
+    - Each tip should have a `category` (e.g., "Content", "Keywords", "Impact") and `advice` (the tip itself).
+2.  **Interview Tips**: Provide 3-5 distinct tips for interview preparation. These can cover research, common questions (STAR method), behavioral aspects, and post-interview follow-up. If `job_category` is provided, try to make 1-2 tips relevant to common interview focuses for that category.
+    - Each tip should have a `category` (e.g., "Preparation", "Answering Questions", "Behavioral") and `advice`.
+
+Pydantic Models for Output Structure:
+```python
+from typing import List
+from pydantic import BaseModel, Field
+
+class Tip(BaseModel):
+    category: str
+    advice: str
+
+class TipsData(BaseModel):
+    resume_tips: List[Tip] = Field(default_factory=list)
+    interview_tips: List[Tip] = Field(default_factory=list)
+```
+
+Output:
+Return ONLY a single JSON object that would successfully instantiate `TipsData(...)`.
+"""
+
+
 tips_generator_prompt = PromptTemplate(
     input_variables=["job_category", "skills_list_str"],
     template=tips_generator_prompt_template_str,
 )
 
+
+format_analyse_prompt_template_str = """
+You are an expert resume text-processing and analysis assistant.
+
+Phase 1 – CLEAN & FORMAT  
+The following text was extracted from a resume file. It may contain:
+- Broken lines, inconsistent spacing, or duplicated words  
+- Unnecessary artifacts (page numbers, headers/footers, tool watermarks)  
+- Jumbled ordering of sections  
+
+Your first task is to transform it into a professional, well-structured plain-text resume.
+
+Guidelines:
+1. Preserve every substantive detail (contact info, summary, experience, education, skills, projects, certifications, etc.).  
+2. Re-organize logically under clear section headings (e.g., “Contact Information”, “Professional Summary”, “Experience”, “Education”, “Skills”, “Projects”).  
+3. Use consistent spacing and bullet points.  
+4. Remove obvious non-content artifacts (e.g., “Page 1 of 2”, extraction tool names).  
+5. Keep wording concise but do not omit information.  
+6. Output MUST be plain text only – no markdown, no code fences, no commentary.
+
+Phase 2 – STRUCTURE AS JSON  
+After cleaning, extract information from the cleaned text and populate the Pydantic models below.
+
+Pydantic Models
+```python
+from typing import List, Optional
+from pydantic import BaseModel, Field
+
+class SkillProficiency(BaseModel):
+    skill_name: str
+    percentage: int           # 0-100, based on prominence, depth, and recency
+
+class UIDetailedWorkExperienceEntry(BaseModel):
+    role: str
+    company_and_duration: str # “Company | YYYY-YYYY” or “Company | YYYY-Present”
+    bullet_points: List[str]
+
+class UIProjectEntry(BaseModel):
+    title: str
+    technologies_used: List[str] = Field(default_factory=list)
+    description: str
+
+class LanguageEntry(BaseModel):
+    language: str             # e.g., “English (Native)”
+
+class EducationEntry(BaseModel):
+    education_detail: str     # e.g., “B.Tech in ECE – XYZ University”
+
+class ComprehensiveAnalysisData(BaseModel):
+    skills_analysis: List[SkillProficiency] = Field(default_factory=list)
+    recommended_roles: List[str] = Field(default_factory=list)
+    languages: List[LanguageEntry] = Field(default_factory=list)
+    education: List[EducationEntry] = Field(default_factory=list)
+    work_experience: List[UIDetailedWorkExperienceEntry] = Field(default_factory=list)
+    projects: List[UIProjectEntry] = Field(default_factory=list)
+    name: Optional[str] = None
+    email: Optional[str] = None
+    contact: Optional[str] = None
+    predicted_field: Optional[str] = None   # MUST be inferred from resume content
+```
+
+Input
+- Raw Resume Text (messy):
+```
+{raw_resume_text}
+```
+- Basic Extracted Info (may be empty):
+```json
+{basic_info_json}
+```
+
+Instructions
+1. Produce a cleaned, well-structured resume (“cleaned_text”) per Phase 1 guidelines.  
+2. From the cleaned text:
+   - Populate name, email, and contact (use basic_info_json if present, else extract).  
+   - Infer predicted_field (e.g., “Software Engineering”, “Digital Marketing”). If ambiguous, choose the closest match and append “(inferred)”.  
+   - Build skills_analysis (5-7 key skills, each with proficiency percentage). If skills are sparse, infer common skills and tag with “(inferred)”.  
+   - Suggest 3-4 recommended_roles that fit the candidate’s background.  
+   - Extract languages spoken; if none, add “English (Professional) (inferred)”.  
+   - List education; if none, infer a typical qualification and tag “(inferred)”.  
+   - Detail each significant work experience (role, company_and_duration, 2-5 bullets).  
+   - List projects (title, technologies_used, description); if absent, infer 1-2 typical projects and tag “(inferred)”.  
+3. Apply the general inference rule: prefer direct extraction, mark every inferred value with “(inferred)”.  
+4. OUTPUT: Return ONLY one JSON object with exactly these two top-level keys:
+
+{
+  "cleaned_text": "<the full cleaned resume as plain text>",
+  "analysis": { …Contents that instantiate ComprehensiveAnalysisData… }
+}
+
+Do not add any other keys, commentary, markdown, or code fences.
+"""
+
+format_analyse_prompt = PromptTemplate(
+    input_variables=[
+        "raw_resume_text",
+        "basic_info_json",
+    ],
+    template=format_analyse_prompt_template_str,
+)
 
 # DATABASE_URL = os.getenv(
 #     "DATABASE_URL", "postgresql://user:password@localhost:5432/resume_db_pg"
@@ -402,15 +643,15 @@ tips_generator_prompt = PromptTemplate(
 #         await pool.close()
 
 
-# app.add_event_handler(
+# v1_router.add_event_handler(
 #     "startup",
 #     connect_to_db,
 # )
-# app.add_event_handler(
+# v1_router.add_event_handler(
 #     "startup",
 #     lambda: init_skills_pg(),
 # )
-# app.add_event_handler(
+# v1_router.add_event_handler(
 #     "shutdown",
 #     close_db_connection,
 # )
@@ -963,7 +1204,7 @@ Instructions for Email Generation:
 
 2. Email Body (180–220 words):
    a. Salutation:
-      • "Dear Mr./Ms. [Last Name]," or "Dear [Full Name],"
+      • "Dear Mr./Ms. [Last Name],"" or "Dear [Full Name],"
    b. Paragraph 1 – Introduction:
       • State who you are, your current status/study, and your goal.
       • Mention why you chose *this* recipient/company.
@@ -1256,7 +1497,7 @@ skills_list = [
     "SAP MM",
     "SAP SD",
     "SAP FICO",
-    "Civil Engineering",
+    "Civil Engineer",
     "Structural Analysis",
     "AutoCAD",
     "Construction Management",
@@ -1453,7 +1694,9 @@ class ResumeAnalysis(BaseModel):
     work_experience: Optional[List[WorkExperienceEntry]] = Field(default_factory=list)
     projects: Optional[List[ProjectEntry]] = Field(default_factory=list)
     skills: List[str] = Field(default_factory=list)
-    upload_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    upload_date: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+    )
 
 
 class ResumeUploadResponse(BaseModel):
@@ -1462,6 +1705,7 @@ class ResumeUploadResponse(BaseModel):
     success: bool = True
     message: str = "Resume analyzed successfully"
     data: ResumeAnalysis
+    cleaned_data_dict: Optional[dict] = None
 
 
 class ResumeListResponse(BaseModel):
@@ -1559,10 +1803,45 @@ def clean_resume(txt):
     return " ".join(tokens)
 
 
+# routers
+
+v1_router = APIRouter(
+    prefix="/v1",
+    responses={
+        404: {
+            "description": "Not found",
+        },
+    },
+)
+
+v2_router = APIRouter(
+    prefix="/v2",
+    responses={
+        404: {
+            "description": "Not found",
+        },
+    },
+    tags=[
+        "V2",
+    ],
+)
+
+
 # routes
-@app.post("/analyze-resume/", response_model=ResumeUploadResponse)
+""" Router V1 """
+
+
+@v1_router.post(
+    "/resume/analysis",
+    summary="Analyze Resume",
+    response_model=ResumeUploadResponse,
+    tags=[
+        "V1",
+    ],
+)
 async def analyze_resume(file: UploadFile = File(...)):
     # global pool
+    cleaned_data_dict = None  # Initialize to store LLM response
     try:
         # Ensure skills are initialized (handled by startup, but good to get the list)
         # current_skills_list = await get_skills_list_pg()
@@ -1639,7 +1918,8 @@ async def analyze_resume(file: UploadFile = File(...)):
         else:
 
             formatted_prompt = langchain_prompt.format_prompt(
-                resume_json=initial_resume_json_str, extracted_resume_text=resume_text
+                resume_json=initial_resume_json_str,
+                extracted_resume_text=resume_text,
             ).to_string()
 
             llm_response_content = ""
@@ -1754,7 +2034,10 @@ async def analyze_resume(file: UploadFile = File(...)):
         #         analysis_data.upload_date,
         #     )
 
-        return ResumeUploadResponse(data=analysis_data)
+        return ResumeUploadResponse(
+            data=analysis_data,
+            cleaned_data_dict=cleaned_data_dict,
+        )
 
     except HTTPException:
         raise
@@ -1773,7 +2056,14 @@ async def analyze_resume(file: UploadFile = File(...)):
         )
 
 
-@app.post("/hiring-assistant/", response_model=HiringAssistantResponse)
+@v1_router.post(
+    "/hiring-assistant/",
+    description="Generates answers to interview questions based on the provided resume and inputs.",
+    response_model=HiringAssistantResponse,
+    tags=[
+        "V1",
+    ],
+)
 async def hiring_assistant(
     file: UploadFile = File(...),
     role: str = Form(...),
@@ -1916,7 +2206,14 @@ async def hiring_assistant(
         )
 
 
-@app.post("/cold-mail-generator/", response_model=ColdMailResponse)
+@v1_router.post(
+    "/cold-mail/generator/",
+    response_model=ColdMailResponse,
+    description="Generates a cold email based on the provided resume and user inputs.",
+    tags=[
+        "V1",
+    ],
+)
 async def cold_mail_generator(
     file: UploadFile = File(...),
     recipient_name: str = Form(...),
@@ -2028,34 +2325,70 @@ async def cold_mail_generator(
         )
 
 
-@app.get("/resumes/", response_model=ResumeListResponse)
+@v1_router.get(
+    "/resumes/",
+    response_model=ResumeListResponse,
+    description="Fetch all resumes from the database.",
+    tags=[
+        "V1",
+    ],
+)
 async def get_resumes():
-    global pool
-    async with pool.acquire() as connection:
-        rows = await connection.fetch(
-            "SELECT id, name, email, contact, predicted_field, college, work_experience, skills, upload_date FROM resumes;"
-        )
+    ...
+    return {
+        "success": True,
+        "message": "underconstruction",
+    }
+    # global pool
+    # async with pool.acquire() as connection:
+    #     rows = await connection.fetch(
+    #         "SELECT id, name, email, contact, predicted_field, college, work_experience, skills, upload_date FROM resumes;"
+    #     )
 
-        resumes = [ResumeAnalysis(**dict(row)) for row in rows]
-        return ResumeListResponse(data=resumes, count=len(resumes))
+    #     resumes = [ResumeAnalysis(**dict(row)) for row in rows]
+    #     return ResumeListResponse(
+    #         data=resumes,
+    #         count=len(resumes),
+    #     )
 
 
-@app.get("/resumes/{category}", response_model=ResumeCategoryResponse)
+@v1_router.get(
+    "/resumes/{category}",
+    response_model=ResumeCategoryResponse,
+    description="Fetch resumes by category. The category is the predicted field from the resume analysis.",
+    tags=[
+        "V1",
+    ],
+)
 async def get_resumes_by_category(category: str):
-    global pool
-    async with pool.acquire() as connection:
-        rows = await connection.fetch(
-            "SELECT id, name, email, contact, predicted_field, college, work_experience, skills, upload_date FROM resumes WHERE predicted_field = $1;",
-            category,
-        )
+    ...
+    return {
+        "success": True,
+        "message": "underconstruction",
+    }
+    # global pool
+    # async with pool.acquire() as connection:
+    #     rows = await connection.fetch(
+    #         "SELECT id, name, email, contact, predicted_field, college, work_experience, skills, upload_date FROM resumes WHERE predicted_field = $1;",
+    #         category,
+    #     )
 
-        resumes = [ResumeAnalysis(**dict(row)) for row in rows]
-        return ResumeCategoryResponse(
-            data=resumes, count=len(resumes), category=category
-        )
+    #     resumes = [ResumeAnalysis(**dict(row)) for row in rows]
+    #     return ResumeCategoryResponse(
+    #         data=resumes,
+    #         count=len(resumes),
+    #         category=category,
+    #     )
 
 
-@app.post("/comprehensive-analysis/", response_model=ComprehensiveAnalysisResponse)
+@v1_router.post(
+    "/resume/comprehensive/analysis/",
+    response_model=ComprehensiveAnalysisResponse,
+    description="Performs a comprehensive analysis of the uploaded resume using LLM.",
+    tags=[
+        "V1",
+    ],
+)
 async def comprehensive_resume_analysis(file: UploadFile = File(...)):
     if not llm:
         raise HTTPException(status_code=503, detail="LLM service is not available.")
@@ -2136,13 +2469,13 @@ async def comprehensive_resume_analysis(file: UploadFile = File(...)):
                 analysis_dict["name"] = name
             if "email" not in analysis_dict or not analysis_dict["email"]:
                 analysis_dict["email"] = email
-            if (
-                "contact" not in analysis_dict and contact
-            ):  # only add if contact was found
+            if "contact" not in analysis_dict and contact:
                 analysis_dict["contact"] = contact
 
             comprehensive_data = ComprehensiveAnalysisData(**analysis_dict)
-            return ComprehensiveAnalysisResponse(data=comprehensive_data)
+            return ComprehensiveAnalysisResponse(
+                data=comprehensive_data, cleaned_text=resume_text
+            )
 
         except json.JSONDecodeError:
             print(
@@ -2186,17 +2519,29 @@ class TipsRequest(BaseModel):
     skills: Optional[str] = None
 
 
-@app.get("/tips/", response_model=TipsResponse)
+@v1_router.get(
+    "/generate/tips/",
+    response_model=TipsResponse,
+    description="Generates career & resume tips based on job category and skills.",
+    tags=[
+        "V1",
+    ],
+)
 async def get_career_tips(
     job_category: Optional[str] = Query(
-        None, description="Job category for tailored tips"
+        None,
+        description="Job category for tailored tips",
     ),
     skills: Optional[str] = Query(
-        None, description="Comma-separated skills for tailored tips"
+        None,
+        description="Comma-separated skills for tailored tips",
     ),
 ):
     if not llm:
-        raise HTTPException(status_code=503, detail="LLM service is not available.")
+        raise HTTPException(
+            status_code=503,
+            detail="LLM service is not available.",
+        )
 
     if job_category:
         job_category = job_category.strip().lower()
@@ -2217,7 +2562,8 @@ async def get_career_tips(
 
     try:
         formatted_prompt = tips_generator_prompt.format_prompt(
-            job_category=category_str, skills_list_str=skills_list_str
+            job_category=category_str,
+            skills_list_str=skills_list_str,
         ).to_string()
 
         llm_response_content = ""
@@ -2280,6 +2626,626 @@ async def get_career_tips(
         )
 
 
+""" Router V2 """
+
+
+format_analyse_prompt_template_str = """
+You are an expert resume text-processing and analysis assistant.
+
+Phase 1 – CLEAN & FORMAT  
+The following text was extracted from a resume file. It may contain:
+- Broken lines, inconsistent spacing, or duplicated words  
+- Unnecessary artifacts (page numbers, headers/footers, tool watermarks)  
+- Jumbled ordering of sections  
+
+Your first task is to transform it into a professional, well-structured plain-text resume.
+
+Guidelines:
+1. Preserve every substantive detail (contact info, summary, experience, education, skills, projects, certifications, etc.).  
+2. Re-organize logically under clear section headings (e.g., “Contact Information”, “Professional Summary”, “Experience”, “Education”, “Skills”, “Projects”).  
+3. Use consistent spacing and bullet points.  
+4. Remove obvious non-content artifacts (e.g., “Page 1 of 2”, extraction tool names).  
+5. Keep wording concise but do not omit information.  
+6. Output MUST be plain text only – no markdown, no code fences, no commentary.
+
+Phase 2 – STRUCTURE AS JSON  
+After cleaning, extract information from the cleaned text and populate the Pydantic models below.
+
+Pydantic Models
+```python
+from typing import List, Optional
+from pydantic import BaseModel, Field
+
+class SkillProficiency(BaseModel):
+    skill_name: str
+    percentage: int           # 0-100, based on prominence, depth, and recency
+
+class UIDetailedWorkExperienceEntry(BaseModel):
+    role: str
+    company_and_duration: str # Format “Company Name | Start Year – End Year” or “Company Name | Start Year – Present”
+    bullet_points: List[str] # Each bullet point as a separate string
+
+class UIProjectEntry(BaseModel):
+    title: str
+    technologies_used: List[str] = Field(default_factory=list)
+    description: str
+
+class LanguageEntry(BaseModel):
+    language: str             # e.g., “English (Native)”, “Spanish (Professional)”
+
+class EducationEntry(BaseModel):
+    education_detail: str     # e.g., “M.S. in Computer Science”, “B.Tech in ECE – XYZ University”
+
+class ComprehensiveAnalysisData(BaseModel):
+    skills_analysis: List[SkillProficiency] = Field(default_factory=list)
+    recommended_roles: List[str] = Field(default_factory=list)  # Suggest 3-4 relevant roles based on skills and experience.
+    languages: List[LanguageEntry] = Field(default_factory=list)
+    education: List[EducationEntry] = Field(default_factory=list) # List all distinct education entries.
+    work_experience: List[UIDetailedWorkExperienceEntry] = Field(default_factory=list) # List all significant work experiences.
+    projects: List[UIProjectEntry] = Field(default_factory=list) # List all significant projects.
+    name: Optional[str] = None
+    email: Optional[str] = None
+    contact: Optional[str] = None
+    predicted_field: Optional[str] = None  # MUST be inferred from the resume
+```
+
+Input:
+- Raw Resume Text:
+```text
+{extracted_resume_text}
+```
+- Basic Extracted Info (Name, Email, Contact – use these if provided, otherwise extract):
+```json
+{basic_info_json}
+```
+
+Instructions:
+1. Name, Email, Contact: Populate from `basic_info_json`; if missing, extract from `extracted_resume_text`.
+2. Predicted Field:
+   - Examine the resume’s skills, projects, job titles, and domain-specific keywords.
+   - Infer the candidate’s primary professional field (e.g., “Software Engineering”, “Data Science”, “Mechanical Engineering”, “Digital Marketing”, “Finance”, “Product Management”, etc.).
+   - If the field is ambiguous, choose the closest match and append “(inferred)”.
+3. Skills Analysis:
+   - Identify the top 5-7 key technical and/or soft skills.
+   - Assign `percentage` (0-100) based on frequency, context, and depth.
+   - If the resume lists very few skills, infer common ones for the predicted field and tag with “(inferred)”.
+4. Recommended Roles:
+   - Suggest 3-4 job titles aligned with the inferred field, skills, and experience level.
+5. Languages:
+   - Extract all languages and proficiency levels.
+   - If none are provided, add “English (Professional) (inferred)”.
+6. Education:
+   - List each distinct qualification.
+   - If absent, infer a typical qualification for the predicted field and tag “(inferred)”.
+7. Work Experience:
+   - For every significant experience, populate `role`, `company_and_duration`, and 2-5 concise bullet points.
+8. Projects:
+   - For each project, extract `title`, `technologies_used`, and `description`.
+   - If no projects are mentioned, create 1-2 typical projects for the predicted field and mark “(inferred)”.
+9. General Inference Rule:
+   - Always prefer direct extraction.
+   - Any inferred value must have “(inferred)” appended.
+10. Output:
+   - Return ONLY a single JSON object that successfully instantiates `ComprehensiveAnalysisData(...)`.
+   - Use empty lists for missing list-type data and null for optional scalars when truly unavailable.
+"""
+
+
+format_analyse_prompt = PromptTemplate(
+    input_variables=[
+        "extracted_resume_text",
+        "basic_info_json",
+    ],
+    template=format_analyse_prompt_template_str,
+)
+
+
+class FormattedAndAnalyzedResumeResponse(BaseModel):
+    success: bool = True
+    message: str = "Resume formatted and analyzed successfully"
+    cleaned_text: str
+    analysis: ComprehensiveAnalysisData
+
+
+@v2_router.post(
+    "/resume/format-and-analyze",
+    summary="Format, Clean, and Analyze Resume from File (V2)",
+    response_model=FormattedAndAnalyzedResumeResponse,
+    tags=[
+        "V2",
+    ],
+)
+async def format_and_analyze_resume_v2(file: UploadFile = File(...)):
+    if not llm:
+        raise HTTPException(
+            status_code=503,
+            detail=ErrorResponse(message="LLM service is not available.").model_dump(),
+        )
+
+    try:
+        uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+        os.makedirs(uploads_dir, exist_ok=True)
+
+        file_bytes = await file.read()
+        temp_file_path = os.path.join(
+            uploads_dir, f"temp_format_analyze_{file.filename}"
+        )
+        with open(temp_file_path, "wb") as buffer:
+            buffer.write(file_bytes)
+
+        raw_resume_text = process_document(file_bytes, file.filename)
+        os.remove(temp_file_path)
+
+        if raw_resume_text is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported file type or error processing file: {file.filename}",
+            )
+
+        name, email = extract_name_and_email(raw_resume_text)
+        contact = extract_contact_number_from_resume(raw_resume_text)
+        basic_info = {
+            "name": name,
+            "email": email,
+            "contact": contact,
+        }
+        basic_info_json_str = json.dumps(basic_info)
+
+        formatted_prompt_str = format_analyse_prompt.format_prompt(
+            extracted_resume_text=raw_resume_text,
+            basic_info_json=basic_info_json_str,
+        ).to_string()
+
+        llm_response_content = ""
+        try:
+            response = llm.invoke(formatted_prompt_str)
+            llm_response_content = response.content
+
+        except Exception as e:
+            print(f"Error during LLM invocation for format-and-analyze: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=ErrorResponse(
+                    message="LLM invocation failed for format-and-analyze",
+                    error_detail=str(e),
+                ).model_dump(),
+            )
+
+        try:
+            if llm_response_content.strip().startswith("```json"):
+                llm_response_content = llm_response_content.strip()[7:]
+            if llm_response_content.strip().endswith("```"):
+                llm_response_content = llm_response_content.strip()[:-3]
+
+            parsed_llm_output = json.loads(llm_response_content)
+
+            cleaned_text_from_llm = parsed_llm_output.get("cleaned_text")
+            analysis_dict_from_llm = parsed_llm_output.get("analysis")
+
+            if cleaned_text_from_llm is None or analysis_dict_from_llm is None:
+                raise HTTPException(
+                    status_code=500,
+                    detail=ErrorResponse(
+                        message="LLM response did not contain expected 'cleaned_text' or 'analysis' keys.",
+                        error_detail=f"LLM Output Preview: {llm_response_content[:500]}",
+                    ).model_dump(),
+                )
+
+            # Validate the analysis part
+            analysis_data = ComprehensiveAnalysisData(**analysis_dict_from_llm)
+
+            return FormattedAndAnalyzedResumeResponse(
+                cleaned_text=cleaned_text_from_llm, analysis=analysis_data
+            )
+
+        except json.JSONDecodeError:
+            print(
+                f"LLM output (format-and-analyze) was not valid JSON: {llm_response_content}"
+            )
+            raise HTTPException(
+                status_code=500,
+                detail=ErrorResponse(
+                    message="Failed to parse LLM response for format-and-analyze as JSON.",
+                    error_detail=f"LLM Output Preview: {llm_response_content[:500]}",
+                ).model_dump(),
+            )
+
+        except ValidationError as e:
+            print(f"Pydantic validation error (format-and-analyze): {e.errors()}")
+            error_detail_extended = {
+                "pydantic_errors": e.errors(),
+                "llm_response_preview": llm_response_content[:500],
+            }
+            raise HTTPException(
+                status_code=400,
+                detail=ErrorResponse(
+                    message="Validation error for LLM format-and-analyze data.",
+                    error_detail=json.dumps(error_detail_extended),
+                ).model_dump(),
+            )
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        print(f"Unexpected error in /resume/format-and-analyze/: {e}")
+        import traceback
+
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=ErrorResponse(
+                message="Failed to format and analyze resume due to an unexpected error.",
+                error_detail=str(e),
+            ).model_dump(),
+        )
+
+
+@v2_router.post(
+    "/resume/analysis",
+    summary="Analyze Resume (V2)",
+    response_model=ComprehensiveAnalysisData,
+    tags=[
+        "V2",
+    ],
+)
+async def analyze_resume(
+    formated_resume: str = Form(
+        ...,
+        description="Formatted resume text",
+    ),
+):
+    if not llm:
+        raise HTTPException(
+            status_code=503,
+            detail="LLM service is not available.",
+        )
+
+    cleaned_resume_dict_from_llm = None
+
+    try:
+        if not formated_resume.strip():
+            raise HTTPException(
+                status_code=400, detail="Formatted resume text cannot be empty."
+            )
+
+        name, email = extract_name_and_email(formated_resume)
+        contact = extract_contact_number_from_resume(formated_resume)
+
+        cleaned_resume_for_prediction = clean_resume(formated_resume)
+
+        predicted_category = predict_category(cleaned_resume_for_prediction)
+
+        basic_info = {
+            "name": name,
+            "email": email,
+            "contact": contact,
+        }
+        basic_info_json_str = json.dumps(basic_info)
+
+        formatted_prompt_v2 = comprehensive_analysis_prompt.format_prompt(
+            extracted_resume_text=formated_resume,
+            predicted_category=predicted_category,
+            basic_info_json=basic_info_json_str,
+        ).to_string()
+
+        llm_response_content = ""
+
+        try:
+            response = llm.invoke(formatted_prompt_v2)
+            llm_response_content = response.content
+
+        except Exception as e:
+            print(f"Error during LLM invocation for V2 resume analysis: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=ErrorResponse(
+                    message="LLM invocation failed for V2 analysis", error_detail=str(e)
+                ).model_dump(),
+            )
+
+        try:
+
+            raw_llm_json = llm_response_content
+
+            if raw_llm_json.strip().startswith("```json"):
+                raw_llm_json = raw_llm_json.strip()[7:]
+
+            if raw_llm_json.strip().endswith("```"):
+                raw_llm_json = raw_llm_json.strip()[:-3]
+
+            analysis_dict_from_llm = json.loads(raw_llm_json)
+            cleaned_resume_dict_from_llm = analysis_dict_from_llm
+
+            if (
+                "predicted_field" not in analysis_dict_from_llm
+                or not analysis_dict_from_llm["predicted_field"]
+            ):
+                analysis_dict_from_llm["predicted_field"] = predicted_category
+
+            if (
+                "name" not in analysis_dict_from_llm
+                or not analysis_dict_from_llm["name"]
+            ):
+                analysis_dict_from_llm["name"] = name
+
+            if (
+                "email" not in analysis_dict_from_llm
+                or not analysis_dict_from_llm["email"]
+            ):
+                analysis_dict_from_llm["email"] = email
+
+            if "contact" not in analysis_dict_from_llm and contact:
+                analysis_dict_from_llm["contact"] = contact
+
+            analysis_dict_from_llm["cleaned_resume_dict"] = cleaned_resume_dict_from_llm
+
+            comprehensive_data = ComprehensiveAnalysisData(
+                **analysis_dict_from_llm,
+            )
+
+            return comprehensive_data
+
+        except json.JSONDecodeError:
+            print(
+                f"LLM output (V2 resume analysis) was not valid JSON: {llm_response_content}"
+            )
+            raise HTTPException(
+                status_code=500,
+                detail=ErrorResponse(
+                    message="Failed to parse LLM response for V2 analysis as JSON",
+                    error_detail="LLM did not return valid JSON.",
+                ).model_dump(),
+            )
+
+        except ValidationError as e:
+            print(f"Pydantic validation error (V2 resume analysis): {e.errors()}")
+
+            error_detail_extended = {
+                "pydantic_errors": e.errors(),
+                "llm_response_preview": llm_response_content[:500],
+            }
+            raise HTTPException(
+                status_code=400,
+                detail=ErrorResponse(
+                    message="Validation error for LLM V2 analysis data",
+                    error_detail=json.dumps(error_detail_extended),
+                ).model_dump(),
+            )
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        print(f"Unexpected error in V2 /resume/analysis/: {e}")
+        import traceback
+
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=ErrorResponse(
+                message="Failed to perform V2 resume analysis due to an unexpected error",
+                error_detail=str(e),
+            ).model_dump(),
+        )
+
+
+@v2_router.post(
+    "/hiring-assistant/",
+    description="Generates answers to interview questions based on the provided resume text and inputs.",
+    response_model=HiringAssistantResponse,
+)
+async def hiring_assistant2(
+    resume_text: str = Form(...),
+    role: str = Form(...),
+    questions: str = Form(...),  # JSON string: '["q1", "q2"]'
+    company_name: str = Form(...),
+    user_knowledge: Optional[str] = Form(""),
+    company_url: Optional[str] = Form(None),
+    word_limit: Optional[int] = Form(150),
+):
+    if not llm:
+        raise HTTPException(
+            status_code=503,
+            detail=ErrorResponse(
+                message="LLM service is not available.",
+            ).model_dump(),
+        )
+
+    try:
+        try:
+            questions_list = json.loads(questions)
+            if (
+                not isinstance(questions_list, list)
+                or not all(isinstance(q, str) for q in questions_list)
+                or not questions_list
+            ):
+                raise ValueError("Questions must be a non-empty list of strings.")
+        except (json.JSONDecodeError, ValueError) as e:
+            raise HTTPException(
+                status_code=422,
+                detail=ErrorResponse(
+                    message="Invalid format for questions. Expected a JSON string representing a non-empty list of strings.",
+                    error_detail=str(e),
+                ).model_dump(),
+            )
+
+        # The resume_text is now a direct input, so we can validate it immediately.
+        if not is_valid_resume(resume_text):
+            raise HTTPException(
+                status_code=400,
+                detail=ErrorResponse(
+                    message="Invalid resume format or content. Text seems too short."
+                ).model_dump(),
+            )
+
+        company_research_info = ""
+        if company_url:
+            company_research_info = get_company_research(company_name, company_url)
+
+        generated_answers_list = generate_answers_for_geting_hired(
+            resume_text=resume_text,
+            role=role,
+            company=company_name,
+            questions_list=questions_list,
+            word_limit=word_limit,
+            user_company_knowledge=user_knowledge,
+            company_research=company_research_info,
+        )
+
+        answers_data = {}
+        for item in generated_answers_list:
+            if "Error:" in item["answer"] or "Configuration Error:" in item["answer"]:
+                raise HTTPException(
+                    status_code=500,
+                    detail=ErrorResponse(
+                        message="Failed to generate one or more answers due to an internal error.",
+                        error_detail=item["answer"],
+                    ).model_dump(),
+                )
+            answers_data[item["question"]] = item["answer"]
+
+        if not answers_data:
+            raise HTTPException(
+                status_code=500,
+                detail=ErrorResponse(message="No answers were generated.").model_dump(),
+            )
+
+        return HiringAssistantResponse(data=answers_data)
+
+    except HTTPException:
+        raise
+
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=422,
+            detail=ErrorResponse(
+                message="Input validation error.", error_detail=str(e.errors())
+            ).model_dump(),
+        )
+
+    except Exception as e:
+        print(f"Error in /hiring-assistant/: {e}")
+        import traceback
+
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=ErrorResponse(
+                message="Failed to generate hiring assistance.",
+                error_detail=str(e),
+            ).model_dump(),
+        )
+
+
+@v2_router.post(
+    "/cold-mail/generator/",
+    response_model=ColdMailResponse,
+    description="Generates a cold email based on the provided resume text and user inputs.",
+)
+async def cold_mail_generator_v2(
+    resume_text: str = Form(...),
+    recipient_name: str = Form(...),
+    recipient_designation: str = Form(...),
+    company_name: str = Form(...),
+    sender_name: str = Form(...),
+    sender_role_or_goal: str = Form(...),
+    key_points_to_include: str = Form(...),
+    additional_info_for_llm: Optional[str] = Form(""),
+    company_url: Optional[str] = Form(None),
+):
+    if not llm:
+        raise HTTPException(
+            status_code=503,
+            detail=ErrorResponse(message="LLM service is not available.").model_dump(),
+        )
+
+    try:
+        # The resume_text is now a direct input, so we can validate it immediately.
+        if not is_valid_resume(resume_text):
+            raise HTTPException(
+                status_code=400,
+                detail=ErrorResponse(
+                    message="Invalid resume content. Text seems too short or malformed."
+                ).model_dump(),
+            )
+
+        company_research_info = ""
+        if company_url:
+            company_research_info = get_company_research(company_name, company_url)
+
+        email_content = generate_cold_mail_content(
+            resume_text=resume_text,
+            recipient_name=recipient_name,
+            recipient_designation=recipient_designation,
+            company_name=company_name,
+            sender_name=sender_name,
+            sender_role_or_goal=sender_role_or_goal,
+            key_points_to_include=key_points_to_include,
+            additional_info_for_llm=additional_info_for_llm,
+            company_research=company_research_info,
+        )
+
+        if "Error:" in email_content["subject"] or "Error:" in email_content["body"]:
+            raise HTTPException(
+                status_code=500,
+                detail=ErrorResponse(
+                    message="Failed to generate email content due to an LLM or parsing error.",
+                    error_detail=f"Subject: {email_content['subject']}, Body: {email_content['body'][:200]}...",
+                ).model_dump(),
+            )
+
+        return ColdMailResponse(
+            subject=email_content["subject"], body=email_content["body"]
+        )
+
+    except HTTPException:
+        raise
+
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=422,
+            detail=ErrorResponse(
+                message="Input validation error.", error_detail=str(e.errors())
+            ).model_dump(),
+        )
+
+    except Exception as e:
+        print(f"Error in /cold-mail-generator/: {e}")
+        import traceback
+
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=ErrorResponse(
+                message="Failed to generate cold mail content.",
+                error_detail=str(e),
+            ).model_dump(),
+        )
+
+
+# comprehesive route inclusion
+app.include_router(
+    v1_router,
+    prefix="/api",
+    responses={
+        404: {
+            "description": "Not found",
+        },
+    },
+)
+
+app.include_router(
+    v2_router,
+    prefix="/api",
+    responses={
+        404: {
+            "description": "Not found",
+        },
+    },
+)
+
+
 if __name__ == "__main__":
 
     uvicorn.run(
@@ -2287,5 +3253,7 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=8000,
         reload=True,
-        reload_dirs=[os.path.dirname(__file__)],
+        reload_dirs=[
+            os.path.dirname(__file__),
+        ],
     )
