@@ -212,6 +212,7 @@ class ComprehensiveAnalysisResponse(BaseModel):
     success: bool = True
     message: str = "Comprehensive analysis successful"
     data: ComprehensiveAnalysisData
+    cleaned_text: Optional[str] = None
 
 
 class Tip(BaseModel):
@@ -2472,7 +2473,9 @@ async def comprehensive_resume_analysis(file: UploadFile = File(...)):
                 analysis_dict["contact"] = contact
 
             comprehensive_data = ComprehensiveAnalysisData(**analysis_dict)
-            return ComprehensiveAnalysisResponse(data=comprehensive_data)
+            return ComprehensiveAnalysisResponse(
+                data=comprehensive_data, cleaned_text=resume_text
+            )
 
         except json.JSONDecodeError:
             print(

@@ -53,3 +53,7 @@ test.py
 #postgres
 /backend/data/db
 /frontend/data/db
+
+# uploaded files
+/frontend/public/uploads/*
+!/frontend/public/uploads/.gitkeep
