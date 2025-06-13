@@ -358,6 +358,141 @@ Output:
 Return ONLY a single JSON object that would successfully instantiate `TipsData(...)`.
 """
 
+
+comprehensive_analysis_prompt = PromptTemplate(
+    input_variables=[
+        "extracted_resume_text",
+        "predicted_category",
+        "basic_info_json",
+    ],
+    template=comprehensive_analysis_prompt_template_str,
+)
+
+
+comprehensive_analysis_prompt_template_str_v2 = """
+You are an expert resume analyzer. Your task is to extract and structure information from the provided resume text to populate a JSON object conforming to the Pydantic models below. The goal is to generate data that can be used to render a UI similar to the provided example.
+
+Pydantic Models:
+```python
+from typing import List, Optional
+from pydantic import BaseModel, Field
+
+class SkillProficiency(BaseModel):
+    skill_name: str
+    percentage: int  # e.g., 90 for 90 %. Infer this based on experience, project mentions, and skill prominence. Max 5-7 skills.
+
+class UIDetailedWorkExperienceEntry(BaseModel):
+    role: str
+    company_and_duration: str  # Format “Company Name | Start Year – End Year” or “Company Name | Start Year – Present”
+    bullet_points: List[str]
+
+class UIProjectEntry(BaseModel):
+    title: str
+    technologies_used: List[str] = Field(default_factory=list)
+    description: str
+
+class LanguageEntry(BaseModel):
+    language: str  # e.g., “English (Native)”, “Spanish (Professional)”
+
+class EducationEntry(BaseModel):
+    education_detail: str  # e.g., “M.S. in Computer Science”, “B.Tech in ECE – XYZ University”
+
+class ComprehensiveAnalysisData(BaseModel):
+    skills_analysis: List[SkillProficiency] = Field(default_factory=list)
+    recommended_roles: List[str] = Field(default_factory=list)  # Suggest 3-4 relevant roles based on skills and experience.
+    languages: List[LanguageEntry] = Field(default_factory=list)
+    education: List[EducationEntry] = Field(default_factory=list)
+    work_experience: List[UIDetailedWorkExperienceEntry] = Field(default_factory=list)
+    projects: List[UIProjectEntry] = Field(default_factory=list)
+    name: Optional[str] = None
+    email: Optional[str] = None
+    contact: Optional[str] = None
+    predicted_field: Optional[str] = None  # MUST be inferred from the resume
+```
+
+Input:
+- Raw Resume Text:
+```text
+{extracted_resume_text}
+```
+- Basic Extracted Info (Name, Email, Contact – use these if provided, otherwise extract):
+```json
+{basic_info_json}
+```
+
+Instructions:
+1. Name, Email, Contact: Populate from `basic_info_json`; if missing, extract from `extracted_resume_text`.
+2. Predicted Field:
+   - Examine the resume’s skills, projects, job titles, and domain-specific keywords.
+   - Infer the candidate’s primary professional field (e.g., “Software Engineering”, “Data Science”, “Mechanical Engineering”, “Digital Marketing”, “Finance”, “Product Management”, etc.).
+   - If the field is ambiguous, choose the closest match and append “(inferred)”.
+3. Skills Analysis:
+   - Identify the top 5-7 key technical and/or soft skills.
+   - Assign `percentage` (0-100) based on frequency, context, and depth.
+   - If the resume lists very few skills, infer common ones for the predicted field and tag with “(inferred)”.
+4. Recommended Roles:
+   - Suggest 3-4 job titles aligned with the inferred field, skills, and experience level.
+5. Languages:
+   - Extract all languages and proficiency levels.
+   - If none are provided, add “English (Professional) (inferred)”.
+6. Education:
+   - List each distinct qualification.
+   - If absent, infer a typical qualification for the predicted field and tag “(inferred)”.
+7. Work Experience:
+   - For every significant experience, populate `role`, `company_and_duration`, and 2-5 concise bullet points.
+8. Projects:
+   - For each project, extract `title`, `technologies_used`, and `description`.
+   - If no projects are mentioned, create 1-2 typical projects for the predicted field and mark “(inferred)”.
+9. General Inference Rule:
+   - Always prefer direct extraction.
+   - Any inferred value must have “(inferred)” appended.
+10. Output:
+   - Return ONLY a single JSON object that successfully instantiates `ComprehensiveAnalysisData(...)`.
+   - Use empty lists for missing list-type data and null for optional scalars when truly unavailable.
+"""
+
+
+comprehensive_analysis_prompt_v2 = PromptTemplate(
+    input_variables=[
+        "extracted_resume_text",
+        "basic_info_json",
+    ],
+    template=comprehensive_analysis_prompt_template_str_v2,
+)
+
+
+tips_generator_prompt_template_str = """
+You are a helpful career advisor. Generate practical and actionable tips for resume improvement and interview preparation.
+
+Context (Optional):
+- Job Category: {job_category}
+- Key Skills: {skills_list_str}
+
+Instructions:
+1.  **Resume Tips**: Provide 3-5 distinct tips for improving a resume. These can cover content, formatting, tailoring, and common mistakes to avoid. If `job_category` or `skills_list_str` are provided, try to make 1-2 tips relevant to them.
+    - Each tip should have a `category` (e.g., "Content", "Keywords", "Impact") and `advice` (the tip itself).
+2.  **Interview Tips**: Provide 3-5 distinct tips for interview preparation. These can cover research, common questions (STAR method), behavioral aspects, and post-interview follow-up. If `job_category` is provided, try to make 1-2 tips relevant to common interview focuses for that category.
+    - Each tip should have a `category` (e.g., "Preparation", "Answering Questions", "Behavioral") and `advice`.
+
+Pydantic Models for Output Structure:
+```python
+from typing import List
+from pydantic import BaseModel, Field
+
+class Tip(BaseModel):
+    category: str
+    advice: str
+
+class TipsData(BaseModel):
+    resume_tips: List[Tip] = Field(default_factory=list)
+    interview_tips: List[Tip] = Field(default_factory=list)
+```
+
+Output:
+Return ONLY a single JSON object that would successfully instantiate `TipsData(...)`.
+"""
+
+
 tips_generator_prompt = PromptTemplate(
     input_variables=["job_category", "skills_list_str"],
     template=tips_generator_prompt_template_str,
@@ -1458,7 +1593,9 @@ class ResumeAnalysis(BaseModel):
     work_experience: Optional[List[WorkExperienceEntry]] = Field(default_factory=list)
     projects: Optional[List[ProjectEntry]] = Field(default_factory=list)
     skills: List[str] = Field(default_factory=list)
-    upload_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    upload_date: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+    )
 
 
 class ResumeUploadResponse(BaseModel):
@@ -2377,6 +2514,22 @@ async def get_career_tips(
 
 
 """ Router V2 """
+
+
+@v2_router.post(
+    "/resume/analysis",
+    summary="Analyze Resume (V2)",
+    response_model=ComprehensiveAnalysisData,
+    tags=[
+        "V2",
+    ],
+)
+async def analyze_resume(
+    formated_resume: str = Form(
+        ...,
+        description="Formatted resume text",
+    ),
+): ...
 
 
 # comprehesive route inclusion
