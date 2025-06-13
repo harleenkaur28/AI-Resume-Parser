@@ -17,9 +17,21 @@ export async function GET(request: NextRequest) {
       return new NextResponse('Missing image URL', { status: 400 });
     }
 
-    // Validate that it's a Google profile image URL
-    if (!imageUrl.includes('googleusercontent.com') && !imageUrl.includes('github.com')) {
-      return new NextResponse('Invalid image URL', { status: 400 });
+    // Validate that it's a Google profile image URL, GitHub avatar, or other common image hosts
+    const allowedHosts = [
+      'googleusercontent.com',
+      'github.com', 
+      'githubusercontent.com',
+      'gravatar.com',
+      'avatars.githubusercontent.com',
+      'lh3.googleusercontent.com'
+    ];
+    
+    const imageUrlObj = new URL(imageUrl);
+    const isAllowedHost = allowedHosts.some(host => imageUrlObj.hostname.includes(host));
+    
+    if (!isAllowedHost) {
+      return new NextResponse('Image URL not from allowed hosts', { status: 400 });
     }
 
     // Fetch the image from Google/GitHub with retry logic

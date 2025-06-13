@@ -8,6 +8,7 @@ const registerSchema = z.object({
   email: z.string().email("Invalid email format"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   roleId: z.string().min(1, "Role is required"),
+  avatarUrl: z.string().url("Invalid avatar URL").optional().or(z.literal("")),
 });
 
 export async function POST(req: NextRequest) {
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const validatedData = registerSchema.parse(body);
     
-    const { name, email, password, roleId } = validatedData;
+    const { name, email, password, roleId, avatarUrl } = validatedData;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -51,6 +52,7 @@ export async function POST(req: NextRequest) {
         email,
         passwordHash,
         roleId,
+        image: avatarUrl || null,
         isVerified: false,
       },
       select: {

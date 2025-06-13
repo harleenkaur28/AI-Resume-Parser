@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Avatar } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
 	Card,
@@ -31,6 +32,8 @@ import {
 	EyeOff,
 	User,
 	Lock,
+	Upload,
+	AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -64,7 +67,36 @@ export default function AuthPage() {
 		password: "",
 		confirmPassword: "",
 		roleId: "",
+		avatarUrl: "",
 	});
+
+	// Avatar preview state
+	const [avatarPreview, setAvatarPreview] = useState("");
+	const [avatarError, setAvatarError] = useState("");
+
+	// Avatar URL validation
+	const handleAvatarUrlChange = (url: string) => {
+		setRegisterForm((prev) => ({ ...prev, avatarUrl: url }));
+		setAvatarError("");
+
+		if (url && (url.startsWith("http://") || url.startsWith("https://"))) {
+			setAvatarPreview(url);
+		} else {
+			setAvatarPreview("");
+		}
+	};
+
+	const validateAvatarUrl = (url: string) => {
+		if (!url) return true; // Avatar is optional
+
+		try {
+			new URL(url);
+			return true;
+		} catch {
+			setAvatarError("Please enter a valid URL");
+			return false;
+		}
+	};
 
 	// Fetch roles on component mount
 	useEffect(() => {
@@ -137,6 +169,11 @@ export default function AuthPage() {
 			return;
 		}
 
+		if (!validateAvatarUrl(registerForm.avatarUrl)) {
+			setIsLoading(false);
+			return;
+		}
+
 		try {
 			const response = await fetch("/api/auth/register", {
 				method: "POST",
@@ -148,6 +185,7 @@ export default function AuthPage() {
 					email: registerForm.email,
 					password: registerForm.password,
 					roleId: registerForm.roleId,
+					avatarUrl: registerForm.avatarUrl || null,
 				}),
 			});
 
@@ -392,6 +430,39 @@ export default function AuthPage() {
 												/>
 											</div>
 										</div>
+
+										{/* Avatar Upload Section */}
+										<div className="space-y-2">
+											<Label className="text-[#EEEEEE]">
+												Profile Picture (Optional)
+											</Label>
+											<div className="flex items-center space-x-4">
+												<Avatar 
+													src={avatarPreview} 
+													alt="Avatar Preview" 
+													size="md" 
+												/>
+												<div className="flex-1 space-y-2">
+													<Input
+														type="url"
+														placeholder="https://example.com/your-avatar.jpg"
+														value={registerForm.avatarUrl}
+														onChange={(e) => handleAvatarUrlChange(e.target.value)}
+														className="bg-white/10 border-white/20 text-[#EEEEEE] placeholder:text-[#EEEEEE]/40 focus:bg-white/15 transition-all duration-300"
+													/>
+													<p className="text-xs text-[#EEEEEE]/60">
+														Paste a URL to your profile picture (JPG, PNG, GIF, WebP)
+													</p>
+													{avatarError && (
+														<div className="flex items-center space-x-1 text-red-400 text-xs">
+															<AlertCircle className="h-3 w-3" />
+															<span>{avatarError}</span>
+														</div>
+													)}
+												</div>
+											</div>
+										</div>
+
 										<div className="space-y-2">
 											<Label
 												htmlFor="register-email"

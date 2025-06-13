@@ -23,7 +23,7 @@ export default function AccountPage() {
 	const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
 	// Check if user is using email authentication (not OAuth)
-	const isEmailUser = session?.user?.email && !session.user?.image?.includes('googleusercontent.com') && !session.user?.image?.includes('github.com');
+	const isEmailUser = session?.user?.email && !session.user?.image?.includes('googleusercontent.com') && !session.user?.image?.includes('github.com') && !session.user?.image?.includes('avatars.githubusercontent.com');
 
 	// Redirect if not authenticated
 	useEffect(() => {
