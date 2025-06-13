@@ -44,7 +44,7 @@ export default function TipsClient() {
 				if (skills) params.append("skills", skills);
 
 				const response = await fetch(
-					`${process.env.NEXT_PUBLIC_BACKEND_URL}/tips/?${params.toString()}`
+					`/api/backend-interface/tips/?${params.toString()}`
 				);
 
 				if (!response.ok) {
@@ -143,14 +143,44 @@ export default function TipsClient() {
 											</h2>
 										</div>
 
-										{tipsData?.resume_tips.map((tip, index) => (
-											<div
-												key={index}
-												className="p-4 bg-white/10 border-white/20 rounded-md"
-											>
-												<p className="text-[#EEEEEE]">{tip.advice}</p>
+										{tipsData?.resume_tips &&
+										tipsData.resume_tips.length > 0 ? (
+											<div className="space-y-4">
+												{tipsData.resume_tips.map((tip: Tip, index: number) => (
+													<motion.div
+														key={index}
+														initial={{ opacity: 0, y: 20 }}
+														animate={{ opacity: 1, y: 0 }}
+														transition={{ duration: 0.5, delay: index * 0.1 }}
+													>
+														<Card className="backdrop-blur-lg bg-white/5 border-white/10 hover:bg-white/10 transition-all duration-300">
+															<CardContent className="p-6">
+																<div className="flex items-start space-x-3">
+																	<div className="flex-shrink-0 w-8 h-8 bg-[#76ABAE]/20 rounded-full flex items-center justify-center mt-1">
+																		<FileText className="h-4 w-4 text-[#76ABAE]" />
+																	</div>
+																	<div className="flex-1">
+																		<h3 className="text-[#76ABAE] font-semibold mb-2">
+																			{tip.category}
+																		</h3>
+																		<p className="text-[#EEEEEE] leading-relaxed">
+																			{tip.advice}
+																		</p>
+																	</div>
+																</div>
+															</CardContent>
+														</Card>
+													</motion.div>
+												))}
 											</div>
-										))}
+										) : (
+											<div className="text-center py-8">
+												<FileText className="h-12 w-12 text-[#EEEEEE]/30 mx-auto mb-4" />
+												<p className="text-[#EEEEEE]/60">
+													No resume tips available
+												</p>
+											</div>
+										)}
 									</div>
 
 									{/* Interview Tips */}
@@ -162,14 +192,46 @@ export default function TipsClient() {
 											</h2>
 										</div>
 
-										{tipsData?.interview_tips.map((tip, index) => (
-											<div
-												key={index}
-												className="p-4 bg-white/10 border-white/20 rounded-md"
-											>
-												<p className="text-[#EEEEEE]">{tip.advice}</p>
+										{tipsData?.interview_tips &&
+										tipsData.interview_tips.length > 0 ? (
+											<div className="space-y-4">
+												{tipsData.interview_tips.map(
+													(tip: Tip, index: number) => (
+														<motion.div
+															key={index}
+															initial={{ opacity: 0, y: 20 }}
+															animate={{ opacity: 1, y: 0 }}
+															transition={{ duration: 0.5, delay: index * 0.1 }}
+														>
+															<Card className="backdrop-blur-lg bg-white/5 border-white/10 hover:bg-white/10 transition-all duration-300">
+																<CardContent className="p-6">
+																	<div className="flex items-start space-x-3">
+																		<div className="flex-shrink-0 w-8 h-8 bg-[#76ABAE]/20 rounded-full flex items-center justify-center mt-1">
+																			<Users className="h-4 w-4 text-[#76ABAE]" />
+																		</div>
+																		<div className="flex-1">
+																			<h3 className="text-[#76ABAE] font-semibold mb-2">
+																				{tip.category}
+																			</h3>
+																			<p className="text-[#EEEEEE] leading-relaxed">
+																				{tip.advice}
+																			</p>
+																		</div>
+																	</div>
+																</CardContent>
+															</Card>
+														</motion.div>
+													)
+												)}
 											</div>
-										))}
+										) : (
+											<div className="text-center py-8">
+												<Users className="h-12 w-12 text-[#EEEEEE]/30 mx-auto mb-4" />
+												<p className="text-[#EEEEEE]/60">
+													No interview tips available
+												</p>
+											</div>
+										)}
 									</div>
 								</div>
 
@@ -180,7 +242,30 @@ export default function TipsClient() {
 									transition={{ duration: 0.8, delay: 0.8 }}
 									className="mt-12 text-center"
 								>
-									<Card className="backdrop-blur-lg bg-white/5 border-white/10 max-w-2xl mx-auto"></Card>
+									<Card className="backdrop-blur-lg bg-white/5 border-white/10 max-w-2xl mx-auto">
+										<CardContent className="p-6">
+											<h3 className="text-lg font-semibold text-[#EEEEEE] mb-4">
+												Want more personalized advice?
+											</h3>
+											<div className="flex flex-col sm:flex-row gap-4 justify-center">
+												<Link href="/dashboard/resume-analysis">
+													<Button className="bg-gradient-to-r from-[#76ABAE] to-[#5A8B8F] hover:from-[#5A8B8F] hover:to-[#76ABAE] text-white">
+														<FileText className="mr-2 h-4 w-4" />
+														Analyze Resume
+													</Button>
+												</Link>
+												<Link href="/dashboard/hiring-assistant">
+													<Button
+														variant="outline"
+														className="border-[#76ABAE]/50 text-[#76ABAE] hover:bg-[#76ABAE]/10"
+													>
+														<Users className="mr-2 h-4 w-4" />
+														Practice Interviews
+													</Button>
+												</Link>
+											</div>
+										</CardContent>
+									</Card>
 								</motion.div>
 							</motion.div>
 						)}
