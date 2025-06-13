@@ -35,7 +35,7 @@ import {
 	Award,
 } from "lucide-react";
 import Link from "next/link";
-import { Loader } from "@/components/ui/loader";
+import { Loader, LoaderOverlay } from "@/components/ui/loader";
 
 export default function DashboardPage() {
 	const { data: session, status } = useSession();
@@ -81,18 +81,12 @@ export default function DashboardPage() {
 	}, []);
 
 	if (status === "loading") {
-		return (
-			<div className="flex items-center justify-center min-h-screen text-white bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831]">
-				Loading dashboard...
-			</div>
-		);
+		return <LoaderOverlay variant="dots" size="xl" text="Loading session..." />;
 	}
 
 	if (!session) {
 		return (
-			<div className="flex items-center justify-center min-h-screen text-white bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831]">
-				Redirecting to login...
-			</div>
+			<LoaderOverlay variant="dots" size="xl" text="Redirecting to login..." />
 		);
 	}
 
