@@ -777,7 +777,7 @@ export default function DashboardPage() {
 											<Link href="/dashboard/recruiter">
 												<Button
 													variant="outline"
-													className="w-full border-slate-500/30 text-slate-300 hover:bg-slate-500/10 hover:text-white group text-lg py-3 shadow-lg hover:shadow-xl transition-all duration-300 button-hover"
+													className="w-full border-slate-500/30 text-slate-900 hover:bg-slate-500/10 hover:text-white group text-lg py-3 shadow-lg hover:shadow-xl transition-all duration-300 button-hover"
 												>
 													<BarChart3 className="mr-2 h-5 w-5" />
 													Explore Tools
@@ -1039,7 +1039,7 @@ export default function DashboardPage() {
 																		setEditingResume(null);
 																		setNewResumeName("");
 																	}}
-																	className="border-white/20 text-[#EEEEEE] hover:bg-white/10"
+																	className="border-white/20 text-gray-900 hover:text-[#EEEEEE] hover:bg-white/10"
 																>
 																	Cancel
 																</Button>
@@ -1082,7 +1082,7 @@ export default function DashboardPage() {
 																	});
 																	setNewResumeName(resume.customName);
 																}}
-																className="text-[#76ABAE] hover:text-[#EEEEEE] hover:bg-white/10"
+																className="text-[#76ABAE] text-gray-900 hover:text-[#EEEEEE] hover:bg-white/10"
 															>
 																<Edit className="h-4 w-4" />
 															</Button>
@@ -1172,7 +1172,7 @@ export default function DashboardPage() {
 									<Button
 										variant="outline"
 										onClick={() => setDeletingResume(null)}
-										className="border-white/20 text-[#EEEEEE] hover:bg-white/10"
+										className="border-white/20 text-gray-900 hover:text-[#EEEEEE] hover:bg-white/10"
 									>
 										Cancel
 									</Button>
@@ -1545,7 +1545,7 @@ export default function DashboardPage() {
 									<Button
 										variant="outline"
 										onClick={() => setDeletingInterview(null)}
-										className="border-white/20 text-[#EEEEEE] hover:bg-white/10"
+										className="border-white/20 text-gray-900 hover:text-[#EEEEEE] hover:bg-white/10"
 									>
 										Cancel
 									</Button>
@@ -1612,7 +1612,7 @@ export default function DashboardPage() {
 									<Button
 										variant="outline"
 										onClick={() => setDeletingColdMail(null)}
-										className="border-white/20 text-[#EEEEEE] hover:bg-white/10"
+										className="border-white/20 text-gray-900 hover:text-[#EEEEEE] hover:bg-white/10"
 									>
 										Cancel
 									</Button>
