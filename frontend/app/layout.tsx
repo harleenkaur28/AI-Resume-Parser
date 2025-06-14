@@ -1,11 +1,11 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Comfortaa } from "next/font/google";
 import { Navbar } from "@/components/navbar";
 import { Toaster } from "@/components/ui/toaster";
 import { Providers } from "./providers";
 
-const inter = Inter({ subsets: ["latin"] });
+const comfortaa = Comfortaa({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
 	title: "TalentSync - AI-Powered Job Matching",
@@ -19,7 +19,7 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<html lang="en" className={inter.className} suppressHydrationWarning>
+		<html lang="en" className={comfortaa.className} suppressHydrationWarning>
 			<body className="bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831]">
 				<Providers>
 					<Navbar />
