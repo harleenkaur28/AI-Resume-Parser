@@ -176,12 +176,16 @@ function isValidFileType(file: File): boolean {
   const validTypes = [
     'application/pdf',
     'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'text/plain',
+    'text/markdown'
   ];
   return validTypes.includes(file.type) || 
          file.name.toLowerCase().endsWith('.pdf') ||
          file.name.toLowerCase().endsWith('.doc') ||
-         file.name.toLowerCase().endsWith('.docx');
+         file.name.toLowerCase().endsWith('.docx') ||
+         file.name.toLowerCase().endsWith('.txt') ||
+         file.name.toLowerCase().endsWith('.md');
 }
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
@@ -424,7 +428,7 @@ export async function POST(request: NextRequest) {
       
       if (!isValidFileType(file)) {
         return NextResponse.json({ 
-          error: 'Invalid file type. Please upload a PDF or DOC file' 
+          error: 'Invalid file type. Please upload a PDF, DOC, DOCX, TXT, or MD file' 
         }, { status: 400 });
       }
 
