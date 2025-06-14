@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Avatar } from "@/components/ui/avatar";
 import { AvatarUpload } from "@/components/avatar-upload";
 import {
@@ -25,9 +26,18 @@ import {
 	Key,
 	CheckCircle,
 	AlertCircle,
+	Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { Loader } from "@/components/ui/loader";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function AccountPage() {
 	const { data: session, status } = useSession();
@@ -39,6 +49,9 @@ export default function AccountPage() {
 		type: "success" | "error";
 		text: string;
 	} | null>(null);
+	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const [isDeleting, setIsDeleting] = useState(false);
+	const [deleteConfirmation, setDeleteConfirmation] = useState("");
 
 	// Check if user is using email authentication (not OAuth)
 	const isEmailUser =
@@ -102,6 +115,42 @@ export default function AccountPage() {
 			});
 		} finally {
 			setIsResettingPassword(false);
+		}
+	};
+
+	const handleDeleteAccount = async () => {
+		if (deleteConfirmation !== "DELETE") {
+			setResetMessage({
+				type: "error",
+				text: "Please type 'DELETE' to confirm account deletion.",
+			});
+			return;
+		}
+
+		setIsDeleting(true);
+		setResetMessage(null);
+
+		try {
+			const response = await fetch("/api/auth/delete-account", {
+				method: "DELETE",
+				headers: { "Content-Type": "application/json" },
+			});
+
+			const data = await response.json();
+
+			if (!response.ok) {
+				throw new Error(data.error || "Failed to delete account");
+			}
+
+			// Sign out and redirect to home page
+			await signOut({ callbackUrl: "/" });
+		} catch (error: any) {
+			setResetMessage({
+				type: "error",
+				text: error.message || "Failed to delete account. Please try again.",
+			});
+		} finally {
+			setIsDeleting(false);
 		}
 	};
 
@@ -327,6 +376,29 @@ export default function AccountPage() {
 												</div>
 											)}
 										</div>
+
+										{/* Danger Zone */}
+										<div className="border-t border-red-500/20 pt-4 mt-6">
+											<div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+												<h4 className="text-red-400 font-medium mb-2 flex items-center gap-2">
+													<AlertCircle className="h-4 w-4" />
+													Danger Zone
+												</h4>
+												<p className="text-red-300/80 text-sm mb-3">
+													Permanently delete your account and all associated
+													data. This action cannot be undone.
+												</p>
+												<Button
+													onClick={() => setShowDeleteDialog(true)}
+													variant="outline"
+													size="sm"
+													className="border-red-500/50 text-red-400 hover:bg-red-500/20 hover:text-red-300 hover:border-red-400/70"
+												>
+													<Trash2 className="mr-2 h-3 w-3" />
+													Delete Account
+												</Button>
+											</div>
+										</div>
 									</CardContent>
 								</Card>
 
@@ -349,19 +421,6 @@ export default function AccountPage() {
 												</Button>
 											</Link>
 
-											{/* Password Management for Email Users */}
-											{isEmailUser && (
-												<Link href="/auth/forgot-password" className="block">
-													<Button
-														variant="outline"
-														className="w-full border-[#76ABAE]/30 text-[#76ABAE] hover:bg-[#76ABAE]/10 hover:text-[#76ABAE]"
-													>
-														<Key className="mr-2 h-4 w-4" />
-														Change Password
-													</Button>
-												</Link>
-											)}
-
 											<Button
 												onClick={handleSignOut}
 												variant="outline"
@@ -378,6 +437,105 @@ export default function AccountPage() {
 					</div>
 				</div>
 			)}
+
+			{/* Delete Account Confirmation Dialog */}
+			<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+				<DialogContent className="backdrop-blur-2xl bg-gradient-to-br from-red-900/20 via-[#31363F]/95 to-red-900/20 border-red-400/30 border-2 text-white shadow-2xl shadow-red-500/20 rounded-2xl max-w-lg w-[90vw] max-h-[90vh] overflow-y-auto">
+					<div className="bg-gradient-to-br from-red-500/5 via-transparent to-red-500/5 rounded-2xl pointer-events-none"></div>
+					<div className="relative z-10 p-2">
+						<DialogHeader className="space-y-3">
+							<DialogTitle className="text-xl font-semibold text-white flex items-center gap-3">
+								<div className="p-2 rounded-lg bg-red-500/20 backdrop-blur-sm border border-red-400/30">
+									<Trash2 className="h-6 w-6 text-red-400" />
+								</div>
+								Delete Account
+							</DialogTitle>
+							<DialogDescription className="text-slate-300/80">
+								This action cannot be undone. This will permanently delete your
+								account and all associated data.
+							</DialogDescription>
+						</DialogHeader>
+
+						<div className="mt-4 space-y-4">
+							<div>
+								<p className="text-slate-300/80 text-sm mb-2">
+									The following data will be permanently deleted:
+								</p>
+								<ul className="list-disc list-inside text-sm space-y-1 text-slate-300/70 ml-4">
+									<li>All uploaded resumes and analyses</li>
+									<li>Interview practice sessions</li>
+									<li>Cold mail templates</li>
+									<li>Account settings and preferences</li>
+								</ul>
+							</div>
+
+							{resetMessage && (
+								<motion.div
+									initial={{ opacity: 0, y: -10 }}
+									animate={{ opacity: 1, y: 0 }}
+									className={`p-3 rounded-lg text-sm flex items-center space-x-2 ${
+										resetMessage.type === "success"
+											? "bg-green-500/20 border border-green-500/30 text-green-200"
+											: "bg-red-500/20 border border-red-500/30 text-red-200"
+									}`}
+								>
+									{resetMessage.type === "success" ? (
+										<CheckCircle className="h-4 w-4 flex-shrink-0" />
+									) : (
+										<AlertCircle className="h-4 w-4 flex-shrink-0" />
+									)}
+									<span>{resetMessage.text}</span>
+								</motion.div>
+							)}
+
+							<div>
+								<label className="block text-sm font-medium text-slate-300 mb-2">
+									Type "DELETE" to confirm:
+								</label>
+								<Input
+									type="text"
+									value={deleteConfirmation}
+									onChange={(e) => setDeleteConfirmation(e.target.value)}
+									placeholder="DELETE"
+									className="bg-slate-800/50 border-slate-600/50 text-white placeholder-slate-400 focus:ring-red-500/50 focus:border-red-500/50"
+								/>
+							</div>
+						</div>
+
+						<DialogFooter className="flex gap-2 mt-6 pt-4">
+							<Button
+								variant="outline"
+								onClick={() => {
+									setShowDeleteDialog(false);
+									setDeleteConfirmation("");
+									setResetMessage(null);
+								}}
+								className="border-slate-500/50 text-slate-300 hover:bg-slate-600/50 backdrop-blur-sm hover:border-slate-400/50 transition-all duration-200"
+								disabled={isDeleting}
+							>
+								Cancel
+							</Button>
+							<Button
+								onClick={handleDeleteAccount}
+								disabled={isDeleting || deleteConfirmation !== "DELETE"}
+								className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white backdrop-blur-sm border border-red-400/30 transition-all duration-200 hover:shadow-lg hover:shadow-red-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								{isDeleting ? (
+									<>
+										<Loader className="mr-2 h-4 w-4" />
+										Deleting Account...
+									</>
+								) : (
+									<>
+										<Trash2 className="mr-2 h-4 w-4" />
+										Delete Account
+									</>
+								)}
+							</Button>
+						</DialogFooter>
+					</div>
+				</DialogContent>
+			</Dialog>
 		</>
 	);
 }
