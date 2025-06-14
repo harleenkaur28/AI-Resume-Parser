@@ -68,7 +68,7 @@ export default function DetailedAnalysisPage() {
 	useEffect(() => {
 		const loadAnalysisData = async () => {
 			// Add artificial delay for better UX
-			await new Promise((resolve) => setTimeout(resolve, 1500));
+			await new Promise((resolve) => setTimeout(resolve, 70));
 
 			const storedData = localStorage.getItem("analysisData");
 			if (storedData) {
