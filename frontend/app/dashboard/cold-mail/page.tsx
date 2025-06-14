@@ -1057,6 +1057,271 @@ export default function ColdMailGenerator() {
 										</CardContent>
 									</Card>
 								</motion.div>
+
+								{/* AI-Powered Email Editing - Coming Soon */}
+								{generatedEmail && (
+									<motion.div
+										initial={{ opacity: 0, y: 20 }}
+										animate={{ opacity: 1, y: 0 }}
+										transition={{ duration: 0.8, delay: 0.8 }}
+										className="order-3 mt-6"
+									>
+										<Card className="backdrop-blur-lg bg-white/5 border-white/10 shadow-2xl relative overflow-hidden">
+											{/* Coming Soon Overlay */}
+											<div className="absolute inset-0 bg-black/50 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
+												<div className="text-center p-6">
+													<div className="inline-flex items-center px-4 py-2 bg-[#76ABAE]/20 border border-[#76ABAE]/30 rounded-full mb-3">
+														<div className="w-2 h-2 bg-[#76ABAE] rounded-full mr-2 animate-pulse"></div>
+														<span className="text-[#76ABAE] text-sm font-medium">
+															Coming Soon
+														</span>
+													</div>
+													<p className="text-[#EEEEEE]/80 text-lg font-semibold mb-1">
+														Work in Progress
+													</p>
+													<p className="text-[#EEEEEE]/60 text-sm">
+														AI editing features are being developed
+													</p>
+												</div>
+											</div>
+
+											<CardHeader className="pb-4">
+												<CardTitle className="text-[#EEEEEE] text-xl sm:text-2xl font-semibold flex items-center">
+													<div className="h-5 w-5 bg-[#76ABAE] rounded mr-2 flex items-center justify-center">
+														<Mail className="text-[#EEEEEE] text-xs h-3 w-3" />
+													</div>
+													AI Email Editor
+												</CardTitle>
+												<p className="text-[#EEEEEE]/60 text-sm">
+													Enhance your generated email with AI-powered editing
+													tools
+												</p>
+											</CardHeader>
+											<CardContent className="space-y-6 opacity-50">
+												{/* Editing Options */}
+												<div className="space-y-4">
+													<div>
+														<h4 className="text-[#EEEEEE] font-medium mb-3 flex items-center gap-2">
+															<div className="w-2 h-2 bg-[#76ABAE] rounded-full"></div>
+															Editing Options
+														</h4>
+														<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+															{/* Tone Adjustment */}
+															<div className="p-4 bg-white/5 rounded-lg border border-white/10 hover:border-[#76ABAE]/30 transition-colors cursor-pointer">
+																<div className="flex items-center justify-between mb-2">
+																	<div className="flex items-center gap-2">
+																		<div className="w-8 h-8 bg-[#76ABAE] rounded-lg flex items-center justify-center">
+																			<span className="text-[#EEEEEE] text-xs font-bold">
+																				T
+																			</span>
+																		</div>
+																		<span className="text-[#EEEEEE] font-medium">
+																			Tone Adjustment
+																		</span>
+																	</div>
+																	<div className="w-4 h-4 border-2 border-white/30 rounded-full"></div>
+																</div>
+																<p className="text-[#EEEEEE]/60 text-xs">
+																	Professional, casual, or formal
+																</p>
+															</div>
+
+															{/* Grammar Check */}
+															<div className="p-4 bg-white/5 rounded-lg border border-white/10 hover:border-[#76ABAE]/30 transition-colors cursor-pointer">
+																<div className="flex items-center justify-between mb-2">
+																	<div className="flex items-center gap-2">
+																		<div className="w-8 h-8 bg-[#31363F] rounded-lg flex items-center justify-center">
+																			<span className="text-[#EEEEEE] text-xs font-bold">
+																				G
+																			</span>
+																		</div>
+																		<span className="text-[#EEEEEE] font-medium">
+																			Grammar Check
+																		</span>
+																	</div>
+																	<div className="w-4 h-4 border-2 border-white/30 rounded-full"></div>
+																</div>
+																<p className="text-[#EEEEEE]/60 text-xs">
+																	Advanced grammar corrections
+																</p>
+															</div>
+
+															{/* Length Optimizer */}
+															<div className="p-4 bg-white/5 rounded-lg border border-white/10 hover:border-[#76ABAE]/30 transition-colors cursor-pointer">
+																<div className="flex items-center justify-between mb-2">
+																	<div className="flex items-center gap-2">
+																		<div className="w-8 h-8 bg-[#222831] rounded-lg flex items-center justify-center border border-white/20">
+																			<span className="text-[#EEEEEE] text-xs font-bold">
+																				L
+																			</span>
+																		</div>
+																		<span className="text-[#EEEEEE] font-medium">
+																			Length Optimizer
+																		</span>
+																	</div>
+																	<div className="w-4 h-4 border-2 border-white/30 rounded-full"></div>
+																</div>
+																<p className="text-[#EEEEEE]/60 text-xs">
+																	Make it shorter or more detailed
+																</p>
+															</div>
+
+															{/* Impact Enhancer */}
+															<div className="p-4 bg-white/5 rounded-lg border border-white/10 hover:border-[#76ABAE]/30 transition-colors cursor-pointer">
+																<div className="flex items-center justify-between mb-2">
+																	<div className="flex items-center gap-2">
+																		<div className="w-8 h-8 bg-[#76ABAE] rounded-lg flex items-center justify-center">
+																			<span className="text-[#EEEEEE] text-xs font-bold">
+																				I
+																			</span>
+																		</div>
+																		<span className="text-[#EEEEEE] font-medium">
+																			Impact Enhancer
+																		</span>
+																	</div>
+																	<div className="w-4 h-4 border-2 border-white/30 rounded-full"></div>
+																</div>
+																<p className="text-[#EEEEEE]/60 text-xs">
+																	Boost persuasiveness
+																</p>
+															</div>
+														</div>
+													</div>
+												</div>
+
+												{/* Quick Edit Actions */}
+												<div className="space-y-4">
+													<div>
+														<h4 className="text-[#EEEEEE] font-medium mb-3 flex items-center gap-2">
+															<Send className="h-4 w-4 text-[#76ABAE]" />
+															Quick Actions
+														</h4>
+														<div className="grid grid-cols-2 gap-3">
+															<Button
+																disabled
+																variant="outline"
+																className="bg-white/5 border-white/20 text-[#EEEEEE] hover:bg-white/10 hover:text-[#EEEEEE] justify-start"
+															>
+																<Copy className="mr-2 h-4 w-4" />
+																Make Copy
+															</Button>
+															<Button
+																disabled
+																variant="outline"
+																className="bg-white/5 border-white/20 text-[#EEEEEE] hover:bg-white/10 hover:text-[#EEEEEE] justify-start"
+															>
+																<FileText className="mr-2 h-4 w-4" />
+																Rewrite
+															</Button>
+															<Button
+																disabled
+																variant="outline"
+																className="bg-white/5 border-white/20 text-[#EEEEEE] hover:bg-white/10 hover:text-[#EEEEEE] justify-start"
+															>
+																<CheckCircle className="mr-2 h-4 w-4" />
+																Polish
+															</Button>
+															<Button
+																disabled
+																variant="outline"
+																className="bg-white/5 border-white/20 text-[#EEEEEE] hover:bg-white/10 hover:text-[#EEEEEE] justify-start"
+															>
+																<Mail className="mr-2 h-4 w-4" />
+																Customize
+															</Button>
+														</div>
+													</div>
+												</div>
+
+												{/* AI Suggestions Preview */}
+												<div className="space-y-4">
+													<div>
+														<h4 className="text-[#EEEEEE] font-medium mb-3 flex items-center gap-2">
+															<div className="w-4 h-4 bg-[#76ABAE] rounded"></div>
+															AI Suggestions
+														</h4>
+														<div className="space-y-3">
+															<div className="p-3 bg-white/5 rounded-lg border border-white/10">
+																<div className="flex items-start justify-between mb-2">
+																	<div className="flex items-center gap-2">
+																		<div className="w-6 h-6 bg-[#76ABAE]/20 rounded flex items-center justify-center">
+																			<span className="text-[#76ABAE] text-xs">
+																				1
+																			</span>
+																		</div>
+																		<span className="text-[#EEEEEE] text-sm font-medium">
+																			Subject Line Enhancement
+																		</span>
+																	</div>
+																	<div className="px-2 py-1 bg-[#76ABAE]/20 text-[#76ABAE] text-xs rounded-full">
+																		High Impact
+																	</div>
+																</div>
+																<p className="text-[#EEEEEE]/60 text-xs pl-8">
+																	Make your subject line more compelling and
+																	attention-grabbing
+																</p>
+															</div>
+															<div className="p-3 bg-white/5 rounded-lg border border-white/10">
+																<div className="flex items-start justify-between mb-2">
+																	<div className="flex items-center gap-2">
+																		<div className="w-6 h-6 bg-[#76ABAE]/20 rounded flex items-center justify-center">
+																			<span className="text-[#76ABAE] text-xs">
+																				2
+																			</span>
+																		</div>
+																		<span className="text-[#EEEEEE] text-sm font-medium">
+																			Opening Optimization
+																		</span>
+																	</div>
+																	<div className="px-2 py-1 bg-[#76ABAE]/20 text-[#76ABAE] text-xs rounded-full">
+																		Medium
+																	</div>
+																</div>
+																<p className="text-[#EEEEEE]/60 text-xs pl-8">
+																	Improve your opening paragraph for better
+																	engagement
+																</p>
+															</div>
+															<div className="p-3 bg-white/5 rounded-lg border border-white/10">
+																<div className="flex items-start justify-between mb-2">
+																	<div className="flex items-center gap-2">
+																		<div className="w-6 h-6 bg-[#76ABAE]/20 rounded flex items-center justify-center">
+																			<span className="text-[#76ABAE] text-xs">
+																				3
+																			</span>
+																		</div>
+																		<span className="text-[#EEEEEE] text-sm font-medium">
+																			Call-to-Action Boost
+																		</span>
+																	</div>
+																	<div className="px-2 py-1 bg-[#76ABAE]/20 text-[#76ABAE] text-xs rounded-full">
+																		High Impact
+																	</div>
+																</div>
+																<p className="text-[#EEEEEE]/60 text-xs pl-8">
+																	Strengthen your closing with a more effective
+																	call-to-action
+																</p>
+															</div>
+														</div>
+													</div>
+												</div>
+
+												{/* Apply Edits Button */}
+												<div className="pt-4 border-t border-white/10">
+													<Button
+														disabled
+														className="w-full bg-[#76ABAE]/50 hover:bg-[#76ABAE]/60 text-white"
+													>
+														<Send className="mr-2 h-4 w-4" />
+														Apply AI Edits
+													</Button>
+												</div>
+											</CardContent>
+										</Card>
+									</motion.div>
+								)}
 							</div>
 						</div>
 					</div>
