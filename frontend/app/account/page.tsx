@@ -27,6 +27,8 @@ import {
 	CheckCircle,
 	AlertCircle,
 	Trash2,
+	AlertTriangle,
+	X,
 } from "lucide-react";
 import Link from "next/link";
 import { Loader } from "@/components/ui/loader";
@@ -440,69 +442,106 @@ export default function AccountPage() {
 
 			{/* Delete Account Confirmation Dialog */}
 			<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-				<DialogContent className="backdrop-blur-2xl bg-gradient-to-br from-red-900/20 via-[#31363F]/95 to-red-900/20 border-red-400/30 border-2 text-white shadow-2xl shadow-red-500/20 rounded-2xl max-w-lg w-[90vw] max-h-[90vh] overflow-y-auto">
-					<div className="bg-gradient-to-br from-red-500/5 via-transparent to-red-500/5 rounded-2xl pointer-events-none"></div>
-					<div className="relative z-10 p-2">
-						<DialogHeader className="space-y-3">
-							<DialogTitle className="text-xl font-semibold text-white flex items-center gap-3">
+				<DialogContent className="backdrop-blur-lg bg-[#222831]/95 border border-red-400/20 text-[#EEEEEE] shadow-2xl shadow-red-500/10 rounded-lg max-w-lg w-[90vw] max-h-[90vh] overflow-y-auto">
+					{/* Close Button - following original modal pattern */}
+					<button
+						onClick={() => {
+							setShowDeleteDialog(false);
+							setDeleteConfirmation("");
+							setResetMessage(null);
+						}}
+						className="absolute right-4 top-4 z-10 p-2 rounded-full bg-white/10 hover:bg-red-500/20 transition-colors"
+					>
+						<X className="h-4 w-4 text-[#EEEEEE]" />
+					</button>
+
+					<div className="p-6">
+						{/* Header Section - following original modal pattern */}
+						<div className="mb-6">
+							<DialogTitle className="text-2xl font-bold text-[#EEEEEE] mb-2 flex items-center gap-3">
 								<div className="p-2 rounded-lg bg-red-500/20 backdrop-blur-sm border border-red-400/30">
 									<Trash2 className="h-6 w-6 text-red-400" />
 								</div>
 								Delete Account
 							</DialogTitle>
-							<DialogDescription className="text-slate-300/80">
+							<DialogDescription className="text-[#EEEEEE]/60">
 								This action cannot be undone. This will permanently delete your
 								account and all associated data.
 							</DialogDescription>
-						</DialogHeader>
+						</div>
 
-						<div className="mt-4 space-y-4">
-							<div>
-								<p className="text-slate-300/80 text-sm mb-2">
-									The following data will be permanently deleted:
-								</p>
-								<ul className="list-disc list-inside text-sm space-y-1 text-slate-300/70 ml-4">
-									<li>All uploaded resumes and analyses</li>
-									<li>Interview practice sessions</li>
-									<li>Cold mail templates</li>
-									<li>Account settings and preferences</li>
+						<div className="space-y-6">
+							{/* Warning Information Card */}
+							<div className="backdrop-blur-lg bg-red-500/5 rounded-lg p-6 border border-red-400/20">
+								<h3 className="text-lg font-semibold text-[#EEEEEE] mb-4 flex items-center">
+									<AlertTriangle className="mr-2 h-5 w-5 text-red-400" />
+									Data to be Deleted
+								</h3>
+								<ul className="space-y-2">
+									<li className="text-[#EEEEEE]/80 text-sm flex items-center">
+										<div className="w-1 h-1 bg-red-400 rounded-full mr-3"></div>
+										All uploaded resumes and analyses
+									</li>
+									<li className="text-[#EEEEEE]/80 text-sm flex items-center">
+										<div className="w-1 h-1 bg-red-400 rounded-full mr-3"></div>
+										Interview practice sessions
+									</li>
+									<li className="text-[#EEEEEE]/80 text-sm flex items-center">
+										<div className="w-1 h-1 bg-red-400 rounded-full mr-3"></div>
+										Cold mail templates
+									</li>
+									<li className="text-[#EEEEEE]/80 text-sm flex items-center">
+										<div className="w-1 h-1 bg-red-400 rounded-full mr-3"></div>
+										Account settings and preferences
+									</li>
 								</ul>
 							</div>
 
+							{/* Status Message */}
 							{resetMessage && (
 								<motion.div
 									initial={{ opacity: 0, y: -10 }}
 									animate={{ opacity: 1, y: 0 }}
-									className={`p-3 rounded-lg text-sm flex items-center space-x-2 ${
+									className={`backdrop-blur-lg rounded-lg p-4 border flex items-center space-x-3 ${
 										resetMessage.type === "success"
-											? "bg-green-500/20 border border-green-500/30 text-green-200"
-											: "bg-red-500/20 border border-red-500/30 text-red-200"
+											? "bg-green-500/10 border-green-400/30 text-green-200"
+											: "bg-red-500/10 border-red-400/30 text-red-200"
 									}`}
 								>
 									{resetMessage.type === "success" ? (
-										<CheckCircle className="h-4 w-4 flex-shrink-0" />
+										<CheckCircle className="h-5 w-5 flex-shrink-0" />
 									) : (
-										<AlertCircle className="h-4 w-4 flex-shrink-0" />
+										<AlertCircle className="h-5 w-5 flex-shrink-0" />
 									)}
-									<span>{resetMessage.text}</span>
+									<span className="text-sm">{resetMessage.text}</span>
 								</motion.div>
 							)}
 
-							<div>
-								<label className="block text-sm font-medium text-slate-300 mb-2">
-									Type "DELETE" to confirm:
-								</label>
-								<Input
-									type="text"
-									value={deleteConfirmation}
-									onChange={(e) => setDeleteConfirmation(e.target.value)}
-									placeholder="DELETE"
-									className="bg-slate-800/50 border-slate-600/50 text-white placeholder-slate-400 focus:ring-red-500/50 focus:border-red-500/50"
-								/>
+							{/* Confirmation Input Card */}
+							<div className="backdrop-blur-lg bg-white/5 rounded-lg p-6 border border-white/10">
+								<h3 className="text-lg font-semibold text-[#EEEEEE] mb-4 flex items-center">
+									<Shield className="mr-2 h-5 w-5 text-red-400" />
+									Confirmation Required
+								</h3>
+								<div>
+									<label className="block text-sm font-medium text-[#EEEEEE] mb-3">
+										Type{" "}
+										<span className="text-red-400 font-bold">"DELETE"</span> to
+										confirm:
+									</label>
+									<Input
+										type="text"
+										value={deleteConfirmation}
+										onChange={(e) => setDeleteConfirmation(e.target.value)}
+										placeholder="DELETE"
+										className="bg-[#222831]/50 border-white/20 text-[#EEEEEE] placeholder-[#EEEEEE]/40 focus:ring-red-400/50 focus:border-red-400/50 backdrop-blur-sm"
+									/>
+								</div>
 							</div>
 						</div>
 
-						<DialogFooter className="flex gap-2 mt-6 pt-4">
+						{/* Footer Actions */}
+						<DialogFooter className="flex gap-3 mt-6 pt-6 border-t border-white/10">
 							<Button
 								variant="outline"
 								onClick={() => {
@@ -510,7 +549,7 @@ export default function AccountPage() {
 									setDeleteConfirmation("");
 									setResetMessage(null);
 								}}
-								className="border-slate-500/50 text-slate-300 hover:bg-slate-600/50 backdrop-blur-sm hover:border-slate-400/50 transition-all duration-200"
+								className="backdrop-blur-lg bg-white/5 border-white/20 text-[#EEEEEE] hover:bg-white/10 hover:border-white/30 transition-all duration-200"
 								disabled={isDeleting}
 							>
 								Cancel
@@ -518,11 +557,11 @@ export default function AccountPage() {
 							<Button
 								onClick={handleDeleteAccount}
 								disabled={isDeleting || deleteConfirmation !== "DELETE"}
-								className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white backdrop-blur-sm border border-red-400/30 transition-all duration-200 hover:shadow-lg hover:shadow-red-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+								className="backdrop-blur-lg bg-gradient-to-r from-red-500/80 to-red-600/80 hover:from-red-500 hover:to-red-600 text-white border border-red-400/30 transition-all duration-200 hover:shadow-lg hover:shadow-red-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								{isDeleting ? (
 									<>
-										<Loader className="mr-2 h-4 w-4" />
+										<Loader className="mr-2 h-4 w-4 animate-spin" />
 										Deleting Account...
 									</>
 								) : (
