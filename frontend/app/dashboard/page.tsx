@@ -37,6 +37,7 @@ import {
 	Trash2,
 	Eye,
 	Copy,
+	X,
 } from "lucide-react";
 import Link from "next/link";
 import { Loader, LoaderOverlay } from "@/components/ui/loader";
@@ -953,512 +954,685 @@ export default function DashboardPage() {
 			)}
 
 			{/* Resumes Management Modal */}
-			<Dialog open={showResumesModal} onOpenChange={setShowResumesModal}>
-				<DialogContent className="sm:max-w-4xl bg-[#31363F] border-slate-600/30 text-white">
-					<DialogHeader>
-						<DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
-							<FileText className="h-6 w-6 text-[#76ABAE]" />
-							Your Resumes ({dashboardData?.resumes.length || 0})
-						</DialogTitle>
-						<DialogDescription className="text-slate-300">
-							Manage your uploaded resumes - rename or delete them as needed.
-						</DialogDescription>
-					</DialogHeader>
+			<AnimatePresence>
+				{showResumesModal && (
+					<motion.div
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+						onClick={() => setShowResumesModal(false)}
+					>
+						<motion.div
+							initial={{ scale: 0.95, opacity: 0 }}
+							animate={{ scale: 1, opacity: 1 }}
+							exit={{ scale: 0.95, opacity: 0 }}
+							className="backdrop-blur-lg bg-[#222831]/95 border border-white/10 text-[#EEEEEE] max-w-4xl max-h-[90vh] overflow-y-auto rounded-lg relative"
+							onClick={(e) => e.stopPropagation()}
+						>
+							{/* Close Button */}
+							<button
+								className="absolute right-4 top-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+								onClick={() => setShowResumesModal(false)}
+							>
+								<X className="h-4 w-4 text-[#EEEEEE]" />
+							</button>
 
-					<div className="max-h-[60vh] overflow-y-auto">
-						{isLoadingData ? (
-							<div className="flex items-center justify-center py-12">
-								<Loader
-									variant="spinner"
-									size="lg"
-									className="text-[#76ABAE]"
-								/>
-							</div>
-						) : dashboardData?.resumes && dashboardData.resumes.length > 0 ? (
-							<div className="space-y-4">
-								{dashboardData.resumes.map((resume, index) => (
-									<motion.div
-										key={resume.id}
-										initial={{ opacity: 0, y: 20 }}
-										animate={{ opacity: 1, y: 0 }}
-										transition={{ duration: 0.3, delay: index * 0.1 }}
-										className="flex items-center justify-between p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/10"
-									>
-										<div className="flex-1 min-w-0">
-											{editingResume?.id === resume.id ? (
-												<div className="flex items-center space-x-2">
-													<Input
-														value={newResumeName}
-														onChange={(e) => setNewResumeName(e.target.value)}
-														className="bg-white/10 border-white/20 text-white"
-														placeholder="Enter new name"
-													/>
-													<Button
-														size="sm"
-														onClick={() =>
-															handleRenameResume(resume.id, newResumeName)
-														}
-														className="bg-green-600 hover:bg-green-700"
-													>
-														Save
-													</Button>
-													<Button
-														size="sm"
-														variant="outline"
-														onClick={() => {
-															setEditingResume(null);
-															setNewResumeName("");
-														}}
-														className="border-slate-500 text-slate-300"
-													>
-														Cancel
-													</Button>
-												</div>
-											) : (
-												<div>
-													<h3 className="font-medium text-white truncate">
-														{resume.customName}
-													</h3>
-													<div className="flex items-center space-x-4 mt-1">
-														{resume.candidateName && (
-															<span className="text-xs text-slate-400">
-																{resume.candidateName}
-															</span>
-														)}
-														{resume.predictedField && (
-															<Badge className="bg-[#76ABAE]/20 text-[#76ABAE] border-[#76ABAE]/30 text-xs">
-																{resume.predictedField}
-															</Badge>
-														)}
-														<span className="text-xs text-slate-500">
-															{new Date(resume.uploadDate).toLocaleDateString()}
-														</span>
-													</div>
-												</div>
-											)}
+							<div className="p-6">
+								{/* Header Section */}
+								<div className="mb-6">
+									<h2 className="text-2xl font-bold text-[#EEEEEE] mb-2 flex items-center">
+										<FileText className="mr-3 h-6 w-6 text-[#76ABAE]" />
+										Your Resumes ({dashboardData?.resumes.length || 0})
+									</h2>
+									<p className="text-[#EEEEEE]/60">
+										Manage your uploaded resumes - rename or delete them as
+										needed.
+									</p>
+								</div>
+
+								{/* Content */}
+								<div className="backdrop-blur-lg bg-white/5 rounded-lg p-6 border border-white/10">
+									{isLoadingData ? (
+										<div className="flex items-center justify-center py-12">
+											<Loader
+												variant="spinner"
+												size="lg"
+												className="text-[#76ABAE]"
+											/>
 										</div>
+									) : dashboardData?.resumes &&
+									  dashboardData.resumes.length > 0 ? (
+										<div className="space-y-4">
+											{dashboardData.resumes.map((resume, index) => (
+												<motion.div
+													key={resume.id}
+													initial={{ opacity: 0, y: 20 }}
+													animate={{ opacity: 1, y: 0 }}
+													transition={{ duration: 0.3, delay: index * 0.1 }}
+													className="flex items-center justify-between p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/10"
+												>
+													<div className="flex-1 min-w-0">
+														{editingResume?.id === resume.id ? (
+															<div className="flex items-center space-x-2">
+																<Input
+																	value={newResumeName}
+																	onChange={(e) =>
+																		setNewResumeName(e.target.value)
+																	}
+																	className="bg-white/10 border-white/20 text-[#EEEEEE] placeholder:text-[#EEEEEE]/40"
+																	placeholder="Enter new name"
+																/>
+																<Button
+																	size="sm"
+																	onClick={() =>
+																		handleRenameResume(resume.id, newResumeName)
+																	}
+																	className="bg-[#76ABAE] hover:bg-[#76ABAE]/80 text-white"
+																>
+																	Save
+																</Button>
+																<Button
+																	size="sm"
+																	variant="outline"
+																	onClick={() => {
+																		setEditingResume(null);
+																		setNewResumeName("");
+																	}}
+																	className="border-white/20 text-[#EEEEEE] hover:bg-white/10"
+																>
+																	Cancel
+																</Button>
+															</div>
+														) : (
+															<div>
+																<h3 className="font-semibold text-[#EEEEEE] truncate">
+																	{resume.customName}
+																</h3>
+																<div className="flex items-center space-x-4 mt-1">
+																	{resume.candidateName && (
+																		<span className="text-xs text-[#EEEEEE]/60">
+																			{resume.candidateName}
+																		</span>
+																	)}
+																	{resume.predictedField && (
+																		<Badge className="bg-[#76ABAE]/10 text-[#76ABAE] border border-[#76ABAE]/30 text-xs">
+																			{resume.predictedField}
+																		</Badge>
+																	)}
+																	<span className="text-xs text-[#EEEEEE]/40">
+																		{new Date(
+																			resume.uploadDate
+																		).toLocaleDateString()}
+																	</span>
+																</div>
+															</div>
+														)}
+													</div>
 
-										{editingResume?.id !== resume.id && (
-											<div className="flex items-center space-x-2 ml-4">
-												<Button
-													size="sm"
-													variant="ghost"
-													onClick={() => {
-														setEditingResume({
-															id: resume.id,
-															name: resume.customName,
-														});
-														setNewResumeName(resume.customName);
-													}}
-													className="text-slate-400 hover:text-white hover:bg-white/10"
-												>
-													<Edit className="h-4 w-4" />
+													{editingResume?.id !== resume.id && (
+														<div className="flex items-center space-x-2 ml-4">
+															<Button
+																size="sm"
+																variant="ghost"
+																onClick={() => {
+																	setEditingResume({
+																		id: resume.id,
+																		name: resume.customName,
+																	});
+																	setNewResumeName(resume.customName);
+																}}
+																className="text-[#76ABAE] hover:text-[#EEEEEE] hover:bg-white/10"
+															>
+																<Edit className="h-4 w-4" />
+															</Button>
+															<Button
+																size="sm"
+																variant="ghost"
+																onClick={() =>
+																	setDeletingResume({
+																		id: resume.id,
+																		name: resume.customName,
+																	})
+																}
+																className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+															>
+																<Trash2 className="h-4 w-4" />
+															</Button>
+														</div>
+													)}
+												</motion.div>
+											))}
+										</div>
+									) : (
+										<div className="text-center py-12">
+											<FileText className="h-16 w-16 text-[#76ABAE]/50 mx-auto mb-4" />
+											<h3 className="text-lg font-semibold text-[#EEEEEE] mb-2">
+												No resumes uploaded yet
+											</h3>
+											<p className="text-[#EEEEEE]/60 mb-6">
+												Upload your first resume to get started with AI-powered
+												analysis
+											</p>
+											<Link href="/dashboard/seeker">
+												<Button className="bg-gradient-to-r from-[#76ABAE] to-[#5A8B8F] hover:from-[#5A8B8F] hover:to-[#76ABAE] text-white">
+													<FileText className="mr-2 h-4 w-4" />
+													Upload Resume
 												</Button>
-												<Button
-													size="sm"
-													variant="ghost"
-													onClick={() =>
-														setDeletingResume({
-															id: resume.id,
-															name: resume.customName,
-														})
-													}
-													className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-												>
-													<Trash2 className="h-4 w-4" />
-												</Button>
-											</div>
-										)}
-									</motion.div>
-								))}
+											</Link>
+										</div>
+									)}
+								</div>
 							</div>
-						) : (
-							<div className="text-center py-12">
-								<FileText className="h-16 w-16 text-slate-500 mx-auto mb-4" />
-								<h3 className="text-lg font-medium text-white mb-2">
-									No resumes uploaded yet
-								</h3>
-								<p className="text-slate-400 mb-6">
-									Upload your first resume to get started with AI-powered
-									analysis
-								</p>
-								<Link href="/dashboard/seeker">
-									<Button className="bg-gradient-to-r from-[#76ABAE] to-[#5A8B8F] hover:from-[#5A8B8F] hover:to-[#76ABAE]">
-										<FileText className="mr-2 h-4 w-4" />
-										Upload Resume
-									</Button>
-								</Link>
-							</div>
-						)}
-					</div>
-				</DialogContent>
-			</Dialog>
+						</motion.div>
+					</motion.div>
+				)}
+			</AnimatePresence>
 
 			{/* Delete Confirmation Dialog */}
-			<Dialog
-				open={!!deletingResume}
-				onOpenChange={() => setDeletingResume(null)}
-			>
-				<DialogContent className="bg-[#31363F] border-slate-600/30 text-white">
-					<DialogHeader>
-						<DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
-							<Trash2 className="h-6 w-6 text-red-400" />
-							Delete Resume
-						</DialogTitle>
-						<DialogDescription className="text-slate-300">
-							Are you sure you want to delete "{deletingResume?.name}"? This
-							action cannot be undone.
-						</DialogDescription>
-					</DialogHeader>
+			<AnimatePresence>
+				{deletingResume && (
+					<motion.div
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+						onClick={() => setDeletingResume(null)}
+					>
+						<motion.div
+							initial={{ scale: 0.95, opacity: 0 }}
+							animate={{ scale: 1, opacity: 1 }}
+							exit={{ scale: 0.95, opacity: 0 }}
+							className="backdrop-blur-lg bg-[#222831]/95 border border-white/10 text-[#EEEEEE] max-w-md rounded-lg relative"
+							onClick={(e) => e.stopPropagation()}
+						>
+							{/* Close Button */}
+							<button
+								className="absolute right-4 top-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+								onClick={() => setDeletingResume(null)}
+							>
+								<X className="h-4 w-4 text-[#EEEEEE]" />
+							</button>
 
-					<DialogFooter className="flex gap-2">
-						<Button
-							variant="outline"
-							onClick={() => setDeletingResume(null)}
-							className="border-slate-500 text-slate-300 hover:bg-slate-600"
-						>
-							Cancel
-						</Button>
-						<Button
-							onClick={() => {
-								if (deletingResume) {
-									handleDeleteResume(deletingResume.id);
-									setDeletingResume(null);
-								}
-							}}
-							className="bg-red-600 hover:bg-red-700 text-white"
-						>
-							Delete
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+							<div className="p-6">
+								{/* Header Section */}
+								<div className="mb-6">
+									<h2 className="text-2xl font-bold text-[#EEEEEE] mb-2 flex items-center">
+										<Trash2 className="mr-3 h-6 w-6 text-red-400" />
+										Delete Resume
+									</h2>
+									<p className="text-[#EEEEEE]/60">
+										Are you sure you want to delete "{deletingResume?.name}"?
+										This action cannot be undone.
+									</p>
+								</div>
+
+								{/* Action Buttons */}
+								<div className="flex gap-3 justify-end">
+									<Button
+										variant="outline"
+										onClick={() => setDeletingResume(null)}
+										className="border-white/20 text-[#EEEEEE] hover:bg-white/10"
+									>
+										Cancel
+									</Button>
+									<Button
+										onClick={() => {
+											if (deletingResume) {
+												handleDeleteResume(deletingResume.id);
+												setDeletingResume(null);
+											}
+										}}
+										className="bg-red-600 hover:bg-red-700 text-white"
+									>
+										Delete
+									</Button>
+								</div>
+							</div>
+						</motion.div>
+					</motion.div>
+				)}
+			</AnimatePresence>
 
 			{/* Interviews Modal */}
-			<Dialog open={showInterviewsModal} onOpenChange={setShowInterviewsModal}>
-				<DialogContent className="backdrop-blur-xl bg-[#31363F]/95 border-slate-600/30 text-white max-w-[95vw] sm:max-w-4xl h-[90vh] sm:h-[85vh] flex flex-col">
-					<DialogHeader className="shrink-0 pb-4">
-						<DialogTitle className="text-lg sm:text-xl font-semibold text-white flex items-center gap-2">
-							<Users className="h-5 w-5 sm:h-6 sm:w-6 text-green-400" />
-							<span className="truncate">
-								Interview Sessions ({interviewsData.length})
-							</span>
-						</DialogTitle>
-						<DialogDescription className="text-slate-300 text-sm">
-							Your practice interview sessions with questions and answers
-						</DialogDescription>
-					</DialogHeader>
+			<AnimatePresence>
+				{showInterviewsModal && (
+					<motion.div
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+						onClick={() => setShowInterviewsModal(false)}
+					>
+						<motion.div
+							initial={{ scale: 0.95, opacity: 0 }}
+							animate={{ scale: 1, opacity: 1 }}
+							exit={{ scale: 0.95, opacity: 0 }}
+							className="backdrop-blur-lg bg-[#222831]/95 border border-white/10 text-[#EEEEEE] max-w-6xl max-h-[90vh] overflow-y-auto rounded-lg relative"
+							onClick={(e) => e.stopPropagation()}
+						>
+							{/* Close Button */}
+							<button
+								className="absolute right-4 top-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+								onClick={() => setShowInterviewsModal(false)}
+							>
+								<X className="h-4 w-4 text-[#EEEEEE]" />
+							</button>
 
-					<div className="flex-1 overflow-y-auto space-y-4 sm:space-y-6 pr-2">
-						{isLoadingInterviews ? (
-							<div className="flex items-center justify-center py-8">
-								<Loader variant="dots" size="lg" text="Loading interviews..." />
-							</div>
-						) : interviewsData.length === 0 ? (
-							<div className="text-center py-8 text-slate-400">
-								<Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-								<p>No interview sessions found</p>
-								<p className="text-sm">
-									Start practicing to see your sessions here
-								</p>
-							</div>
-						) : (
-							interviewsData.map((session: InterviewSession) => (
-								<Card
-									key={session.id}
-									className="bg-slate-800/50 border-slate-600/30 backdrop-blur-sm"
-								>
-									<CardHeader className="pb-3">
-										<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
-											<div className="min-w-0 flex-1">
-												<CardTitle className="text-base sm:text-lg text-white leading-tight">
-													{session.role} at {session.companyName}
-												</CardTitle>
-												<CardDescription className="text-slate-400 text-xs sm:text-sm">
-													{new Date(session.createdAt).toLocaleDateString(
-														"en-US",
-														{
-															year: "numeric",
-															month: "short",
-															day: "numeric",
-															hour: "2-digit",
-															minute: "2-digit",
-														}
-													)}
-												</CardDescription>
-											</div>
-											<div className="flex items-center gap-2 shrink-0">
-												<Badge
-													variant="secondary"
-													className="bg-green-500/20 text-green-300 text-xs"
-												>
-													{session.questionsAndAnswers.length} Q
-												</Badge>
-												<Button
-													size="sm"
-													variant="ghost"
-													className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-red-500/20 text-red-400 hover:text-red-300"
-													onClick={() =>
-														setDeletingInterview({
-															id: session.id,
-															role: session.role,
-															companyName: session.companyName,
-														})
-													}
-												>
-													<Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-												</Button>
-											</div>
+							<div className="p-6">
+								{/* Header Section */}
+								<div className="mb-6">
+									<h2 className="text-2xl font-bold text-[#EEEEEE] mb-2 flex items-center">
+										<Users className="mr-3 h-6 w-6 text-[#76ABAE]" />
+										Interview Sessions ({interviewsData.length})
+									</h2>
+									<p className="text-[#EEEEEE]/60">
+										Your practice interview sessions with questions and answers
+									</p>
+								</div>
+
+								{/* Content */}
+								<div className="backdrop-blur-lg bg-white/5 rounded-lg p-6 border border-white/10">
+									{isLoadingInterviews ? (
+										<div className="flex items-center justify-center py-8">
+											<Loader
+												variant="dots"
+												size="lg"
+												text="Loading interviews..."
+											/>
 										</div>
-									</CardHeader>
-									<CardContent className="pt-0">
-										<div className="space-y-3 sm:space-y-4">
-											{session.questionsAndAnswers.map((qa, index) => (
+									) : interviewsData.length === 0 ? (
+										<div className="text-center py-8">
+											<Users className="h-16 w-16 mx-auto mb-4 text-[#76ABAE]/50" />
+											<h3 className="text-lg font-semibold text-[#EEEEEE] mb-2">
+												No interview sessions found
+											</h3>
+											<p className="text-[#EEEEEE]/60">
+												Start practicing to see your sessions here
+											</p>
+										</div>
+									) : (
+										<div className="space-y-6">
+											{interviewsData.map((session: InterviewSession) => (
 												<div
-													key={index}
-													className="border-l-2 border-green-500/30 pl-3 sm:pl-4"
+													key={session.id}
+													className="backdrop-blur-lg bg-white/5 rounded-lg p-6 border border-white/10"
 												>
-													<div className="mb-2">
-														<p className="font-medium text-white mb-1 text-sm sm:text-base">
-															<span className="text-green-400 font-semibold">
-																Q{index + 1}:
-															</span>{" "}
-															{qa.question}
-														</p>
+													{/* Session Header */}
+													<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+														<div className="min-w-0 flex-1">
+															<h3 className="text-lg font-semibold text-[#EEEEEE] mb-2 flex items-center">
+																<Briefcase className="mr-2 h-5 w-5 text-[#76ABAE]" />
+																{session.role} at {session.companyName}
+															</h3>
+															<p className="text-[#EEEEEE]/60 text-sm">
+																{new Date(session.createdAt).toLocaleDateString(
+																	"en-US",
+																	{
+																		year: "numeric",
+																		month: "short",
+																		day: "numeric",
+																		hour: "2-digit",
+																		minute: "2-digit",
+																	}
+																)}
+															</p>
+														</div>
+														<div className="flex items-center gap-2 shrink-0">
+															<Badge className="bg-[#76ABAE]/10 text-[#76ABAE] border border-[#76ABAE]/30 text-xs">
+																{session.questionsAndAnswers.length} Questions
+															</Badge>
+															<Button
+																size="sm"
+																variant="ghost"
+																className="h-8 w-8 p-0 hover:bg-red-500/20 text-red-400 hover:text-red-300"
+																onClick={() =>
+																	setDeletingInterview({
+																		id: session.id,
+																		role: session.role,
+																		companyName: session.companyName,
+																	})
+																}
+															>
+																<Trash2 className="h-4 w-4" />
+															</Button>
+														</div>
 													</div>
-													<div className="bg-slate-700/30 rounded-lg p-3 relative">
-														<p className="text-slate-300 text-xs sm:text-sm leading-relaxed pr-8 sm:pr-10">
-															{qa.answer}
-														</p>
-														<Button
-															size="sm"
-															variant="ghost"
-															className="absolute top-2 right-2 h-6 w-6 sm:h-8 sm:w-8 p-0 hover:bg-slate-600/50"
-															onClick={() => copyToClipboard(qa.answer)}
-														>
-															<Copy className="h-3 w-3 sm:h-4 sm:w-4" />
-														</Button>
+
+													{/* Questions and Answers */}
+													<div className="space-y-4">
+														{session.questionsAndAnswers.map((qa, index) => (
+															<div
+																key={index}
+																className="border-l-2 border-[#76ABAE] pl-4"
+															>
+																<div className="mb-2">
+																	<p className="font-semibold text-[#EEEEEE] mb-1 text-sm sm:text-base">
+																		<span className="text-[#76ABAE] font-semibold">
+																			Q{index + 1}:
+																		</span>{" "}
+																		{qa.question}
+																	</p>
+																</div>
+																<div className="backdrop-blur-lg bg-white/5 rounded-lg p-4 border border-white/10 relative">
+																	<p className="text-[#EEEEEE]/80 text-sm leading-relaxed pr-10">
+																		{qa.answer}
+																	</p>
+																	<Button
+																		size="sm"
+																		variant="ghost"
+																		className="absolute top-2 right-2 h-8 w-8 p-0 hover:bg-white/10"
+																		onClick={() => copyToClipboard(qa.answer)}
+																	>
+																		<Copy className="h-4 w-4 text-[#76ABAE]" />
+																	</Button>
+																</div>
+															</div>
+														))}
 													</div>
 												</div>
 											))}
 										</div>
-									</CardContent>
-								</Card>
-							))
-						)}
-					</div>
-				</DialogContent>
-			</Dialog>
+									)}
+								</div>
+							</div>
+						</motion.div>
+					</motion.div>
+				)}
+			</AnimatePresence>
 
 			{/* Cold Mails Modal */}
-			<Dialog open={showColdMailsModal} onOpenChange={setShowColdMailsModal}>
-				<DialogContent className="backdrop-blur-xl bg-[#31363F]/95 border-slate-600/30 text-white max-w-[95vw] sm:max-w-4xl h-[90vh] sm:h-[85vh] flex flex-col">
-					<DialogHeader className="shrink-0 pb-4">
-						<DialogTitle className="text-lg sm:text-xl font-semibold text-white flex items-center gap-2">
-							<Mail className="h-5 w-5 sm:h-6 sm:w-6 text-blue-400" />
-							<span className="truncate">
-								Cold Emails ({coldMailsData.length})
-							</span>
-						</DialogTitle>
-						<DialogDescription className="text-slate-300 text-sm">
-							Your generated cold emails for networking and outreach
-						</DialogDescription>
-					</DialogHeader>
+			<AnimatePresence>
+				{showColdMailsModal && (
+					<motion.div
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+						onClick={() => setShowColdMailsModal(false)}
+					>
+						<motion.div
+							initial={{ scale: 0.95, opacity: 0 }}
+							animate={{ scale: 1, opacity: 1 }}
+							exit={{ scale: 0.95, opacity: 0 }}
+							className="backdrop-blur-lg bg-[#222831]/95 border border-white/10 text-[#EEEEEE] max-w-6xl max-h-[90vh] overflow-y-auto rounded-lg relative"
+							onClick={(e) => e.stopPropagation()}
+						>
+							{/* Close Button */}
+							<button
+								className="absolute right-4 top-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+								onClick={() => setShowColdMailsModal(false)}
+							>
+								<X className="h-4 w-4 text-[#EEEEEE]" />
+							</button>
 
-					<div className="flex-1 overflow-y-auto space-y-4 sm:space-y-6 pr-2">
-						{isLoadingColdMails ? (
-							<div className="flex items-center justify-center py-8">
-								<Loader variant="dots" size="lg" text="Loading cold mails..." />
-							</div>
-						) : coldMailsData.length === 0 ? (
-							<div className="text-center py-8 text-slate-400">
-								<Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
-								<p>No cold emails found</p>
-								<p className="text-sm">
-									Generate your first cold email to see it here
-								</p>
-							</div>
-						) : (
-							coldMailsData.map((session: ColdMailSession) => (
-								<Card
-									key={session.id}
-									className="bg-slate-800/50 border-slate-600/30 backdrop-blur-sm"
-								>
-									<CardHeader className="pb-3">
-										<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
-											<div className="min-w-0 flex-1">
-												<CardTitle className="text-base sm:text-lg text-white leading-tight">
-													To: {session.recipientName}
-												</CardTitle>
-												<CardDescription className="text-slate-400 text-xs sm:text-sm">
-													{session.recipientDesignation} at{" "}
-													{session.companyName}
-												</CardDescription>
-												<CardDescription className="text-slate-500 text-xs">
-													{new Date(session.createdAt).toLocaleDateString(
-														"en-US",
-														{
-															year: "numeric",
-															month: "short",
-															day: "numeric",
-															hour: "2-digit",
-															minute: "2-digit",
-														}
-													)}
-												</CardDescription>
-											</div>
-											<div className="flex items-center gap-2 shrink-0">
-												<Badge
-													variant="secondary"
-													className="bg-blue-500/20 text-blue-300 text-xs"
-												>
-													{session.emails.length} Email
-													{session.emails.length !== 1 ? "s" : ""}
-												</Badge>
-												<Button
-													size="sm"
-													variant="ghost"
-													className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-red-500/20 text-red-400 hover:text-red-300"
-													onClick={() =>
-														setDeletingColdMail({
-															id: session.id,
-															recipientName: session.recipientName,
-															companyName: session.companyName,
-														})
-													}
-												>
-													<Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-												</Button>
-											</div>
+							<div className="p-6">
+								{/* Header Section */}
+								<div className="mb-6">
+									<h2 className="text-2xl font-bold text-[#EEEEEE] mb-2 flex items-center">
+										<Mail className="mr-3 h-6 w-6 text-[#76ABAE]" />
+										Cold Emails ({coldMailsData.length})
+									</h2>
+									<p className="text-[#EEEEEE]/60">
+										Your generated cold emails for networking and outreach
+									</p>
+								</div>
+
+								{/* Content */}
+								<div className="backdrop-blur-lg bg-white/5 rounded-lg p-6 border border-white/10">
+									{isLoadingColdMails ? (
+										<div className="flex items-center justify-center py-8">
+											<Loader
+												variant="dots"
+												size="lg"
+												text="Loading cold mails..."
+											/>
 										</div>
-									</CardHeader>
-									<CardContent className="pt-0">
-										<div className="space-y-3 sm:space-y-4">
-											{session.emails.map((email, index) => (
+									) : coldMailsData.length === 0 ? (
+										<div className="text-center py-8">
+											<Mail className="h-16 w-16 mx-auto mb-4 text-[#76ABAE]/50" />
+											<h3 className="text-lg font-semibold text-[#EEEEEE] mb-2">
+												No cold emails found
+											</h3>
+											<p className="text-[#EEEEEE]/60">
+												Generate your first cold email to see it here
+											</p>
+										</div>
+									) : (
+										<div className="space-y-6">
+											{coldMailsData.map((session: ColdMailSession) => (
 												<div
-													key={email.id}
-													className="border-l-2 border-blue-500/30 pl-3 sm:pl-4"
+													key={session.id}
+													className="backdrop-blur-lg bg-white/5 rounded-lg p-6 border border-white/10"
 												>
-													<div className="mb-2">
-														<p className="font-medium text-white mb-1 flex items-center gap-2 text-sm sm:text-base">
-															<Mail className="h-3 w-3 sm:h-4 sm:w-4 text-blue-400" />
-															<span className="text-blue-400 font-semibold">
-																Subject:
-															</span>
-															<span className="truncate">{email.subject}</span>
-														</p>
-													</div>
-													<div className="bg-slate-700/30 rounded-lg p-3 sm:p-4 relative">
-														<div className="text-slate-300 text-xs sm:text-sm leading-relaxed pr-8 sm:pr-10 whitespace-pre-wrap">
-															{email.body}
+													{/* Session Header */}
+													<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+														<div className="min-w-0 flex-1">
+															<h3 className="text-lg font-semibold text-[#EEEEEE] mb-1 flex items-center">
+																<User className="mr-2 h-5 w-5 text-[#76ABAE]" />
+																To: {session.recipientName}
+															</h3>
+															<p className="text-[#EEEEEE]/80 text-sm mb-1">
+																{session.recipientDesignation} at{" "}
+																{session.companyName}
+															</p>
+															<p className="text-[#EEEEEE]/40 text-xs">
+																{new Date(session.createdAt).toLocaleDateString(
+																	"en-US",
+																	{
+																		year: "numeric",
+																		month: "short",
+																		day: "numeric",
+																		hour: "2-digit",
+																		minute: "2-digit",
+																	}
+																)}
+															</p>
 														</div>
-														<Button
-															size="sm"
-															variant="ghost"
-															className="absolute top-2 right-2 h-6 w-6 sm:h-8 sm:w-8 p-0 hover:bg-slate-600/50"
-															onClick={() =>
-																copyToClipboard(
-																	`Subject: ${email.subject}\n\n${email.body}`
-																)
-															}
-														>
-															<Copy className="h-3 w-3 sm:h-4 sm:w-4" />
-														</Button>
+														<div className="flex items-center gap-2 shrink-0">
+															<Badge className="bg-[#76ABAE]/10 text-[#76ABAE] border border-[#76ABAE]/30 text-xs">
+																{session.emails.length} Email
+																{session.emails.length !== 1 ? "s" : ""}
+															</Badge>
+															<Button
+																size="sm"
+																variant="ghost"
+																className="h-8 w-8 p-0 hover:bg-red-500/20 text-red-400 hover:text-red-300"
+																onClick={() =>
+																	setDeletingColdMail({
+																		id: session.id,
+																		recipientName: session.recipientName,
+																		companyName: session.companyName,
+																	})
+																}
+															>
+																<Trash2 className="h-4 w-4" />
+															</Button>
+														</div>
+													</div>
+
+													{/* Emails */}
+													<div className="space-y-4">
+														{session.emails.map((email, index) => (
+															<div
+																key={email.id}
+																className="border-l-2 border-[#76ABAE] pl-4"
+															>
+																<div className="mb-2">
+																	<p className="font-semibold text-[#EEEEEE] mb-1 flex items-center gap-2 text-sm sm:text-base">
+																		<Mail className="h-4 w-4 text-[#76ABAE]" />
+																		<span className="text-[#76ABAE] font-semibold">
+																			Subject:
+																		</span>
+																		<span className="truncate">
+																			{email.subject}
+																		</span>
+																	</p>
+																</div>
+																<div className="backdrop-blur-lg bg-white/5 rounded-lg p-4 border border-white/10 relative">
+																	<div className="text-[#EEEEEE]/80 text-sm leading-relaxed pr-10 whitespace-pre-wrap">
+																		{email.body}
+																	</div>
+																	<Button
+																		size="sm"
+																		variant="ghost"
+																		className="absolute top-2 right-2 h-8 w-8 p-0 hover:bg-white/10"
+																		onClick={() =>
+																			copyToClipboard(
+																				`Subject: ${email.subject}\n\n${email.body}`
+																			)
+																		}
+																	>
+																		<Copy className="h-4 w-4 text-[#76ABAE]" />
+																	</Button>
+																</div>
+															</div>
+														))}
 													</div>
 												</div>
 											))}
 										</div>
-									</CardContent>
-								</Card>
-							))
-						)}
-					</div>
-				</DialogContent>
-			</Dialog>
+									)}
+								</div>
+							</div>
+						</motion.div>
+					</motion.div>
+				)}
+			</AnimatePresence>
 
 			{/* Delete Interview Confirmation Dialog */}
-			<Dialog
-				open={!!deletingInterview}
-				onOpenChange={() => setDeletingInterview(null)}
-			>
-				<DialogContent className="backdrop-blur-xl bg-[#31363F]/95 border-slate-600/30 text-white max-w-[90vw] sm:max-w-md">
-					<DialogHeader>
-						<DialogTitle className="text-lg sm:text-xl font-semibold text-white flex items-center gap-2">
-							<Trash2 className="h-5 w-5 sm:h-6 sm:w-6 text-red-400" />
-							Delete Interview Session
-						</DialogTitle>
-						<DialogDescription className="text-slate-300 text-sm">
-							Are you sure you want to delete the interview session for "
-							{deletingInterview?.role} at {deletingInterview?.companyName}"?
-							This action cannot be undone and will remove all questions and
-							answers.
-						</DialogDescription>
-					</DialogHeader>
+			<AnimatePresence>
+				{deletingInterview && (
+					<motion.div
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+						onClick={() => setDeletingInterview(null)}
+					>
+						<motion.div
+							initial={{ scale: 0.95, opacity: 0 }}
+							animate={{ scale: 1, opacity: 1 }}
+							exit={{ scale: 0.95, opacity: 0 }}
+							className="backdrop-blur-lg bg-[#222831]/95 border border-white/10 text-[#EEEEEE] max-w-md rounded-lg relative"
+							onClick={(e) => e.stopPropagation()}
+						>
+							{/* Close Button */}
+							<button
+								className="absolute right-4 top-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+								onClick={() => setDeletingInterview(null)}
+							>
+								<X className="h-4 w-4 text-[#EEEEEE]" />
+							</button>
 
-					<DialogFooter className="flex flex-col sm:flex-row gap-2">
-						<Button
-							variant="outline"
-							onClick={() => setDeletingInterview(null)}
-							className="border-slate-500 text-slate-300 hover:bg-slate-600"
-						>
-							Cancel
-						</Button>
-						<Button
-							onClick={() => {
-								if (deletingInterview) {
-									handleDeleteInterview(deletingInterview.id);
-									setDeletingInterview(null);
-								}
-							}}
-							className="bg-red-600 hover:bg-red-700 text-white"
-						>
-							Delete Session
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+							<div className="p-6">
+								{/* Header Section */}
+								<div className="mb-6">
+									<h2 className="text-2xl font-bold text-[#EEEEEE] mb-2 flex items-center">
+										<Trash2 className="mr-3 h-6 w-6 text-red-400" />
+										Delete Interview Session
+									</h2>
+									<p className="text-[#EEEEEE]/60">
+										Are you sure you want to delete the interview session for "
+										{deletingInterview?.role} at{" "}
+										{deletingInterview?.companyName}"? This action cannot be
+										undone and will remove all questions and answers.
+									</p>
+								</div>
+
+								{/* Action Buttons */}
+								<div className="flex gap-3 justify-end">
+									<Button
+										variant="outline"
+										onClick={() => setDeletingInterview(null)}
+										className="border-white/20 text-[#EEEEEE] hover:bg-white/10"
+									>
+										Cancel
+									</Button>
+									<Button
+										onClick={() => {
+											if (deletingInterview) {
+												handleDeleteInterview(deletingInterview.id);
+												setDeletingInterview(null);
+											}
+										}}
+										className="bg-red-600 hover:bg-red-700 text-white"
+									>
+										Delete Session
+									</Button>
+								</div>
+							</div>
+						</motion.div>
+					</motion.div>
+				)}
+			</AnimatePresence>
 
 			{/* Delete Cold Mail Confirmation Dialog */}
-			<Dialog
-				open={!!deletingColdMail}
-				onOpenChange={() => setDeletingColdMail(null)}
-			>
-				<DialogContent className="backdrop-blur-xl bg-[#31363F]/95 border-slate-600/30 text-white max-w-[90vw] sm:max-w-md">
-					<DialogHeader>
-						<DialogTitle className="text-lg sm:text-xl font-semibold text-white flex items-center gap-2">
-							<Trash2 className="h-5 w-5 sm:h-6 sm:w-6 text-red-400" />
-							Delete Cold Mail Session
-						</DialogTitle>
-						<DialogDescription className="text-slate-300 text-sm">
-							Are you sure you want to delete the cold mail session for "
-							{deletingColdMail?.recipientName} at{" "}
-							{deletingColdMail?.companyName}"? This action cannot be undone and
-							will remove all generated emails.
-						</DialogDescription>
-					</DialogHeader>
+			<AnimatePresence>
+				{deletingColdMail && (
+					<motion.div
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+						onClick={() => setDeletingColdMail(null)}
+					>
+						<motion.div
+							initial={{ scale: 0.95, opacity: 0 }}
+							animate={{ scale: 1, opacity: 1 }}
+							exit={{ scale: 0.95, opacity: 0 }}
+							className="backdrop-blur-lg bg-[#222831]/95 border border-white/10 text-[#EEEEEE] max-w-md rounded-lg relative"
+							onClick={(e) => e.stopPropagation()}
+						>
+							{/* Close Button */}
+							<button
+								className="absolute right-4 top-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+								onClick={() => setDeletingColdMail(null)}
+							>
+								<X className="h-4 w-4 text-[#EEEEEE]" />
+							</button>
 
-					<DialogFooter className="flex flex-col sm:flex-row gap-2">
-						<Button
-							variant="outline"
-							onClick={() => setDeletingColdMail(null)}
-							className="border-slate-500 text-slate-300 hover:bg-slate-600 w-full sm:w-auto"
-						>
-							Cancel
-						</Button>
-						<Button
-							onClick={() => {
-								if (deletingColdMail) {
-									handleDeleteColdMail(deletingColdMail.id);
-									setDeletingColdMail(null);
-								}
-							}}
-							className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
-						>
-							Delete Session
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+							<div className="p-6">
+								{/* Header Section */}
+								<div className="mb-6">
+									<h2 className="text-2xl font-bold text-[#EEEEEE] mb-2 flex items-center">
+										<Trash2 className="mr-3 h-6 w-6 text-red-400" />
+										Delete Cold Mail Session
+									</h2>
+									<p className="text-[#EEEEEE]/60">
+										Are you sure you want to delete the cold mail session for "
+										{deletingColdMail?.recipientName} at{" "}
+										{deletingColdMail?.companyName}"? This action cannot be
+										undone and will remove all generated emails.
+									</p>
+								</div>
+
+								{/* Action Buttons */}
+								<div className="flex gap-3 justify-end">
+									<Button
+										variant="outline"
+										onClick={() => setDeletingColdMail(null)}
+										className="border-white/20 text-[#EEEEEE] hover:bg-white/10"
+									>
+										Cancel
+									</Button>
+									<Button
+										onClick={() => {
+											if (deletingColdMail) {
+												handleDeleteColdMail(deletingColdMail.id);
+												setDeletingColdMail(null);
+											}
+										}}
+										className="bg-red-600 hover:bg-red-700 text-white"
+									>
+										Delete Session
+									</Button>
+								</div>
+							</div>
+						</motion.div>
+					</motion.div>
+				)}
+			</AnimatePresence>
 		</>
 	);
 }
