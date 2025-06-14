@@ -434,6 +434,199 @@ export default function AccountPage() {
 										</div>
 									</CardContent>
 								</Card>
+
+								{/* BYOAW & Model Selector */}
+								<Card className="backdrop-blur-xl bg-white/10 border-white/20 shadow-xl relative">
+									{/* Coming Soon Overlay */}
+									<div className="absolute inset-0 bg-black/50 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
+										<div className="text-center p-6">
+											<div className="inline-flex items-center px-4 py-2 bg-[#76ABAE]/20 border border-[#76ABAE]/30 rounded-full mb-3">
+												<div className="w-2 h-2 bg-[#76ABAE] rounded-full mr-2 animate-pulse"></div>
+												<span className="text-[#76ABAE] text-sm font-medium">
+													Coming Soon
+												</span>
+											</div>
+											<p className="text-[#EEEEEE]/80 text-lg font-semibold mb-1">
+												Work in Progress
+											</p>
+											<p className="text-[#EEEEEE]/60 text-sm">
+												This feature is being developed
+											</p>
+										</div>
+									</div>
+
+									<CardHeader>
+										<CardTitle className="text-[#EEEEEE] flex items-center gap-2">
+											<div className="h-5 w-5 bg-[#76ABAE] rounded flex items-center justify-center">
+												<span className="text-[#EEEEEE] text-xs font-bold">
+													AI
+												</span>
+											</div>
+											BYOAW & Model Selector
+										</CardTitle>
+										<CardDescription className="text-[#EEEEEE]/60">
+											Bring your own AI weights and choose your preferred AI
+											model
+										</CardDescription>
+									</CardHeader>
+									<CardContent className="space-y-6 opacity-50">
+										{/* Model Selection */}
+										<div className="space-y-4">
+											<div>
+												<h4 className="text-[#EEEEEE] font-medium mb-3 flex items-center gap-2">
+													<div className="w-2 h-2 bg-[#76ABAE] rounded-full"></div>
+													AI Model Provider
+												</h4>
+												<div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+													{/* OpenAI */}
+													<div className="p-4 bg-white/5 rounded-lg border border-white/10 hover:border-[#76ABAE]/30 transition-colors cursor-pointer">
+														<div className="flex items-center justify-between mb-2">
+															<div className="flex items-center gap-2">
+																<div className="w-8 h-8 bg-[#76ABAE] rounded-lg flex items-center justify-center">
+																	<span className="text-[#EEEEEE] text-xs font-bold">
+																		O
+																	</span>
+																</div>
+																<span className="text-[#EEEEEE] font-medium">
+																	OpenAI
+																</span>
+															</div>
+															<div className="w-4 h-4 border-2 border-white/30 rounded-full"></div>
+														</div>
+														<p className="text-[#EEEEEE]/60 text-xs">
+															GPT-4, GPT-3.5 Turbo
+														</p>
+													</div>
+
+													{/* Claude */}
+													<div className="p-4 bg-white/5 rounded-lg border border-white/10 hover:border-[#76ABAE]/30 transition-colors cursor-pointer">
+														<div className="flex items-center justify-between mb-2">
+															<div className="flex items-center gap-2">
+																<div className="w-8 h-8 bg-[#31363F] rounded-lg flex items-center justify-center">
+																	<span className="text-[#EEEEEE] text-xs font-bold">
+																		C
+																	</span>
+																</div>
+																<span className="text-[#EEEEEE] font-medium">
+																	Claude
+																</span>
+															</div>
+															<div className="w-4 h-4 border-2 border-white/30 rounded-full"></div>
+														</div>
+														<p className="text-[#EEEEEE]/60 text-xs">
+															Claude 3 Opus, Sonnet
+														</p>
+													</div>
+
+													{/* Gemini */}
+													<div className="p-4 bg-white/5 rounded-lg border border-white/10 hover:border-[#76ABAE]/30 transition-colors cursor-pointer">
+														<div className="flex items-center justify-between mb-2">
+															<div className="flex items-center gap-2">
+																<div className="w-8 h-8 bg-[#222831] rounded-lg flex items-center justify-center border border-white/20">
+																	<span className="text-[#EEEEEE] text-xs font-bold">
+																		G
+																	</span>
+																</div>
+																<span className="text-[#EEEEEE] font-medium">
+																	Gemini
+																</span>
+															</div>
+															<div className="w-4 h-4 border-2 border-white/30 rounded-full"></div>
+														</div>
+														<p className="text-[#EEEEEE]/60 text-xs">
+															Gemini Pro, Ultra
+														</p>
+													</div>
+												</div>
+											</div>
+										</div>
+
+										{/* API Configuration */}
+										<div className="space-y-4">
+											<div>
+												<h4 className="text-[#EEEEEE] font-medium mb-3 flex items-center gap-2">
+													<Key className="h-4 w-4 text-[#76ABAE]" />
+													API Configuration
+												</h4>
+												<div className="space-y-3">
+													<div>
+														<label className="block text-sm font-medium text-[#EEEEEE]/80 mb-2">
+															API Key
+														</label>
+														<Input
+															type="password"
+															placeholder="Enter your API key"
+															className="bg-white/10 border-white/20 text-[#EEEEEE] placeholder:text-[#EEEEEE]/40"
+															disabled
+														/>
+														<p className="text-[#EEEEEE]/50 text-xs mt-1">
+															Your API key will be encrypted and stored securely
+														</p>
+													</div>
+													<div>
+														<label className="block text-sm font-medium text-[#EEEEEE]/80 mb-2">
+															Custom Endpoint (Optional)
+														</label>
+														<Input
+															type="url"
+															placeholder="https://api.openai.com/v1"
+															className="bg-white/10 border-white/20 text-[#EEEEEE] placeholder:text-[#EEEEEE]/40"
+															disabled
+														/>
+													</div>
+												</div>
+											</div>
+										</div>
+
+										{/* Model Settings */}
+										{/* <div className="space-y-4">
+											<div>
+												<h4 className="text-[#EEEEEE] font-medium mb-3 flex items-center gap-2">
+													<div className="w-4 h-4 bg-[#76ABAE] rounded"></div>
+													Model Settings
+												</h4>
+												<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+													<div>
+														<label className="block text-sm font-medium text-[#EEEEEE]/80 mb-2">
+															Temperature
+														</label>
+														<Input
+															type="number"
+															placeholder="0.7"
+															min="0"
+															max="2"
+															step="0.1"
+															className="bg-white/10 border-white/20 text-[#EEEEEE] placeholder:text-[#EEEEEE]/40"
+															disabled
+														/>
+													</div>
+													<div>
+														<label className="block text-sm font-medium text-[#EEEEEE]/80 mb-2">
+															Max Tokens
+														</label>
+														<Input
+															type="number"
+															placeholder="2048"
+															className="bg-white/10 border-white/20 text-[#EEEEEE] placeholder:text-[#EEEEEE]/40"
+															disabled
+														/>
+													</div>
+												</div>
+											</div> 
+										</div>*/}
+
+										{/* Test Connection */}
+										<div className="pt-4 border-t border-white/10">
+											<Button
+												disabled
+												className="w-full bg-[#76ABAE]/50 hover:bg-[#76ABAE]/60 text-white"
+											>
+												<CheckCircle className="mr-2 h-4 w-4" />
+												Test Connection
+											</Button>
+										</div>
+									</CardContent>
+								</Card>
 							</div>
 						</motion.div>
 					</div>
