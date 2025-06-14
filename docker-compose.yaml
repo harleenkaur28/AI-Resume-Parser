@@ -16,17 +16,6 @@ services:
     networks:
       - TalentSync
 
-  adminer:
-    image: adminer:latest
-    restart: always
-    environment:
-      ADMINER_DEFAULT_SERVER: db # Connects to the 'db' service
-      ADMINER_DEFAULT_DB: ${POSTGRES_DB} # Sourced from .env
-    depends_on:
-      - db
-    networks:
-      - TalentSync
-
   backend:
     build:
       context: ./backend
