@@ -441,140 +441,159 @@ export default function AccountPage() {
 			)}
 
 			{/* Delete Account Confirmation Dialog */}
-			<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-				<DialogContent className="backdrop-blur-lg bg-[#222831]/95 border border-red-400/20 text-[#EEEEEE] shadow-2xl shadow-red-500/10 rounded-lg max-w-lg w-[90vw] max-h-[90vh] overflow-y-auto">
-					{/* Close Button - following original modal pattern */}
-					<button
+			<AnimatePresence>
+				{showDeleteDialog && (
+					<motion.div
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
 						onClick={() => {
 							setShowDeleteDialog(false);
 							setDeleteConfirmation("");
 							setResetMessage(null);
 						}}
-						className="absolute right-4 top-4 z-10 p-2 rounded-full bg-white/10 hover:bg-red-500/20 transition-colors"
 					>
-						<X className="h-4 w-4 text-[#EEEEEE]" />
-					</button>
-
-					<div className="p-6">
-						{/* Header Section - following original modal pattern */}
-						<div className="mb-6">
-							<DialogTitle className="text-2xl font-bold text-[#EEEEEE] mb-2 flex items-center gap-3">
-								<div className="p-2 rounded-lg bg-red-500/20 backdrop-blur-sm border border-red-400/30">
-									<Trash2 className="h-6 w-6 text-red-400" />
-								</div>
-								Delete Account
-							</DialogTitle>
-							<DialogDescription className="text-[#EEEEEE]/60">
-								This action cannot be undone. This will permanently delete your
-								account and all associated data.
-							</DialogDescription>
-						</div>
-
-						<div className="space-y-6">
-							{/* Warning Information Card */}
-							<div className="backdrop-blur-lg bg-red-500/5 rounded-lg p-6 border border-red-400/20">
-								<h3 className="text-lg font-semibold text-[#EEEEEE] mb-4 flex items-center">
-									<AlertTriangle className="mr-2 h-5 w-5 text-red-400" />
-									Data to be Deleted
-								</h3>
-								<ul className="space-y-2">
-									<li className="text-[#EEEEEE]/80 text-sm flex items-center">
-										<div className="w-1 h-1 bg-red-400 rounded-full mr-3"></div>
-										All uploaded resumes and analyses
-									</li>
-									<li className="text-[#EEEEEE]/80 text-sm flex items-center">
-										<div className="w-1 h-1 bg-red-400 rounded-full mr-3"></div>
-										Interview practice sessions
-									</li>
-									<li className="text-[#EEEEEE]/80 text-sm flex items-center">
-										<div className="w-1 h-1 bg-red-400 rounded-full mr-3"></div>
-										Cold mail templates
-									</li>
-									<li className="text-[#EEEEEE]/80 text-sm flex items-center">
-										<div className="w-1 h-1 bg-red-400 rounded-full mr-3"></div>
-										Account settings and preferences
-									</li>
-								</ul>
-							</div>
-
-							{/* Status Message */}
-							{resetMessage && (
-								<motion.div
-									initial={{ opacity: 0, y: -10 }}
-									animate={{ opacity: 1, y: 0 }}
-									className={`backdrop-blur-lg rounded-lg p-4 border flex items-center space-x-3 ${
-										resetMessage.type === "success"
-											? "bg-green-500/10 border-green-400/30 text-green-200"
-											: "bg-red-500/10 border-red-400/30 text-red-200"
-									}`}
-								>
-									{resetMessage.type === "success" ? (
-										<CheckCircle className="h-5 w-5 flex-shrink-0" />
-									) : (
-										<AlertCircle className="h-5 w-5 flex-shrink-0" />
-									)}
-									<span className="text-sm">{resetMessage.text}</span>
-								</motion.div>
-							)}
-
-							{/* Confirmation Input Card */}
-							<div className="backdrop-blur-lg bg-white/5 rounded-lg p-6 border border-white/10">
-								<h3 className="text-lg font-semibold text-[#EEEEEE] mb-4 flex items-center">
-									<Shield className="mr-2 h-5 w-5 text-red-400" />
-									Confirmation Required
-								</h3>
-								<div>
-									<label className="block text-sm font-medium text-[#EEEEEE] mb-3">
-										Type{" "}
-										<span className="text-red-400 font-bold">"DELETE"</span> to
-										confirm:
-									</label>
-									<Input
-										type="text"
-										value={deleteConfirmation}
-										onChange={(e) => setDeleteConfirmation(e.target.value)}
-										placeholder="DELETE"
-										className="bg-[#222831]/50 border-white/20 text-[#EEEEEE] placeholder-[#EEEEEE]/40 focus:ring-red-400/50 focus:border-red-400/50 backdrop-blur-sm"
-									/>
-								</div>
-							</div>
-						</div>
-
-						{/* Footer Actions */}
-						<DialogFooter className="flex gap-3 mt-6 pt-6 border-t border-white/10">
-							<Button
-								variant="outline"
+						<motion.div
+							initial={{ scale: 0.95, opacity: 0 }}
+							animate={{ scale: 1, opacity: 1 }}
+							exit={{ scale: 0.95, opacity: 0 }}
+							className="backdrop-blur-lg bg-[#222831]/95 border border-white/10 text-[#EEEEEE] max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg relative"
+							onClick={(e) => e.stopPropagation()}
+						>
+							{/* Close Button */}
+							<button
+								className="absolute right-4 top-4 z-10 p-2 rounded-full bg-white/10 hover:bg-red-500/20 transition-colors"
 								onClick={() => {
 									setShowDeleteDialog(false);
 									setDeleteConfirmation("");
 									setResetMessage(null);
 								}}
-								className="backdrop-blur-lg bg-white/5 border-white/20 text-[#EEEEEE] hover:bg-white/10 hover:border-white/30 transition-all duration-200"
-								disabled={isDeleting}
 							>
-								Cancel
-							</Button>
-							<Button
-								onClick={handleDeleteAccount}
-								disabled={isDeleting || deleteConfirmation !== "DELETE"}
-								className="backdrop-blur-lg bg-gradient-to-r from-red-500/80 to-red-600/80 hover:from-red-500 hover:to-red-600 text-white border border-red-400/30 transition-all duration-200 hover:shadow-lg hover:shadow-red-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
-							>
-								{isDeleting ? (
-									<>
-										<Loader className="mr-2 h-4 w-4 animate-spin" />
-										Deleting Account...
-									</>
-								) : (
-									<>
-										<Trash2 className="mr-2 h-4 w-4" />
+								<X className="h-4 w-4 text-[#EEEEEE]" />
+							</button>
+
+							<div className="p-6">
+								{/* Header Section */}
+								<div className="mb-6">
+									<h2 className="text-2xl font-bold text-[#EEEEEE] mb-2 flex items-center">
+										<Trash2 className="mr-3 h-6 w-6 text-red-400" />
 										Delete Account
-									</>
-								)}
-							</Button>
-						</DialogFooter>
-					</div>
-				</DialogContent>
-			</Dialog>
+									</h2>
+									<p className="text-[#EEEEEE]/60">
+										This action cannot be undone. This will permanently delete
+										your account and all associated data.
+									</p>
+								</div>
+
+								{/* Content Grid */}
+								<div className="grid grid-cols-1 gap-6">
+									{/* Warning Information Card */}
+									<div className="backdrop-blur-lg bg-white/5 rounded-lg p-6 border border-white/10">
+										<h3 className="text-lg font-semibold text-[#EEEEEE] mb-4 flex items-center">
+											<AlertTriangle className="mr-2 h-5 w-5 text-red-400" />
+											Data to be Deleted
+										</h3>
+										<div className="space-y-3">
+											<div className="flex items-center text-sm text-[#EEEEEE]/80">
+												<div className="w-2 h-2 bg-red-400 rounded-full mr-3"></div>
+												All uploaded resumes and analyses
+											</div>
+											<div className="flex items-center text-sm text-[#EEEEEE]/80">
+												<div className="w-2 h-2 bg-red-400 rounded-full mr-3"></div>
+												Interview practice sessions
+											</div>
+											<div className="flex items-center text-sm text-[#EEEEEE]/80">
+												<div className="w-2 h-2 bg-red-400 rounded-full mr-3"></div>
+												Cold mail templates
+											</div>
+											<div className="flex items-center text-sm text-[#EEEEEE]/80">
+												<div className="w-2 h-2 bg-red-400 rounded-full mr-3"></div>
+												Account settings and preferences
+											</div>
+										</div>
+									</div>
+
+									{/* Status Message */}
+									{resetMessage && (
+										<motion.div
+											initial={{ opacity: 0, y: -10 }}
+											animate={{ opacity: 1, y: 0 }}
+											className={`backdrop-blur-lg rounded-lg p-4 border flex items-center space-x-3 ${
+												resetMessage.type === "success"
+													? "bg-green-500/10 border-green-400/30 text-green-200"
+													: "bg-red-500/10 border-red-400/30 text-red-200"
+											}`}
+										>
+											{resetMessage.type === "success" ? (
+												<CheckCircle className="h-5 w-5 flex-shrink-0" />
+											) : (
+												<AlertCircle className="h-5 w-5 flex-shrink-0" />
+											)}
+											<span className="text-sm">{resetMessage.text}</span>
+										</motion.div>
+									)}
+
+									{/* Confirmation Input Card */}
+									<div className="backdrop-blur-lg bg-white/5 rounded-lg p-6 border border-white/10">
+										<h3 className="text-lg font-semibold text-[#EEEEEE] mb-4 flex items-center">
+											<Shield className="mr-2 h-5 w-5 text-red-400" />
+											Confirmation Required
+										</h3>
+										<div>
+											<label className="block text-sm font-medium text-[#EEEEEE] mb-3">
+												Type{" "}
+												<span className="text-red-400 font-bold">"DELETE"</span>{" "}
+												to confirm:
+											</label>
+											<Input
+												type="text"
+												value={deleteConfirmation}
+												onChange={(e) => setDeleteConfirmation(e.target.value)}
+												placeholder="DELETE"
+												className="bg-white/10 border-white/20 text-[#EEEEEE] placeholder:text-[#EEEEEE]/40 focus:ring-red-400/50 focus:border-red-400/50"
+											/>
+										</div>
+									</div>
+								</div>
+
+								{/* Action Buttons */}
+								<div className="flex gap-3 justify-end mt-6 pt-6 border-t border-white/10">
+									<Button
+										variant="outline"
+										onClick={() => {
+											setShowDeleteDialog(false);
+											setDeleteConfirmation("");
+											setResetMessage(null);
+										}}
+										className="border-white/20 text-[#EEEEEE] hover:bg-white/10"
+										disabled={isDeleting}
+									>
+										Cancel
+									</Button>
+									<Button
+										onClick={handleDeleteAccount}
+										disabled={isDeleting || deleteConfirmation !== "DELETE"}
+										className="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+									>
+										{isDeleting ? (
+											<>
+												<Loader className="mr-2 h-4 w-4 animate-spin" />
+												Deleting Account...
+											</>
+										) : (
+											<>
+												<Trash2 className="mr-2 h-4 w-4" />
+												Delete Account
+											</>
+										)}
+									</Button>
+								</div>
+							</div>
+						</motion.div>
+					</motion.div>
+				)}
+			</AnimatePresence>
 		</>
 	);
 }
