@@ -759,7 +759,7 @@ export default function AccountPage() {
 											setDeleteConfirmation("");
 											setResetMessage(null);
 										}}
-										className="border-white/20 text-[#EEEEEE] hover:bg-white/10"
+										className="border-white/20 text-slate-600 hover:text-[#EEEEEE] hover:bg-white/10"
 										disabled={isDeleting}
 									>
 										Cancel
