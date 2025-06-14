@@ -35,6 +35,7 @@ export default withAuth(
         // Allow access to public pages
         if (
           pathname === "/" || 
+          pathname === "/about" ||
           pathname === "/auth" || 
           pathname.startsWith("/auth/verify-email") ||
           pathname.startsWith("/auth/resend-verification") ||

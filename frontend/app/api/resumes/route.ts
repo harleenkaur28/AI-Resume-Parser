@@ -5,6 +5,107 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+export async function GET(request: NextRequest) {
+	try {
+		// Get session for authentication
+		const session = await getServerSession(authOptions);
+		if (!session?.user?.email) {
+			return NextResponse.json(
+				{
+					success: false,
+					message: "Authentication required",
+				},
+				{ status: 401 }
+			);
+		}
+
+		// Get the user
+		const user = await prisma.user.findUnique({
+			where: { email: session.user.email },
+			include: {
+				role: true,
+			},
+		});
+
+		if (!user) {
+			return NextResponse.json(
+				{
+					success: false,
+					message: "User not found",
+				},
+				{ status: 404 }
+			);
+		}
+
+		// Fetch resumes based on user role
+		let resumes;
+		if (user.role?.name === "admin" || user.role?.name === "recruiter") {
+			// Admins and recruiters can see all resumes that are marked as showInCentral
+			resumes = await prisma.resume.findMany({
+				where: {
+					showInCentral: true,
+				},
+				include: {
+					analysis: {
+						select: {
+							id: true,
+							name: true,
+							email: true,
+							predictedField: true,
+							uploadedAt: true,
+						},
+					},
+					user: {
+						select: {
+							id: true,
+							name: true,
+							email: true,
+						},
+					},
+				},
+				orderBy: {
+					uploadDate: "desc",
+				},
+			});
+		} else {
+			// Regular users can only see their own resumes
+			resumes = await prisma.resume.findMany({
+				where: {
+					userId: user.id,
+				},
+				include: {
+					analysis: {
+						select: {
+							id: true,
+							name: true,
+							email: true,
+							predictedField: true,
+							uploadedAt: true,
+						},
+					},
+				},
+				orderBy: {
+					uploadDate: "desc",
+				},
+			});
+		}
+
+		return NextResponse.json({
+			success: true,
+			data: resumes,
+		});
+	} catch (error) {
+		console.error("Error fetching resumes:", error);
+		return NextResponse.json(
+			{
+				success: false,
+				message: "Internal server error",
+			},
+			{ status: 500 }
+		);
+	}
+}
+
 export async function DELETE(request: NextRequest) {
 	try {
 		// Get session for authentication

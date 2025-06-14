@@ -65,26 +65,28 @@ export function Navbar() {
 
 	const UserMenu = () => (
 		<div className="flex items-center space-x-3">
-			<div className="flex items-center space-x-2 text-[#EEEEEE]/90">
-				<Avatar src={session?.user?.image} alt="Profile" size="sm" />
-				<div className="hidden md:block">
-					<div className="text-sm font-medium">
-						{session?.user?.name || session?.user?.email || "Account"}
-					</div>
-					<div className="text-xs text-[#76ABAE]">
-						{(session?.user as any)?.role === "Admin"
-							? "Recruiter"
-							: (session?.user as any)?.role || "No role"}
+			<Link href="/account">
+				<div className="flex items-center space-x-2 text-[#EEEEEE]/90 hover:text-[#76ABAE] cursor-pointer transition-colors">
+					<Avatar src={session?.user?.image} alt="Profile" size="sm" />
+					<div className="hidden md:block">
+						<div className="text-sm font-medium">
+							{session?.user?.name || session?.user?.email || "Account"}
+						</div>
+						<div className="text-xs text-[#76ABAE]">
+							{(session?.user as any)?.role === "Admin"
+								? "Recruiter"
+								: (session?.user as any)?.role || "No role"}
+						</div>
 					</div>
 				</div>
-			</div>
-			<Link href="/account">
+			</Link>
+			<Link href="/dashboard">
 				<Button
 					variant="ghost"
 					className="text-[#EEEEEE]/90 hover:text-[#76ABAE] hover:bg-[#76ABAE]/10 px-3"
 				>
-					<User className="h-4 w-4 mr-1" />
-					Account
+					<LayoutDashboard className="h-4 w-4 mr-1" />
+					Dashboard
 				</Button>
 			</Link>
 			<Button
@@ -200,30 +202,32 @@ export function Navbar() {
 											</span>
 										</Link>
 									);
-								})}
+								})}{" "}
 								<div className="pt-3 flex flex-col space-y-3">
 									{session ? (
 										<>
-											<div className="px-4 py-2 text-[#EEEEEE]/90">
-												<div className="text-sm font-medium">
-													{session?.user?.name ||
-														session?.user?.email ||
-														"Account"}
-												</div>
-												<div className="text-xs text-[#76ABAE]">
-													{(session?.user as any)?.role === "Admin"
-														? "Recruiter"
-														: (session?.user as any)?.role || "No role"}
-												</div>
-											</div>
 											<Link href="/account">
+												<div className="px-4 py-2 text-[#EEEEEE]/90 hover:text-[#76ABAE] cursor-pointer transition-colors">
+													<div className="text-sm font-medium">
+														{session?.user?.name ||
+															session?.user?.email ||
+															"Account"}
+													</div>
+													<div className="text-xs text-[#76ABAE]">
+														{(session?.user as any)?.role === "Admin"
+															? "Recruiter"
+															: (session?.user as any)?.role || "No role"}
+													</div>
+												</div>
+											</Link>
+											<Link href="/dashboard">
 												<Button
 													variant="ghost"
 													className="w-full text-[#EEEEEE]/90 hover:text-[#76ABAE] hover:bg-[#76ABAE]/10 justify-start"
 													onClick={() => setIsMobileMenuOpen(false)}
 												>
-													<User className="h-4 w-4 mr-2.5" />
-													My Account
+													<LayoutDashboard className="h-4 w-4 mr-2.5" />
+													Dashboard
 												</Button>
 											</Link>
 											<Button
