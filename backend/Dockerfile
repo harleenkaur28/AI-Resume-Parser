@@ -18,6 +18,8 @@ COPY pyproject.toml .
 # Using --system to install in the global environment
 # Using --no-cache to reduce image size
 RUN uv pip install --system --no-cache ".[dev]"
+# Explicitly install uvicorn to ensure it's available
+RUN uv pip install --system --no-cache uvicorn
 
 # Copy the server application code into the container
 COPY server.py .
@@ -29,4 +31,5 @@ COPY model ./model
 EXPOSE 8000
 
 # Command to run the application
-CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]
+# Using python -m uvicorn for more robust path handling
+CMD ["python", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]

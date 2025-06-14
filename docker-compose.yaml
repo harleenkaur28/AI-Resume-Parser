@@ -22,6 +22,8 @@ services:
     environment:
       ADMINER_DEFAULT_SERVER: db # Connects to the 'db' service
       ADMINER_DEFAULT_DB: ${POSTGRES_DB} # Sourced from .env
+    ports:
+      - "4444:8080"
     depends_on:
       - db
     networks:
@@ -71,9 +73,10 @@ services:
       BACKEND_URL: http://backend:8000 # Internal communication to backend service
       # Other variables like NEXTAUTH_SECRET, OAuth credentials, Email server settings,
       # JWT secrets will be sourced from the .env file via env_file.
+    command: sh -c "bunx prisma migrate deploy && bun prisma/seed.ts && bun run start"
     depends_on:
+      - db # Ensure db is up before attempting to migrate
       - backend
-      - db
     networks:
       - TalentSync
 

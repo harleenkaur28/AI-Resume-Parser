@@ -3,30 +3,29 @@ FROM oven/bun:1 AS builder
 
 WORKDIR /app
 
-# Set NODE_ENV for Next.js build optimizations and other environment variables
-# Variables starting with NEXT_PUBLIC_ will be embedded into the client-side bundle.
-# Other variables are for server-side use.
-# These should be passed as build arguments if needed during 'bun run build'.
-# Example: docker build --build-arg NEXT_PUBLIC_API_URL=your_api_url -t your-image .
-# ARG NEXT_PUBLIC_MY_VARIABLE
-# ENV NEXT_PUBLIC_MY_VARIABLE=${NEXT_PUBLIC_MY_VARIABLE}
-
+# Set NODE_ENV for Next.js build optimizations
 ENV NODE_ENV=production
 
-# Copy package.json and bun.lock (Bun's lockfile)
-COPY package.json bun.lock ./
+# Switch to root to install packages and set permissions
+USER root
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
-# Using --frozen-lockfile ensures that the exact dependencies from bun.lock are installed.
-RUN bun install --frozen-lockfile
-
-# Copy the rest of the application code
-# This includes app/, components/, lib/, public/, next.config.js, tsconfig.json, middleware.ts, prisma/, etc.
+# Copy all application files first.
 COPY . .
+
+# Change ownership of the /app directory to the bun user
+RUN chown -R bun:bun /app
+
+# Switch to the bun user for subsequent commands
+USER bun
+
+# Install dependencies using bun.
+# bun install should now have the necessary permissions.
+RUN bun install --frozen-lockfile
 
 # If your project uses Prisma, ensure 'prisma generate' is part of your 'build' script in package.json
 # Example package.json script: "build": "prisma generate && next build"
-# The Prisma client will then be generated during the build process.
+# The Prisma client will then be generated (or re-generated) during the build process.
 RUN bun run build
 
 # Stage 2: Production image
@@ -37,12 +36,24 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Copy package.json and bun.lock from the builder stage
+# Switch to root for system operations like installing packages and changing ownership
+USER root
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
+# Copy necessary files from builder stage
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/bun.lock ./bun.lock
+COPY --from=builder /app/prisma/ ./prisma/ 
+
+# Change ownership of the /app directory and its contents to the bun user
+# This must be done as root before switching to the bun user
+RUN chown -R bun:bun /app
+
+# Switch to the bun user for subsequent commands
+USER bun
 
 # Install only production dependencies
-# This helps in reducing the size of the final image by excluding development dependencies.
+# bun install should now have the necessary permissions to create node_modules
 RUN bun install --production --frozen-lockfile
 
 # Copy the built Next.js application from the builder stage
@@ -51,11 +62,6 @@ COPY --from=builder /app/public ./public
 
 # next.config.js is often needed at runtime by 'next start'
 COPY --from=builder /app/next.config.js ./next.config.js
-
-# If your middleware.ts is not automatically included in the .next build output in a way
-# that `next start` can find it, you might need to copy it.
-# However, typically it's compiled and part of the .next/server directory.
-# COPY --from=builder /app/middleware.ts ./middleware.ts
 
 # Expose the port Next.js runs on (default is 3000)
 EXPOSE 3000
