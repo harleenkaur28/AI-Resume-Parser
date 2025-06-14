@@ -828,53 +828,6 @@ export default function AboutPage() {
 														</div>
 													</motion.div>
 												))}
-
-												{/* AI Model Performance Indicators */}
-												<div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-													{" "}
-													{[
-														{
-															model: "NER Model",
-															accuracy: "96.8%",
-															type: "Named Entity Recognition",
-															icon: "",
-														},
-														{
-															model: "Classification Model",
-															accuracy: "94.2%",
-															type: "Job Field Prediction",
-															icon: "",
-														},
-														{
-															model: "Quality Scorer",
-															accuracy: "91.5%",
-															type: "Resume Assessment",
-															icon: "",
-														},
-													].map((model, index) => (
-														<motion.div
-															key={index}
-															initial={{ opacity: 0, scale: 0.9 }}
-															whileInView={{ opacity: 1, scale: 1 }}
-															whileHover={{ scale: 1.05, y: -2 }}
-															transition={{
-																duration: 0.5,
-																delay: 1.0 + index * 0.1,
-															}}
-															className="bg-white/5 border border-purple-400/30 rounded-lg p-4 text-center hover:bg-white/10 cursor-pointer group"
-														>
-															<div className="font-bold text-purple-300 mb-1">
-																{model.model}
-															</div>
-															<div className="text-sm text-[#EEEEEE]/70 mb-2">
-																{model.type}
-															</div>
-															<div className="text-lg font-bold text-green-400">
-																{model.accuracy}
-															</div>
-														</motion.div>
-													))}
-												</div>
 											</div>
 
 											{/* Enhanced Results & Storage */}
@@ -1395,6 +1348,91 @@ export default function AboutPage() {
 								))}
 							</motion.div>
 						</Card>
+					</div>
+				</section>
+
+				{/* Database Architecture Section */}
+				<section className="py-16 px-4">
+					<div className="container mx-auto">
+						<motion.div
+							initial={{ opacity: 0, y: 20 }}
+							whileInView={{ opacity: 1, y: 0 }}
+							transition={{ duration: 0.8 }}
+							className="text-center mb-12"
+						>
+							<h2 className="text-3xl font-bold text-[#EEEEEE] mb-4">
+								Database Architecture & Relationships
+							</h2>
+							<p className="text-lg text-[#EEEEEE]/70 max-w-3xl mx-auto">
+								Our comprehensive database design ensures efficient data
+								storage, relationships, and scalability for all user
+								interactions and resume processing.
+							</p>
+						</motion.div>
+
+						<div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+							{/* Database Architecture */}
+							<motion.div
+								initial={{ opacity: 0, x: -20 }}
+								whileInView={{ opacity: 1, x: 0 }}
+								transition={{ duration: 0.8 }}
+							>
+								<Card className="backdrop-blur-lg bg-white/5 border border-white/10 p-6 h-full">
+									<div className="flex items-center mb-4">
+										<Database className="h-8 w-8 text-[#76ABAE] mr-3" />
+										<h3 className="text-xl font-bold text-[#EEEEEE]">
+											Database Architecture
+										</h3>
+									</div>
+									<div className="relative group">
+										<Image
+											src="/database-archetecture.png"
+											alt="Database Architecture Diagram"
+											width={600}
+											height={400}
+											className="w-full h-auto rounded-lg border border-white/20 transition-transform duration-300 group-hover:scale-105"
+										/>
+										<div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+									</div>
+									<p className="text-[#EEEEEE]/70 mt-4">
+										Comprehensive database structure supporting user management,
+										resume analysis, hiring workflows, and comprehensive data
+										relationships.
+									</p>
+								</Card>
+							</motion.div>
+
+							{/* Database Relationships */}
+							<motion.div
+								initial={{ opacity: 0, x: 20 }}
+								whileInView={{ opacity: 1, x: 0 }}
+								transition={{ duration: 0.8 }}
+							>
+								<Card className="backdrop-blur-lg bg-white/5 border border-white/10 p-6 h-full">
+									<div className="flex items-center mb-4">
+										<Server className="h-8 w-8 text-[#76ABAE] mr-3" />
+										<h3 className="text-xl font-bold text-[#EEEEEE]">
+											Table Relationships
+										</h3>
+									</div>
+									<div className="relative group">
+										<Image
+											src="/database-relationships.png"
+											alt="Database Relationships Diagram"
+											width={600}
+											height={400}
+											className="w-full h-auto rounded-lg border border-white/20 transition-transform duration-300 group-hover:scale-105"
+										/>
+										<div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+									</div>
+									<p className="text-[#EEEEEE]/70 mt-4">
+										Detailed entity relationships showing how users, resumes,
+										analyses, and hiring data interconnect for seamless platform
+										functionality.
+									</p>
+								</Card>
+							</motion.div>
+						</div>
 					</div>
 				</section>
 
