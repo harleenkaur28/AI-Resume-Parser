@@ -54,11 +54,10 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      args:
-        # Pass any NEXT_PUBLIC_ variables from the .env file as build arguments
-        # Example:
-        # NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
-        # NEXT_PUBLIC_ANOTHER_VAR: ${NEXT_PUBLIC_ANOTHER_VAR}
+      args: {} # Ensures 'args' is a valid empty mapping. Add build args here if needed.
+        # Example of how to pass build arguments (uncomment and define in .env):
+        # NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL_FROM_ENV}
+        # NEXT_PUBLIC_ANOTHER_VAR: ${NEXT_PUBLIC_ANOTHER_VAR_FROM_ENV}
     restart: always
     ports:
       - "3000:3000" # Frontend is the only externally accessible service
