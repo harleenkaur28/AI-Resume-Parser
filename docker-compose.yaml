@@ -22,8 +22,6 @@ services:
     environment:
       ADMINER_DEFAULT_SERVER: db # Connects to the 'db' service
       ADMINER_DEFAULT_DB: ${POSTGRES_DB} # Sourced from .env
-    ports:
-      - "4444:8080"
     depends_on:
       - db
     networks:
@@ -68,7 +66,7 @@ services:
     environment:
       NODE_ENV: production
       # Overrides for Docker Compose networking:
-      NEXTAUTH_URL: http://localhost:3000 # For host access; for server-side redirects within Docker, it might need to be http://frontend:3000
+      NEXTAUTH_URL: https://talentsync.tashif.codes # Updated for your subdomain
       DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public"
       BACKEND_URL: http://backend:8000 # Internal communication to backend service
       # Other variables like NEXTAUTH_SECRET, OAuth credentials, Email server settings,
