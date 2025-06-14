@@ -17,13 +17,6 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import {
 	ArrowLeft,
 	Mail,
 	Github,
@@ -349,7 +342,7 @@ function AuthContent() {
 			</AnimatePresence>
 
 			{!isPageLoading && (
-				<div className="min-h-screen bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831] relative overflow-hidden">
+				<div className="min-h-screen bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831] relative overflow-visible">
 					{/* Animated background elements */}
 					<div className="absolute inset-0 overflow-hidden">
 						<div className="absolute -top-10 -left-10 w-72 h-72 bg-[#76ABAE]/10 rounded-full blur-3xl animate-pulse"></div>
@@ -716,37 +709,35 @@ function AuthContent() {
 														>
 															Role
 														</Label>
-														<Select
+														<select
+															id="register-role"
 															value={registerForm.roleId}
-															onValueChange={(value) =>
+															onChange={(e) =>
 																setRegisterForm((prev) => ({
 																	...prev,
-																	roleId: value,
+																	roleId: e.target.value,
 																}))
 															}
 															required
+															className="w-full h-12 bg-white/10 border border-white/20 text-[#EEEEEE] focus:bg-white/15 focus:border-[#76ABAE]/50 transition-all duration-300 rounded-xl px-3 cursor-pointer"
 														>
-															<SelectTrigger className="h-12 bg-white/10 border-white/20 text-[#EEEEEE] focus:bg-white/15 focus:border-[#76ABAE]/50 transition-all duration-300 rounded-xl hover:bg-white/15">
-																<SelectValue placeholder="Select your role" />
-															</SelectTrigger>
-															<SelectContent
-																className="bg-[#31363F] border border-white/30 text-[#EEEEEE] rounded-xl shadow-2xl"
-																style={{ zIndex: 9999 }}
-																position="popper"
-																sideOffset={4}
-																avoidCollisions={true}
+															<option
+																value=""
+																disabled
+																className="bg-[#31363F] text-[#EEEEEE]"
 															>
-																{roles.map((role) => (
-																	<SelectItem
-																		key={role.id}
-																		value={role.id}
-																		className="hover:bg-white/20 focus:bg-white/20 focus:text-[#EEEEEE] rounded-lg cursor-pointer px-3 py-2 data-[highlighted]:bg-white/20 data-[highlighted]:text-[#EEEEEE] data-[state=checked]:bg-[#76ABAE] data-[state=checked]:text-white"
-																	>
-																		{role.name}
-																	</SelectItem>
-																))}
-															</SelectContent>
-														</Select>
+																Select your role
+															</option>
+															{roles.map((role) => (
+																<option
+																	key={role.id}
+																	value={role.id}
+																	className="bg-[#31363F] text-[#EEEEEE]"
+																>
+																	{role.name}
+																</option>
+															))}
+														</select>
 													</div>
 												</div>
 
