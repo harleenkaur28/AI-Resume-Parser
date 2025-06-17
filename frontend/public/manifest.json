@@ -1,0 +1,49 @@
+{
+	"name": "TalentSync AI",
+	"short_name": "TalentSync",
+	"description": "An intelligent platform for resume analysis and career development.",
+	"start_url": "/",
+	"display": "standalone",
+	"background_color": "#222831",
+	"theme_color": "#76ABAE",
+	"icons": [
+		{
+			"src": "/icon.svg",
+			"sizes": "any",
+			"type": "image/svg+xml"
+		},
+		{
+			"src": "/icon-192x192.png",
+			"sizes": "192x192",
+			"type": "image/png"
+		},
+		{
+			"src": "/icon-512x512.png",
+			"sizes": "512x512",
+			"type": "image/png"
+		}
+	],
+	"shortcuts": [
+		{
+			"name": "Dashboard",
+			"short_name": "Dashboard",
+			"description": "Go to your dashboard",
+			"url": "/dashboard",
+			"icons": [{ "src": "/icons/dashboard.png", "sizes": "192x192" }]
+		},
+		{
+			"name": "Cold Mail Generator",
+			"short_name": "Cold Mail",
+			"description": "Generate a cold mail",
+			"url": "/dashboard/cold-mail",
+			"icons": [{ "src": "/icons/cold-mail.png", "sizes": "192x192" }]
+		},
+		{
+			"name": "Answer Generator",
+			"short_name": "Hiring",
+			"description": "Get help with hiring-related questions",
+			"url": "/dashboard/hiring-assistant",
+			"icons": [{ "src": "/icons/hiring.png", "sizes": "192x192" }]
+		}
+	]
+}
