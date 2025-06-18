@@ -2549,6 +2549,124 @@ async def cold_mail_generator(
         )
 
 
+@v1_router.post(
+    "/cold-mail/editor/",
+    response_model=ColdMailResponse,
+    description="Edit a cold email based on the provided resume and user inputs.",
+    tags=[
+        "V1",
+    ],
+)
+async def cold_mail_editor(
+    file: UploadFile = File(...),
+    recipient_name: str = Form(...),
+    recipient_designation: str = Form(...),
+    company_name: str = Form(...),
+    sender_name: str = Form(...),
+    sender_role_or_goal: str = Form(...),
+    key_points_to_include: str = Form(...),
+    additional_info_for_llm: Optional[str] = Form(""),
+    company_url: Optional[str] = Form(None),
+    generated_email_subject: str = Form(""),
+    generated_email_body: str = Form(""),
+    edit_inscription: str = Form(""),
+):
+    if not llm:
+        raise HTTPException(
+            status_code=503,
+            detail=ErrorResponse(message="LLM service is not available.").model_dump(),
+        )
+
+    try:
+        uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+        os.makedirs(uploads_dir, exist_ok=True)
+
+        temp_file_path = os.path.join(uploads_dir, f"temp_cold_mail_{file.filename}")
+        file_bytes = await file.read()
+        with open(temp_file_path, "wb") as buffer:
+            buffer.write(file_bytes)
+
+        resume_text = process_document(file_bytes, file.filename)
+        if resume_text is None:
+            os.remove(temp_file_path)
+            raise HTTPException(
+                status_code=400,
+                detail=ErrorResponse(
+                    message=f"Unsupported file type or error processing file: {file.filename}"
+                ).model_dump(),
+            )
+
+        file_extension = os.path.splitext(file.filename)[1].lower()
+        if resume_text.strip() and file_extension not in [".md", ".txt"]:
+            resume_text = format_resume_text_with_llm(resume_text)
+
+        os.remove(temp_file_path)
+
+        if not is_valid_resume(resume_text):
+            raise HTTPException(
+                status_code=400,
+                detail=ErrorResponse(
+                    message="Invalid resume format or content."
+                ).model_dump(),
+            )
+
+        company_research_info = ""
+        if company_url:
+            company_research_info = get_company_research(company_name, company_url)
+
+        email_content = generate_cold_mail_edit_content(
+            resume_text=resume_text,
+            recipient_name=recipient_name,
+            recipient_designation=recipient_designation,
+            company_name=company_name,
+            sender_name=sender_name,
+            sender_role_or_goal=sender_role_or_goal,
+            key_points_to_include=key_points_to_include,
+            additional_info_for_llm=additional_info_for_llm,
+            company_research=company_research_info,
+            previous_email_subject=generated_email_subject,
+            previous_email_body=generated_email_body,
+            edit_instructions=edit_inscription,
+        )
+
+        if "Error:" in email_content["subject"] or "Error:" in email_content["body"]:
+            raise HTTPException(
+                status_code=500,
+                detail=ErrorResponse(
+                    message="Failed to generate email content due to an LLM or parsing error.",
+                    error_detail=f"Subject: {email_content['subject']}, Body: {email_content['body'][:200]}...",
+                ).model_dump(),
+            )
+
+        return ColdMailResponse(
+            subject=email_content["subject"], body=email_content["body"]
+        )
+
+    except HTTPException:
+        raise
+
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=422,
+            detail=ErrorResponse(
+                message="Input validation error.", error_detail=str(e.errors())
+            ).model_dump(),
+        )
+
+    except Exception as e:
+        print(f"Error in /cold-mail-editor/: {e}")
+        import traceback
+
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=ErrorResponse(
+                message="Failed to generate cold mail content.",
+                error_detail=str(e),
+            ).model_dump(),
+        )
+
+
 @v1_router.get(
     "/resumes/",
     response_model=ResumeListResponse,
@@ -3451,7 +3569,7 @@ async def cold_mail_generator_v2(
 @v2_router.post(
     "/cold-mail/edit/",
     response_model=ColdMailResponse,
-    description="Generates a cold email based on the provided resume text and user inputs.",
+    description="Edit a cold email based on the provided resume text and user inputs.",
 )
 async def cold_mail_editor_v2(
     resume_text: str = Form(...),
@@ -3527,7 +3645,7 @@ async def cold_mail_editor_v2(
         )
 
     except Exception as e:
-        print(f"Error in /cold-mail-generator/: {e}")
+        print(f"Error in /cold-mail-editor/: {e}")
         import traceback
 
         traceback.print_exc()
