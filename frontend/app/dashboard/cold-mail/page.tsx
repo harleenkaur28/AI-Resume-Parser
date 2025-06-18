@@ -18,6 +18,9 @@ import {
 	ChevronDown,
 	Calendar,
 	User,
+	Edit,
+	Wand2,
+	RefreshCw,
 } from "lucide-react";
 import Link from "next/link";
 import { Loader } from "@/components/ui/loader";
@@ -40,6 +43,25 @@ interface ColdMailResponse {
 	message: string;
 	subject: string;
 	body: string;
+	requestId?: string;
+	responseId?: string;
+}
+
+interface ColdMailEditRequest {
+	resume_text?: string;
+	resumeId?: string;
+	recipient_name: string;
+	recipient_designation: string;
+	company_name: string;
+	sender_name: string;
+	sender_role_or_goal: string;
+	key_points_to_include: string;
+	additional_info_for_llm: string;
+	company_url?: string;
+	generated_email_subject: string;
+	generated_email_body: string;
+	edit_inscription: string;
+	cold_mail_request_id?: string;
 }
 
 interface UserResume {
@@ -53,13 +75,18 @@ interface UserResume {
 export default function ColdMailGenerator() {
 	const [isPageLoading, setIsPageLoading] = useState(true);
 	const [isGenerating, setIsGenerating] = useState(false);
+	const [isEditing, setIsEditing] = useState(false);
 	const [generatedEmail, setGeneratedEmail] = useState<{
 		subject: string;
 		body: string;
+		requestId?: string;
+		responseId?: string;
 	} | null>(null);
 	const [resumeFile, setResumeFile] = useState<File | null>(null);
 	const [resumeText, setResumeText] = useState("");
 	const [isPreloaded, setIsPreloaded] = useState(false);
+	const [editMode, setEditMode] = useState(false);
+	const [editInstructions, setEditInstructions] = useState("");
 
 	// Resume selection states
 	const [userResumes, setUserResumes] = useState<UserResume[]>([]);
@@ -290,7 +317,12 @@ export default function ColdMailGenerator() {
 			const result: ColdMailResponse = await response.json();
 
 			if (result.success) {
-				setGeneratedEmail({ subject: result.subject, body: result.body });
+				setGeneratedEmail({
+					subject: result.subject,
+					body: result.body,
+					requestId: result.requestId,
+					responseId: result.responseId,
+				});
 				toast({
 					title: "Email Generated Successfully!",
 					description:
@@ -344,6 +376,118 @@ export default function ColdMailGenerator() {
 		URL.revokeObjectURL(url);
 	};
 
+	// Edit existing cold mail
+	const editColdMail = async () => {
+		if (!generatedEmail) {
+			toast({
+				title: "No Email to Edit",
+				description: "Please generate an email first before editing.",
+				variant: "destructive",
+			});
+			return;
+		}
+
+		if (!editInstructions.trim()) {
+			toast({
+				title: "Edit Instructions Required",
+				description: "Please provide instructions on how to edit the email.",
+				variant: "destructive",
+			});
+			return;
+		}
+
+		setIsEditing(true);
+
+		try {
+			const formDataToSend = new FormData();
+
+			// Add resume data
+			if (resumeSelectionMode === "existing" && selectedResumeId) {
+				formDataToSend.append("resumeId", selectedResumeId);
+			} else if (resumeFile) {
+				formDataToSend.append("file", resumeFile);
+			} else if (isPreloaded && !resumeFile) {
+				toast({
+					title: "Resume File Needed",
+					description: "Please re-upload your resume file to edit the email.",
+					variant: "destructive",
+				});
+				setIsEditing(false);
+				return;
+			}
+
+			// Append other form data
+			formDataToSend.append("recipient_name", formData.recipient_name);
+			formDataToSend.append(
+				"recipient_designation",
+				formData.recipient_designation
+			);
+			formDataToSend.append("company_name", formData.company_name);
+			formDataToSend.append("sender_name", formData.sender_name);
+			formDataToSend.append(
+				"sender_role_or_goal",
+				formData.sender_role_or_goal
+			);
+			formDataToSend.append(
+				"key_points_to_include",
+				formData.key_points_to_include
+			);
+			formDataToSend.append(
+				"additional_info_for_llm",
+				formData.additional_info_for_llm
+			);
+			if (formData.company_url) {
+				formDataToSend.append("company_url", formData.company_url);
+			}
+
+			// Append email to be edited and instructions
+			formDataToSend.append("generated_email_subject", generatedEmail.subject);
+			formDataToSend.append("generated_email_body", generatedEmail.body);
+			formDataToSend.append("edit_inscription", editInstructions);
+
+			// Append request ID if it exists
+			if (generatedEmail.requestId) {
+				formDataToSend.append("cold_mail_request_id", generatedEmail.requestId);
+			}
+
+			const response = await fetch("/api/cold-mail/edit", {
+				method: "POST",
+				body: formDataToSend,
+			});
+
+			const result = await response.json();
+
+			if (result.success) {
+				setGeneratedEmail({
+					subject: result.data.subject,
+					body: result.data.body,
+					requestId: result.data.requestId,
+					responseId: result.data.responseId,
+				});
+				setEditInstructions(""); // Clear edit instructions
+				setEditMode(false); // Exit edit mode
+				toast({
+					title: "Email Edited Successfully!",
+					description:
+						"Your cold email has been updated based on your instructions.",
+				});
+			} else {
+				throw new Error(result.message || "Failed to edit email");
+			}
+		} catch (error) {
+			toast({
+				title: "Edit Failed",
+				description:
+					error instanceof Error
+						? error.message
+						: "An error occurred while editing the email.",
+				variant: "destructive",
+			});
+		} finally {
+			setIsEditing(false);
+		}
+	};
+
 	return (
 		<>
 			<AnimatePresence>
@@ -366,7 +510,7 @@ export default function ColdMailGenerator() {
 				<div className="min-h-screen bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831]">
 					{/* Full-screen loading overlay for email generation */}
 					<AnimatePresence>
-						{isGenerating && (
+						{(isGenerating || isEditing) && (
 							<motion.div
 								initial={{ opacity: 0 }}
 								animate={{ opacity: 1 }}
@@ -387,11 +531,12 @@ export default function ColdMailGenerator() {
 										/>
 									</div>
 									<h3 className="text-[#EEEEEE] font-semibold text-xl mb-3">
-										Crafting Your Email
+										{isEditing ? "Editing Your Email" : "Crafting Your Email"}
 									</h3>
 									<p className="text-[#EEEEEE]/70 text-sm leading-relaxed">
-										AI is analyzing your resume and generating a personalized
-										cold email...
+										{isEditing
+											? "AI is applying your edits and improving the email..."
+											: "AI is analyzing your resume and generating a personalized cold email..."}
 									</p>
 									<div className="mt-6 flex justify-center space-x-2">
 										<div className="w-2 h-2 bg-[#76ABAE] rounded-full animate-pulse"></div>
@@ -996,6 +1141,19 @@ export default function ColdMailGenerator() {
 														<Button
 															size="sm"
 															variant="ghost"
+															onClick={() => setEditMode(!editMode)}
+															className="text-[#76ABAE] hover:text-[#76ABAE]/80 hover:bg-white/10 rounded-lg p-2"
+															title={editMode ? "Cancel edit" : "Edit email"}
+														>
+															{editMode ? (
+																<RefreshCw className="h-4 w-4" />
+															) : (
+																<Edit className="h-4 w-4" />
+															)}
+														</Button>
+														<Button
+															size="sm"
+															variant="ghost"
 															onClick={() =>
 																copyToClipboard(
 																	`Subject: ${generatedEmail.subject}\n\n${generatedEmail.body}`
@@ -1022,6 +1180,66 @@ export default function ColdMailGenerator() {
 										<CardContent>
 											{generatedEmail ? (
 												<div className="space-y-6">
+													{/* Edit Mode */}
+													{editMode && (
+														<motion.div
+															initial={{ opacity: 0, height: 0 }}
+															animate={{ opacity: 1, height: "auto" }}
+															exit={{ opacity: 0, height: 0 }}
+															className="space-y-4 p-4 bg-[#76ABAE]/10 border border-[#76ABAE]/20 rounded-xl"
+														>
+															<div className="flex items-center space-x-2 mb-3">
+																<Wand2 className="h-4 w-4 text-[#76ABAE]" />
+																<Label className="text-[#EEEEEE] text-sm font-semibold">
+																	Edit Instructions
+																</Label>
+															</div>
+															<textarea
+																placeholder="Describe how you want to modify the email (e.g., 'Make it more formal', 'Add emphasis on Python skills', 'Shorten the content')..."
+																value={editInstructions}
+																onChange={(e) =>
+																	setEditInstructions(e.target.value)
+																}
+																className="w-full h-24 px-3 py-3 bg-white/5 border border-white/20 rounded-lg text-[#EEEEEE] placeholder:text-[#EEEEEE]/50 resize-none focus:border-[#76ABAE] focus:ring-1 focus:ring-[#76ABAE] transition-all"
+															/>
+															<div className="flex space-x-3">
+																<Button
+																	onClick={editColdMail}
+																	disabled={
+																		isEditing || !editInstructions.trim()
+																	}
+																	className="bg-[#76ABAE] hover:bg-[#76ABAE]/80 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 disabled:cursor-not-allowed"
+																>
+																	{isEditing ? (
+																		<>
+																			<Loader
+																				variant="spinner"
+																				size="sm"
+																				className="mr-2"
+																			/>
+																			Editing...
+																		</>
+																	) : (
+																		<>
+																			<Wand2 className="mr-2 h-4 w-4" />
+																			Apply Changes
+																		</>
+																	)}
+																</Button>
+																<Button
+																	onClick={() => {
+																		setEditMode(false);
+																		setEditInstructions("");
+																	}}
+																	variant="ghost"
+																	className="text-[#EEEEEE]/70 hover:text-[#EEEEEE] hover:bg-white/10"
+																>
+																	Cancel
+																</Button>
+															</div>
+														</motion.div>
+													)}
+
 													<div className="space-y-3">
 														<Label className="text-[#EEEEEE] text-sm font-semibold">
 															Subject Line:
