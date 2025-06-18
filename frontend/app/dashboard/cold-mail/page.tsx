@@ -87,6 +87,8 @@ export default function ColdMailGenerator() {
 	const [isPreloaded, setIsPreloaded] = useState(false);
 	const [editMode, setEditMode] = useState(false);
 	const [editInstructions, setEditInstructions] = useState("");
+	const [customDraft, setCustomDraft] = useState("");
+	const [customDraftEdited, setCustomDraftEdited] = useState("");
 
 	// Resume selection states
 	const [userResumes, setUserResumes] = useState<UserResume[]>([]);
@@ -94,7 +96,7 @@ export default function ColdMailGenerator() {
 	const [isLoadingResumes, setIsLoadingResumes] = useState(false);
 	const [showResumeDropdown, setShowResumeDropdown] = useState(false);
 	const [resumeSelectionMode, setResumeSelectionMode] = useState<
-		"existing" | "upload"
+		"existing" | "upload" | "customDraft"
 	>("existing");
 
 	const { toast } = useToast();
@@ -631,6 +633,16 @@ export default function ColdMailGenerator() {
 												>
 													Upload New Resume
 												</button>
+												<button
+													onClick={() => setResumeSelectionMode("customDraft")}
+													className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all duration-300 ${
+														resumeSelectionMode === "customDraft"
+															? "bg-[#76ABAE] text-white shadow-lg"
+															: "text-[#EEEEEE]/70 hover:text-[#EEEEEE] hover:bg-white/10"
+													}`}
+												>
+													Edit My Own Draft
+												</button>
 											</div>
 
 											{/* Resume Selection */}
@@ -783,7 +795,7 @@ export default function ColdMailGenerator() {
 														</AnimatePresence>
 													</div>
 												</div>
-											) : (
+											) : resumeSelectionMode === "upload" ? (
 												<div className="space-y-3">
 													<Label
 														htmlFor="resume"
@@ -886,6 +898,277 @@ export default function ColdMailGenerator() {
 															</div>
 														</motion.div>
 													)}
+												</div>
+											) : resumeSelectionMode === "customDraft" ? (
+												<div className="space-y-3">
+													<Label className="text-[#EEEEEE] text-sm font-medium flex items-center">
+														<FileText className="h-4 w-4 mr-2 text-[#76ABAE]" />
+														Paste Your Email Draft
+													</Label>
+													<textarea
+														placeholder="Paste your email draft here..."
+														value={customDraft}
+														onChange={(e) => setCustomDraft(e.target.value)}
+														className="w-full h-32 px-3 py-3 bg-white/5 border border-white/20 rounded-lg text-[#EEEEEE] placeholder:text-[#EEEEEE]/50 resize-none focus:border-[#76ABAE] focus:ring-1 focus:ring-[#76ABAE] transition-all"
+													/>
+													<div className="space-y-2">
+														<Label className="text-[#EEEEEE] text-sm font-medium">
+															Edit Instructions
+														</Label>
+														<textarea
+															placeholder="Describe how you want to modify the email (e.g., 'Make it more formal', 'Add emphasis on Python skills', 'Shorten the content')..."
+															value={editInstructions}
+															onChange={(e) =>
+																setEditInstructions(e.target.value)
+															}
+															className="w-full h-24 px-3 py-3 bg-white/5 border border-white/20 rounded-lg text-[#EEEEEE] placeholder:text-[#EEEEEE]/50 resize-none focus:border-[#76ABAE] focus:ring-1 focus:ring-[#76ABAE] transition-all"
+														/>
+													</div>
+													<motion.div
+														whileHover={{ scale: 1.01 }}
+														whileTap={{ scale: 0.99 }}
+													>
+														<Button
+															onClick={async () => {
+																if (
+																	!customDraft.trim() ||
+																	!editInstructions.trim()
+																) {
+																	toast({
+																		title: "Draft and Instructions Required",
+																		description:
+																			"Please paste your draft and provide edit instructions.",
+																		variant: "destructive",
+																	});
+																	return;
+																}
+																setIsEditing(true);
+																try {
+																	const response = await fetch(
+																		"/api/cold-mail/edit",
+																		{
+																			method: "POST",
+																			headers: {
+																				"Content-Type": "application/json",
+																			},
+																			body: JSON.stringify({
+																				generated_email_subject: "",
+																				generated_email_body: customDraft,
+																				edit_inscription: editInstructions,
+																			}),
+																		}
+																	);
+																	const result = await response.json();
+																	if (result.success) {
+																		setCustomDraftEdited(result.data.body);
+																		toast({
+																			title: "Draft Edited Successfully!",
+																			description:
+																				"Your draft has been updated based on your instructions.",
+																		});
+																	} else {
+																		throw new Error(
+																			result.message || "Failed to edit draft"
+																		);
+																	}
+																} catch (error) {
+																	toast({
+																		title: "Edit Failed",
+																		description:
+																			error instanceof Error
+																				? error.message
+																				: "An error occurred while editing the draft.",
+																		variant: "destructive",
+																	});
+																} finally {
+																	setIsEditing(false);
+																}
+															}}
+															disabled={
+																isEditing ||
+																!customDraft.trim() ||
+																!editInstructions.trim()
+															}
+															className="bg-[#76ABAE] hover:bg-[#76ABAE]/80 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 disabled:cursor-not-allowed mt-2"
+														>
+															{isEditing ? (
+																<>
+																	<Loader
+																		variant="spinner"
+																		size="sm"
+																		className="mr-2"
+																	/>
+																	Editing...
+																</>
+															) : (
+																<>
+																	<Wand2 className="mr-2 h-4 w-4" />
+																	Edit My Draft
+																</>
+															)}
+														</Button>
+													</motion.div>
+													{customDraftEdited && (
+														<div className="mt-6">
+															<Label className="text-[#EEEEEE] text-sm font-semibold">
+																Edited Draft:
+															</Label>
+															<div className="p-4 bg-white/5 border border-white/20 rounded-xl max-h-[500px] overflow-y-auto mt-2">
+																<pre className="text-[#EEEEEE] whitespace-pre-wrap font-sans text-sm leading-relaxed">
+																	{customDraftEdited}
+																</pre>
+															</div>
+														</div>
+													)}
+												</div>
+											) : (
+												<div className="space-y-3">
+													<Label className="text-[#EEEEEE] text-sm font-medium flex items-center">
+														<FileText className="h-4 w-4 mr-2 text-[#76ABAE]" />
+														Select Resume *
+													</Label>
+													<div className="relative">
+														<button
+															onClick={() =>
+																setShowResumeDropdown(!showResumeDropdown)
+															}
+															className="relative flex items-center justify-between w-full h-12 px-4 border border-white/20 rounded-xl bg-gradient-to-br from-white/5 to-white/10 hover:from-[#76ABAE]/10 hover:to-[#76ABAE]/5 transition-all duration-300 cursor-pointer group"
+														>
+															<div className="flex items-center space-x-3">
+																<FileText className="h-4 w-4 text-[#76ABAE]" />
+																<div className="text-left">
+																	{selectedResumeId ? (
+																		<div>
+																			<p className="text-[#EEEEEE] text-sm font-medium">
+																				{
+																					userResumes.find(
+																						(r) => r.id === selectedResumeId
+																					)?.customName
+																				}
+																			</p>
+																			<p className="text-[#EEEEEE]/60 text-xs">
+																				{userResumes.find(
+																					(r) => r.id === selectedResumeId
+																				)?.predictedField || "Resume Selected"}
+																			</p>
+																		</div>
+																	) : (
+																		<p className="text-[#EEEEEE]/50 text-sm">
+																			{isLoadingResumes
+																				? "Loading resumes..."
+																				: "Choose a resume"}
+																		</p>
+																	)}
+																</div>
+															</div>
+															<ChevronDown
+																className={`h-4 w-4 text-[#EEEEEE]/60 transition-transform duration-200 ${
+																	showResumeDropdown ? "rotate-180" : ""
+																}`}
+															/>
+														</button>
+
+														{/* Dropdown */}
+														<AnimatePresence>
+															{showResumeDropdown && (
+																<motion.div
+																	initial={{ opacity: 0, y: -10, scale: 0.95 }}
+																	animate={{ opacity: 1, y: 0, scale: 1 }}
+																	exit={{ opacity: 0, y: -10, scale: 0.95 }}
+																	transition={{ duration: 0.2 }}
+																	className="absolute top-full mt-2 w-full bg-[#31363F] border border-white/20 rounded-xl shadow-2xl z-50 overflow-hidden"
+																>
+																	{isLoadingResumes ? (
+																		<div className="p-4 text-center">
+																			<Loader
+																				variant="spinner"
+																				size="sm"
+																				className="text-[#76ABAE]"
+																			/>
+																		</div>
+																	) : userResumes.length > 0 ? (
+																		<div className="max-h-64 overflow-y-auto">
+																			{userResumes.map((resume) => (
+																				<button
+																					key={resume.id}
+																					onClick={() => {
+																						setSelectedResumeId(resume.id);
+																						setShowResumeDropdown(false);
+																						// Auto-populate sender name if available
+																						if (
+																							resume.candidateName &&
+																							!formData.sender_name
+																						) {
+																							setFormData((prev) => ({
+																								...prev,
+																								sender_name:
+																									resume.candidateName || "",
+																							}));
+																						}
+																						// Auto-populate role/goal if available
+																						if (
+																							resume.predictedField &&
+																							!formData.sender_role_or_goal
+																						) {
+																							setFormData((prev) => ({
+																								...prev,
+																								sender_role_or_goal:
+																									resume.predictedField || "",
+																							}));
+																						}
+																					}}
+																					className="w-full p-3 text-left hover:bg-white/10 transition-colors border-b border-white/10 last:border-b-0"
+																				>
+																					<div className="flex items-center space-x-3">
+																						<FileText className="h-4 w-4 text-[#76ABAE] flex-shrink-0" />
+																						<div className="flex-1 min-w-0">
+																							<p className="text-[#EEEEEE] text-sm font-medium truncate">
+																								{resume.customName}
+																							</p>
+																							<div className="flex items-center space-x-2 mt-1">
+																								{resume.candidateName && (
+																									<div className="flex items-center space-x-1">
+																										<User className="h-3 w-3 text-[#EEEEEE]/40" />
+																										<span className="text-[#EEEEEE]/60 text-xs">
+																											{resume.candidateName}
+																										</span>
+																									</div>
+																								)}
+																								{resume.predictedField && (
+																									<span className="px-2 py-0.5 bg-[#76ABAE]/20 text-[#76ABAE] text-xs rounded-full">
+																										{resume.predictedField}
+																									</span>
+																								)}
+																							</div>
+																							<div className="flex items-center space-x-1 mt-1">
+																								<Calendar className="h-3 w-3 text-[#EEEEEE]/40" />
+																								<span className="text-[#EEEEEE]/40 text-xs">
+																									{new Date(
+																										resume.uploadDate
+																									).toLocaleDateString()}
+																								</span>
+																							</div>
+																						</div>
+																					</div>
+																				</button>
+																			))}
+																		</div>
+																	) : (
+																		<div className="p-4 text-center">
+																			<FileText className="h-8 w-8 text-[#EEEEEE]/30 mx-auto mb-2" />
+																			<p className="text-[#EEEEEE]/60 text-sm">
+																				No resumes found
+																			</p>
+																			<p className="text-[#EEEEEE]/40 text-xs mt-1">
+																				Upload a resume first in the analysis
+																				section
+																			</p>
+																		</div>
+																	)}
+																</motion.div>
+															)}
+														</AnimatePresence>
+													</div>
 												</div>
 											)}
 
