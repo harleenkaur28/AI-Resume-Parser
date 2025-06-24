@@ -11,9 +11,13 @@ import {
 	Calendar,
 	User,
 	Wand2,
+	Mail,
+	Building,
+	UserCheck,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader } from "@/components/ui/loader";
+import { useState } from "react";
 
 export interface UserResume {
 	id: string;
@@ -48,6 +52,7 @@ interface ResumeSelectionProps {
 	setCustomDraftEdited: (edited: string) => void;
 	isEditing: boolean;
 	handleCustomDraftEdit: () => void;
+	handleInputChange: (field: string, value: string) => void;
 }
 
 export default function ResumeSelection({
@@ -75,7 +80,10 @@ export default function ResumeSelection({
 	setCustomDraftEdited,
 	isEditing,
 	handleCustomDraftEdit,
+	handleInputChange,
 }: ResumeSelectionProps) {
+	const [editInstructionsError, setEditInstructionsError] = useState(false);
+
 	const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
 		if (file) {
@@ -131,7 +139,7 @@ export default function ResumeSelection({
 							: "text-[#EEEEEE]/70 hover:text-[#EEEEEE] hover:bg-white/10"
 					}`}
 				>
-					Edit My Own Draft
+					Bring Your Own Draft
 				</button>
 			</div>
 
@@ -381,55 +389,184 @@ export default function ResumeSelection({
 					)}
 				</div>
 			) : resumeSelectionMode === "customDraft" ? (
-				<div>
-					<Label className="text-[#EEEEEE] text-sm font-medium flex items-center">
-						<FileText className="h-4 w-4 mr-2 text-[#76ABAE]" />
-						Paste Your Email Draft
-					</Label>
-					<textarea
-						placeholder="Paste your email draft here..."
-						value={customDraft}
-						onChange={(e) => setCustomDraft(e.target.value)}
-						className="w-full h-32 px-3 py-3 bg-white/5 border border-white/20 rounded-lg text-[#EEEEEE] placeholder:text-[#EEEEEE]/50 resize-none focus:border-[#76ABAE] focus:ring-1 focus:ring-[#76ABAE] transition-all"
-					/>
-					<div className="space-y-2">
-						<Label className="text-[#EEEEEE] text-sm font-medium">
-							Edit Instructions
+				<div className="space-y-6">
+					{/* Resume Enhancement Section (Optional) */}
+					<div className="p-4 bg-gradient-to-r from-[#76ABAE]/5 to-white/5 border border-[#76ABAE]/20 rounded-xl">
+						<div className="flex items-center space-x-2 mb-3">
+							<Wand2 className="h-4 w-4 text-[#76ABAE]" />
+							<Label className="text-[#EEEEEE] text-sm font-medium">
+								Enhance with Resume (Optional)
+							</Label>
+						</div>
+						<p className="text-[#EEEEEE]/60 text-xs mb-4">
+							Add your resume to provide context and improve the email quality
+						</p>
+
+						{/* Resume Selection Toggle */}
+						<div className="flex space-x-2 mb-4">
+							<button
+								onClick={() => setShowResumeDropdown(!showResumeDropdown)}
+								className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-300 ${
+									selectedResumeId
+										? "bg-[#76ABAE] text-white"
+										: "bg-white/10 text-[#EEEEEE]/70 hover:text-[#EEEEEE]"
+								}`}
+							>
+								Use Existing
+							</button>
+							<button
+								onClick={() => document.getElementById("resume-draft")?.click()}
+								className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-300 ${
+									resumeFile
+										? "bg-[#76ABAE] text-white"
+										: "bg-white/10 text-[#EEEEEE]/70 hover:text-[#EEEEEE]"
+								}`}
+							>
+								Upload New
+							</button>
+						</div>
+
+						{/* Hidden file input for draft mode */}
+						<Input
+							id="resume-draft"
+							type="file"
+							accept=".pdf,.doc,.docx,.txt,.md"
+							onChange={handleFileUpload}
+							className="hidden"
+						/>
+
+						{/* Resume Display */}
+						{selectedResumeId && (
+							<div className="p-3 bg-white/5 border border-white/20 rounded-lg">
+								<div className="flex items-center space-x-2">
+									<FileText className="h-4 w-4 text-[#76ABAE]" />
+									<span className="text-[#EEEEEE] text-sm">
+										{
+											userResumes.find((r) => r.id === selectedResumeId)
+												?.customName
+										}
+									</span>
+									<button
+										onClick={() => setSelectedResumeId("")}
+										className="ml-auto text-[#EEEEEE]/40 hover:text-[#EEEEEE] text-xs"
+									>
+										Remove
+									</button>
+								</div>
+							</div>
+						)}
+
+						{resumeFile && (
+							<div className="p-3 bg-white/5 border border-white/20 rounded-lg">
+								<div className="flex items-center space-x-2">
+									<FileText className="h-4 w-4 text-[#76ABAE]" />
+									<span className="text-[#EEEEEE] text-sm">
+										{resumeFile.name}
+									</span>
+									<button
+										onClick={() => {
+											setResumeFile(null);
+											setResumeText("");
+										}}
+										className="ml-auto text-[#EEEEEE]/40 hover:text-[#EEEEEE] text-xs"
+									>
+										Remove
+									</button>
+								</div>
+							</div>
+						)}
+
+						{/* Resume Dropdown for existing resumes */}
+						<AnimatePresence>
+							{showResumeDropdown && (
+								<motion.div
+									initial={{ opacity: 0, y: -10, scale: 0.95 }}
+									animate={{ opacity: 1, y: 0, scale: 1 }}
+									exit={{ opacity: 0, y: -10, scale: 0.95 }}
+									transition={{ duration: 0.2 }}
+									className="absolute mt-2 w-full bg-[#31363F] border border-white/20 rounded-xl shadow-2xl z-50 overflow-hidden"
+								>
+									{userResumes.length > 0 ? (
+										<div className="max-h-48 overflow-y-auto">
+											{userResumes.map((resume) => (
+												<button
+													key={resume.id}
+													onClick={() => {
+														setSelectedResumeId(resume.id);
+														setShowResumeDropdown(false);
+													}}
+													className="w-full p-3 text-left hover:bg-white/10 transition-colors border-b border-white/10 last:border-b-0"
+												>
+													<div className="flex items-center space-x-3">
+														<FileText className="h-4 w-4 text-[#76ABAE] flex-shrink-0" />
+														<div className="flex-1 min-w-0">
+															<p className="text-[#EEEEEE] text-sm font-medium truncate">
+																{resume.customName}
+															</p>
+															<p className="text-[#EEEEEE]/60 text-xs">
+																{resume.predictedField}
+															</p>
+														</div>
+													</div>
+												</button>
+											))}
+										</div>
+									) : (
+										<div className="p-4 text-center">
+											<p className="text-[#EEEEEE]/60 text-sm">
+												No resumes found
+											</p>
+										</div>
+									)}
+								</motion.div>
+							)}
+						</AnimatePresence>
+					</div>
+
+					{/* Your Draft Section */}
+					<div>
+						<Label className="text-[#EEEEEE] text-sm font-medium flex items-center">
+							<Mail className="h-4 w-4 mr-2 text-[#76ABAE]" />
+							Your Email Draft *
 						</Label>
 						<textarea
-							placeholder="Describe how you want to modify the email (e.g., 'Make it more formal', 'Add emphasis on Python skills', 'Shorten the content')..."
-							value={editInstructions}
-							onChange={(e) => setEditInstructions(e.target.value)}
-							className="w-full h-24 px-3 py-3 bg-white/5 border border-white/20 rounded-lg text-[#EEEEEE] placeholder:text-[#EEEEEE]/50 resize-none focus:border-[#76ABAE] focus:ring-1 focus:ring-[#76ABAE] transition-all"
+							placeholder="Paste your email draft here... This will be enhanced with the recipient details and resume context."
+							value={customDraft}
+							onChange={(e) => setCustomDraft(e.target.value)}
+							className="w-full h-32 px-3 py-3 bg-white/5 border border-white/20 rounded-lg text-[#EEEEEE] placeholder:text-[#EEEEEE]/50 resize-none focus:border-[#76ABAE] focus:ring-1 focus:ring-[#76ABAE] transition-all"
 						/>
 					</div>
-					<motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
-						<Button
-							onClick={handleCustomDraftEdit}
-							disabled={
-								isEditing || !customDraft.trim() || !editInstructions.trim()
-							}
-							className="bg-[#76ABAE] hover:bg-[#76ABAE]/80 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 disabled:cursor-not-allowed mt-2"
-						>
-							{isEditing ? (
-								<>
-									<Loader variant="spinner" size="sm" className="mr-2" />
-									Editing...
-								</>
-							) : (
-								<>
-									<Wand2 className="mr-2 h-4 w-4" />
-									Edit My Draft
-								</>
-							)}
-						</Button>
-					</motion.div>
+
+					{/* Edit Instructions Section */}
+					<div>
+						<Label className="text-[#EEEEEE] text-sm font-medium flex items-center">
+							<Wand2 className="h-4 w-4 mr-2 text-[#76ABAE]" />
+							Enhancement Instructions{" "}
+							<span className="text-red-400 ml-1">*</span>
+						</Label>
+						<textarea
+							placeholder="Describe how you want to enhance the email (e.g., 'Make it more formal', 'Add emphasis on Python skills', 'Shorten the content', 'Improve the opening')..."
+							value={editInstructions}
+							onChange={(e) => setEditInstructions(e.target.value)}
+							className={`w-full h-24 px-3 py-3 bg-white/5 border border-white/20 rounded-lg text-[#EEEEEE] placeholder:text-[#EEEEEE]/50 resize-none focus:border-[#76ABAE] focus:ring-1 focus:ring-[#76ABAE] transition-all ${
+								editInstructionsError ? "border-red-400" : ""
+							}`}
+						/>
+						{editInstructionsError && (
+							<p className="text-red-400 text-xs mt-1">
+								Enhancement instructions are required.
+							</p>
+						)}
+					</div>
+
+					{/* Enhanced Draft Preview */}
 					{customDraftEdited && (
-						<div className="mt-6">
-							<Label className="text-[#EEEEEE] text-sm font-semibold">
-								Edited Draft:
+						<div className="p-4 bg-gradient-to-r from-[#76ABAE]/10 to-white/5 border border-[#76ABAE]/20 rounded-xl">
+							<Label className="text-[#EEEEEE] text-sm font-semibold flex items-center mb-3">
+								<CheckCircle className="h-4 w-4 mr-2 text-[#76ABAE]" />
+								Enhanced Draft Preview:
 							</Label>
-							<div className="p-4 bg-white/5 border border-white/20 rounded-xl max-h-[500px] overflow-y-auto mt-2">
+							<div className="p-3 bg-white/5 border border-white/20 rounded-lg max-h-48 overflow-y-auto">
 								<pre className="text-[#EEEEEE] whitespace-pre-wrap font-sans text-sm leading-relaxed">
 									{customDraftEdited}
 								</pre>
