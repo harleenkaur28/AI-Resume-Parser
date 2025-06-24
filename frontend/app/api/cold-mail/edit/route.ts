@@ -18,14 +18,9 @@ export async function POST(req: Request) {
 
 		const resumeId = data.get("resumeId") as string | null;
 		const resumeFile = data.get("file") as File | null;
-		const customDraft = data.get("custom_draft") as string | null;
-		const editInstructions = data.get("edit_instructions") as string | null;
-		const generatedEmailBody = data.get("generated_email_body") as string | null;
-		const editInscription = data.get("edit_inscription") as string | null;
 
 		let resumeText: string | null = null;
 
-		// Handle resume if provided
 		if (resumeId) {
 			const resume = await prisma.resume.findUnique({
 				where: { id: resumeId, userId: userId },
@@ -41,48 +36,23 @@ export async function POST(req: Request) {
 			resumeText = await resumeFile.text();
 		}
 
-		const backendFormData = new FormData();
-
-		// Add resume if available
-		if (resumeText) {
-			const resumeBlob = new Blob([resumeText], { type: "text/plain" });
-			backendFormData.append("file", resumeBlob, "resume.txt");
-		}
-
-		// Determine the email content to edit
-		let emailContentToEdit = "";
-		let instructions = "";
-
-		if (customDraft) {
-			// Custom draft mode - use the provided draft
-			emailContentToEdit = customDraft;
-			instructions = editInstructions || "";
-		} else if (generatedEmailBody) {
-			// Edit existing generated email
-			emailContentToEdit = generatedEmailBody;
-			instructions = editInscription || "";
-		} else {
+		if (!resumeText) {
 			return NextResponse.json(
-				{ success: false, message: "No email content provided for editing" },
+				{ success: false, message: "Resume content is missing" },
 				{ status: 400 }
 			);
 		}
 
-		// Add the email content and instructions
-		backendFormData.append("generated_email_body", emailContentToEdit);
-		backendFormData.append("edit_inscription", instructions);
+		const backendFormData = new FormData();
+		const resumeBlob = new Blob([resumeText], { type: "text/plain" });
+		backendFormData.append("file", resumeBlob, "resume.txt");
 
 		// Append other fields from the original form data
 		data.forEach((value, key) => {
-			if (key !== "file" && key !== "resumeId" && key !== "custom_draft" && key !== "edit_instructions") {
+			if (key !== "file" && key !== "resumeId") {
 				backendFormData.append(key, value);
 			}
 		});
-
-		// Add empty subject if not provided (for custom draft mode)
-		if (!data.get("generated_email_subject")) {
-			backendFormData.append("generated_email_subject", "");
-		}
 
 		const pythonApiUrl = "http://localhost:8000/api/v1/cold-mail/editor/";
 		const response = await fetch(pythonApiUrl, {
@@ -149,7 +119,7 @@ export async function POST(req: Request) {
 			});
 			newResponseId = newResponse.id;
 		} else {
-			// New request, create new request and response
+			// New draft, create new request and response
 			const newRequest = await prisma.coldMailRequest.create({
 				data: {
 					userId: userId,

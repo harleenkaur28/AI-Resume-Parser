@@ -1,10 +1,27 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Mail, Send } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+	ArrowLeft,
+	Mail,
+	Send,
+	Copy,
+	Download,
+	Upload,
+	CheckCircle,
+	FileText,
+	ChevronDown,
+	Calendar,
+	User,
+	Edit,
+	Wand2,
+	RefreshCw,
+} from "lucide-react";
 import Link from "next/link";
 import { Loader } from "@/components/ui/loader";
 import { useToast } from "@/hooks/use-toast";
@@ -229,7 +246,7 @@ export default function ColdMailGenerator() {
 				});
 				return;
 			}
-		} else if (resumeSelectionMode === "upload") {
+		} else {
 			if (!resumeFile && !isPreloaded) {
 				toast({
 					title: "Resume Required",
@@ -244,15 +261,6 @@ export default function ColdMailGenerator() {
 					title: "Resume File Needed",
 					description:
 						"Please re-upload your resume file to generate the email.",
-					variant: "destructive",
-				});
-				return;
-			}
-		} else if (resumeSelectionMode === "customDraft") {
-			if (!customDraft.trim()) {
-				toast({
-					title: "Draft Required",
-					description: "Please paste your email draft first.",
 					variant: "destructive",
 				});
 				return;
@@ -281,21 +289,8 @@ export default function ColdMailGenerator() {
 			// Add resume data based on selection mode
 			if (resumeSelectionMode === "existing") {
 				formDataToSend.append("resumeId", selectedResumeId);
-			} else if (resumeSelectionMode === "upload") {
+			} else {
 				formDataToSend.append("file", resumeFile!);
-			} else if (resumeSelectionMode === "customDraft") {
-				// For custom draft mode, add resume if available
-				if (selectedResumeId) {
-					formDataToSend.append("resumeId", selectedResumeId);
-				} else if (resumeFile) {
-					formDataToSend.append("file", resumeFile);
-				}
-				// Add the custom draft (use enhanced version if available)
-				const draftToUse = customDraftEdited || customDraft;
-				formDataToSend.append("custom_draft", draftToUse);
-				if (editInstructions.trim()) {
-					formDataToSend.append("edit_instructions", editInstructions);
-				}
 			}
 
 			formDataToSend.append("recipient_name", formData.recipient_name);
@@ -321,13 +316,7 @@ export default function ColdMailGenerator() {
 				formDataToSend.append("company_url", formData.company_url);
 			}
 
-			// Use different endpoint for custom draft mode
-			const endpoint =
-				resumeSelectionMode === "customDraft"
-					? "/api/cold-mail/edit"
-					: "/api/backend-interface/cold-mail";
-
-			const response = await fetch(endpoint, {
+			const response = await fetch("/api/backend-interface/cold-mail", {
 				method: "POST",
 				body: formDataToSend,
 			});
@@ -344,11 +333,7 @@ export default function ColdMailGenerator() {
 				toast({
 					title: "Email Generated Successfully!",
 					description:
-						resumeSelectionMode === "customDraft"
-							? customDraftEdited
-								? "Your enhanced draft has been finalized and is ready to use."
-								: "Your draft has been enhanced and is ready to use."
-							: "Your cold email has been generated and is ready to use.",
+						"Your cold email has been generated and is ready to use.",
 				});
 			} else {
 				throw new Error(result.message || "Failed to generate email");
@@ -511,67 +496,26 @@ export default function ColdMailGenerator() {
 	};
 
 	const handleCustomDraftEdit = async () => {
-		if (!customDraft.trim()) {
+		if (!customDraft.trim() || !editInstructions.trim()) {
 			toast({
-				title: "Draft Required",
-				description: "Please paste your email draft first.",
+				title: "Draft and Instructions Required",
+				description: "Please paste your draft and provide edit instructions.",
 				variant: "destructive",
 			});
 			return;
 		}
-
-		if (!editInstructions.trim()) {
-			toast({
-				title: "Instructions Required",
-				description: "Please provide enhancement instructions.",
-				variant: "destructive",
-			});
-			return;
-		}
-
 		setIsEditing(true);
 		try {
-			const formDataToSend = new FormData();
-
-			// Add resume data if available
-			if (selectedResumeId) {
-				formDataToSend.append("resumeId", selectedResumeId);
-			} else if (resumeFile) {
-				formDataToSend.append("file", resumeFile);
-			}
-
-			// Add form data
-			formDataToSend.append("recipient_name", formData.recipient_name);
-			formDataToSend.append(
-				"recipient_designation",
-				formData.recipient_designation
-			);
-			formDataToSend.append("company_name", formData.company_name);
-			formDataToSend.append("sender_name", formData.sender_name);
-			formDataToSend.append(
-				"sender_role_or_goal",
-				formData.sender_role_or_goal
-			);
-			formDataToSend.append(
-				"key_points_to_include",
-				formData.key_points_to_include
-			);
-			formDataToSend.append(
-				"additional_info_for_llm",
-				formData.additional_info_for_llm
-			);
-			if (formData.company_url) {
-				formDataToSend.append("company_url", formData.company_url);
-			}
-
-			// Add draft and instructions
-			formDataToSend.append("generated_email_subject", "");
-			formDataToSend.append("generated_email_body", customDraft);
-			formDataToSend.append("edit_inscription", editInstructions);
-
 			const response = await fetch("/api/cold-mail/edit", {
 				method: "POST",
-				body: formDataToSend,
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					generated_email_subject: "",
+					generated_email_body: customDraft,
+					edit_inscription: editInstructions,
+				}),
 			});
 			const result = await response.json();
 			if (result.success) {
@@ -584,20 +528,20 @@ export default function ColdMailGenerator() {
 					responseId: result.data.responseId,
 				});
 				toast({
-					title: "Draft Enhanced Successfully!",
+					title: "Draft Edited Successfully!",
 					description:
-						"Your draft has been enhanced based on your instructions.",
+						"Your draft has been updated based on your instructions.",
 				});
 			} else {
-				throw new Error(result.message || "Failed to enhance draft");
+				throw new Error(result.message || "Failed to edit draft");
 			}
 		} catch (error) {
 			toast({
-				title: "Enhancement Failed",
+				title: "Edit Failed",
 				description:
 					error instanceof Error
 						? error.message
-						: "An error occurred while enhancing the draft.",
+						: "An error occurred while editing the draft.",
 				variant: "destructive",
 			});
 		} finally {
@@ -698,7 +642,6 @@ export default function ColdMailGenerator() {
 												setCustomDraftEdited={setCustomDraftEdited}
 												isEditing={isEditing}
 												handleCustomDraftEdit={handleCustomDraftEdit}
-												handleInputChange={handleInputChange}
 											/>
 											<EmailDetailsForm
 												formData={formData}
@@ -715,11 +658,7 @@ export default function ColdMailGenerator() {
 														isGenerating ||
 														(resumeSelectionMode === "existing"
 															? !selectedResumeId
-															: resumeSelectionMode === "upload"
-															? !resumeFile && !isPreloaded
-															: resumeSelectionMode === "customDraft"
-															? !customDraft.trim()
-															: true) ||
+															: !resumeFile && !isPreloaded) ||
 														!formData.recipient_name ||
 														!formData.company_name ||
 														!formData.sender_name
@@ -747,11 +686,7 @@ export default function ColdMailGenerator() {
 																	</div>
 																	<div className="flex flex-col items-start">
 																		<span className="text-sm font-medium">
-																			{resumeSelectionMode === "customDraft"
-																				? customDraftEdited
-																					? "Finalizing your enhanced email..."
-																					: "Enhancing your draft..."
-																				: "Generating your email..."}
+																			Generating your email...
 																		</span>
 																		<span className="text-xs text-white/80">
 																			This may take a few moments
@@ -763,11 +698,7 @@ export default function ColdMailGenerator() {
 															<>
 																<Send className="mr-3 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
 																<span className="text-base">
-																	{resumeSelectionMode === "customDraft"
-																		? customDraftEdited
-																			? "Finalize Enhanced Email"
-																			: "Enhance My Draft"
-																		: "Generate Cold Email"}
+																	Generate Cold Email
 																</span>
 															</>
 														)}
