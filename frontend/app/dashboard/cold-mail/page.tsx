@@ -576,6 +576,13 @@ export default function ColdMailGenerator() {
 			const result = await response.json();
 			if (result.success) {
 				setCustomDraftEdited(result.data.body);
+				// Also update generatedEmail so the panel displays the enhanced draft
+				setGeneratedEmail({
+					subject: result.data.subject || "",
+					body: result.data.body,
+					requestId: result.data.requestId,
+					responseId: result.data.responseId,
+				});
 				toast({
 					title: "Draft Enhanced Successfully!",
 					description:
