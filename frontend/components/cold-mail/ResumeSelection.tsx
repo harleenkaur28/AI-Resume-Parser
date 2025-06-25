@@ -48,6 +48,7 @@ interface ResumeSelectionProps {
 	setCustomDraftEdited: (edited: string) => void;
 	isEditing: boolean;
 	handleCustomDraftEdit: () => void;
+	handleInputChange: (field: string, value: string) => void;
 }
 
 export default function ResumeSelection({
@@ -75,6 +76,7 @@ export default function ResumeSelection({
 	setCustomDraftEdited,
 	isEditing,
 	handleCustomDraftEdit,
+	handleInputChange,
 }: ResumeSelectionProps) {
 	const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
