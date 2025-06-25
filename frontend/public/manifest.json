@@ -28,22 +28,19 @@
 			"name": "Dashboard",
 			"short_name": "Dashboard",
 			"description": "Go to your dashboard",
-			"url": "/dashboard",
-			"icons": [{ "src": "/icons/dashboard.png", "sizes": "192x192" }]
+			"url": "/dashboard"
 		},
 		{
 			"name": "Cold Mail Generator",
 			"short_name": "Cold Mail",
 			"description": "Generate a cold mail",
-			"url": "/dashboard/cold-mail",
-			"icons": [{ "src": "/icons/cold-mail.png", "sizes": "192x192" }]
+			"url": "/dashboard/cold-mail"
 		},
 		{
 			"name": "Answer Generator",
 			"short_name": "Hiring",
 			"description": "Get help with hiring-related questions",
-			"url": "/dashboard/hiring-assistant",
-			"icons": [{ "src": "/icons/hiring.png", "sizes": "192x192" }]
+			"url": "/dashboard/hiring-assistant"
 		}
 	]
 }
