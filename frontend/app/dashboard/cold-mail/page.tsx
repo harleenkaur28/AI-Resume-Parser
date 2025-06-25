@@ -190,7 +190,6 @@ export default function ColdMailGenerator() {
 	};
 
 	const generateColdMail = async () => {
-		// Validation for resume selection
 		if (resumeSelectionMode === "existing") {
 			if (!selectedResumeId) {
 				toast({

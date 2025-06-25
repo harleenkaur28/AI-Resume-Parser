@@ -25,7 +25,7 @@ export default function EmailDetailsForm({
 							Recipient Name *
 						</Label>
 						<Input
-							placeholder="John Doe"
+							placeholder="Harleen Kaur"
 							value={formData.recipient_name}
 							onChange={(e) =>
 								handleInputChange("recipient_name", e.target.value)
@@ -38,7 +38,7 @@ export default function EmailDetailsForm({
 							Position
 						</Label>
 						<Input
-							placeholder="HR Manager"
+							placeholder="CEO"
 							value={formData.recipient_designation}
 							onChange={(e) =>
 								handleInputChange("recipient_designation", e.target.value)
@@ -73,9 +73,11 @@ export default function EmailDetailsForm({
 							Your Name *
 						</Label>
 						<Input
-							placeholder="Jane Smith"
+							placeholder="Tashif"
 							value={formData.sender_name}
-							onChange={(e) => handleInputChange("sender_name", e.target.value)}
+							onChange={(e) =>
+								handleInputChange("sender_name", e.target.value.toLowerCase())
+							}
 							className="h-11 bg-white/5 border-white/20 text-[#EEEEEE] placeholder:text-[#EEEEEE]/50 focus:border-[#76ABAE] focus:ring-1 focus:ring-[#76ABAE] transition-all"
 						/>
 					</div>
@@ -100,7 +102,7 @@ export default function EmailDetailsForm({
 						Company Website (Optional)
 					</Label>
 					<Input
-						placeholder="https://company.com"
+						placeholder="https://talentsync.ai"
 						value={formData.company_url}
 						onChange={(e) => handleInputChange("company_url", e.target.value)}
 						className="h-11 bg-white/5 border-white/20 text-[#EEEEEE] placeholder:text-[#EEEEEE]/50 focus:border-[#76ABAE] focus:ring-1 focus:ring-[#76ABAE] transition-all"
