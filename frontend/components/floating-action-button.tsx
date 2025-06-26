@@ -22,7 +22,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
 		if (action === "cold-mail") {
 			router.push("/dashboard/cold-mail");
 		} else if (action === "interview") {
-			router.push("/dashboard/interview");
+			router.push("/dashboard/hiring-assistant");
 		}
 	};
 
