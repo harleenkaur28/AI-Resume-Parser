@@ -28,15 +28,14 @@ jobs:
           script: |
             echo "Navigating to project directory on VPS..."
             cd ${{ env.VPS_PROJECT_PATH }}
-            pwd
 
             echo "Pulling latest code from Git repository..."
             git pull origin main 
 
             echo "Rebuilding Docker images on VPS..."
-            docker compose -f docker-compose.prod.yml build
+            docker compose -f docker-compose.prod.yaml build
 
             echo "Bringing up services with new images..."
-            docker compose -f docker-compose.prod.yml up -d --force-recreate
+            docker compose -f docker-compose.prod.yaml up -d --force-recreate
 
             echo "Deployment complete!"
