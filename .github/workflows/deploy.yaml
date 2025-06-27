@@ -28,6 +28,7 @@ jobs:
           script: |
             echo "Navigating to project directory on VPS..."
             cd ${{ env.VPS_PROJECT_PATH }}
+            pwd
 
             echo "Pulling latest code from Git repository..."
             git pull origin main 
