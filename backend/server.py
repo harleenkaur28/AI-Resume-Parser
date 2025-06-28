@@ -1842,6 +1842,8 @@ def generate_answers_for_geting_hired(
 
     Your task: craft a clear, concise answer (≤ {word_limit} words) to the interview question below.
 
+    Note: always use the first person to answer the question. act as the candidate. also use the resume suolimented with your own knowledge.
+
     Question:
     {question}
 
