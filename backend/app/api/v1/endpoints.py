@@ -146,6 +146,14 @@ async def get_career_tips(
         description="Comma-separated skills for tailored tips",
     ),
 ):
+    if job_category:
+        job_category = job_category.strip().lower()
+        if not job_category:
+            job_category = "general"
+
+    else:
+        job_category = "general"
+
     return tips.get_career_tips_service(job_category, skills)
 
 
