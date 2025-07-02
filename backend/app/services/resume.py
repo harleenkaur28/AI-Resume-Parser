@@ -29,6 +29,7 @@ from app.data.skills import skills_list
 from app.services.llm import format_resume_text_with_llm
 from app.services.llm import format_resume_json_with_llm
 from app.services.llm import comprehensive_analysis_llm
+from app.services.llm import format_and_analyse_resumes
 from app.services.llm import LLMNotFoundError
 
 
@@ -293,30 +294,16 @@ async def format_and_analyze_resume_service(file: UploadFile):
             "email": email,
             "contact": contact,
         }
-        # Placeholder LLM logic
 
-        cleaned_text = raw_resume_text.strip()
-
-        analysis_dict = {
-            "skills_analysis": [],
-            "recommended_roles": [
-                "Software Engineer",
-                "Data Scientist",
-            ],
-            "languages": [],
-            "education": [],
-            "work_experience": [],
-            "projects": [],
-            "name": name,
-            "email": email,
-            "contact": contact,
-            "predicted_field": "Unknown",
-        }
+        analysis_dict = format_and_analyse_resumes(
+            raw_text=raw_resume_text,
+            basic_info=basic_info,
+        )
 
         analysis = ComprehensiveAnalysisData(**analysis_dict)
 
         return FormattedAndAnalyzedResumeResponse(
-            cleaned_text=cleaned_text,
+            cleaned_text=raw_resume_text,
             analysis=analysis,
         )
 
