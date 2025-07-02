@@ -27,6 +27,7 @@ from app.core.llm import llm
 from app.data.skills import skills_list
 
 from app.services.llm import format_resume_text_with_llm
+from app.services.llm import LLMNotFoundError
 
 
 async def analyze_resume_service(file: UploadFile = File(...)):
@@ -98,7 +99,11 @@ async def analyze_resume_service(file: UploadFile = File(...)):
             "upload_date": datetime.now(timezone.utc).isoformat(),
         }
 
+        initial_resume_json_str = json.dumps(initial_resume_data)
+
         try:
+            ...
+        except LLMNotFoundError:
             analysis_data = ResumeAnalysis(**initial_resume_data)
 
         except ValidationError as e:
@@ -129,7 +134,11 @@ async def analyze_resume_service(file: UploadFile = File(...)):
 
 
 async def comprehensive_analysis_llm(
-    resume_text, name, email, contact, predicted_category
+    resume_text,
+    name,
+    email,
+    contact,
+    predicted_category,
 ):
     # TODO: Replace with actual LLM logic
     return {
@@ -191,6 +200,7 @@ def comprehensive_resume_analysis_service(file: UploadFile):
             contact,
             predicted_category,
         )
+
         comprehensive_data = ComprehensiveAnalysisData(**analysis_dict)
 
         return ComprehensiveAnalysisResponse(

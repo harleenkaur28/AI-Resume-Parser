@@ -3,6 +3,13 @@ from core.llm import llm
 from data.ai.txt_processor import text_formater_chain as chain
 
 
+class LLMNotFoundError(Exception):
+    """Exception raised when the specified LLM provider or model is not found."""
+
+    def __init__(self, message="LLM provider or model not found"):
+        super().__init__(message)
+
+
 def format_resume_text_with_llm(
     raw_text: str,
     model_provider="Google",
