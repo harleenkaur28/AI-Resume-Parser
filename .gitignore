@@ -49,6 +49,7 @@ node_modules
 docs/
 
 backend/model/nltk_data
+backend/app/model/nltk_data
 
 test.py
 .env
