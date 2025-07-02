@@ -141,7 +141,7 @@ async def get_career_tips(
         None,
         description="Job category for tailored tips",
     ),
-    skills: Optional[str] = Query(
+    skills: Optional[str | list[str]] = Query(
         None,
         description="Comma-separated skills for tailored tips",
     ),
@@ -154,7 +154,13 @@ async def get_career_tips(
     else:
         job_category = "general"
 
-    return tips.get_career_tips_service(job_category, skills)
+    if skills is None:
+        skills_param = []
+
+    else:
+        skills_param = skills
+
+    return tips.get_career_tips_service(job_category, skills_param)
 
 
 # postfres fetching endpoints
