@@ -255,27 +255,6 @@ async def comprehensive_resume_analysis_service(file: UploadFile):
         )
 
 
-def get_resumes_service():
-    # TODO: Replace with actual DB or persistent storage
-    return {
-        "success": True,
-        "message": "Fetched resumes successfully.",
-        "data": [],
-        "count": 0,
-    }
-
-
-def get_resumes_by_category_service(category: str):
-    # TODO: Replace with actual DB or persistent storage
-    return {
-        "success": True,
-        "message": f"Fetched resumes for category: {category}",
-        "data": [],
-        "count": 0,
-        "category": category,
-    }
-
-
 async def format_and_analyze_resume_service(file: UploadFile):
     # Async version for v2
     try:
@@ -389,3 +368,25 @@ async def analyze_resume_v2_service(formated_resume: str):
                 message="Failed to analyze resume.", error_detail=str(e)
             ).model_dump(),
         )
+
+
+# db response placeholders
+def get_resumes_service():
+    # TODO: Replace with actual DB or persistent storage
+    return {
+        "success": True,
+        "message": "Fetched resumes successfully.",
+        "data": [],
+        "count": 0,
+    }
+
+
+def get_resumes_by_category_service(category: str):
+    # TODO: Replace with actual DB or persistent storage
+    return {
+        "success": True,
+        "message": f"Fetched resumes for category: {category}",
+        "data": [],
+        "count": 0,
+        "category": category,
+    }
