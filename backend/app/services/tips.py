@@ -1,3 +1,4 @@
+import json
 from fastapi import HTTPException
 from app.models.schemas import TipsResponse, TipsData, Tip
 from app.data.ai.tips_generator import tips_generator_chain
@@ -29,42 +30,57 @@ def tips_llm(
                 "skills_list_str": skills,
             }
         )
-        if isinstance(result, dict):
-            return TipsData(**result)
+        result = str(result.content)
 
-        elif isinstance(result, str):
-            if result.strip().startswith("```json"):
-                result = (
-                    result.strip().removeprefix("```json").removesuffix("```").strip()
-                )
+        if result.strip().startswith("```json"):
+            result = result.strip().removeprefix("```json").removesuffix("```").strip()
 
-            import json
+            return TipsData(**json.loads(result))
+
+        elif result.strip().startswith("{"):
+            result = result.strip()
 
             return TipsData(**json.loads(result))
 
         else:
-            return TipsData(
-                resume_tips=[
-                    Tip(
-                        category="Content",
-                        advice="Keep your resume concise and relevant.",
-                    ),
-                    Tip(
-                        category="Formatting",
-                        advice="Use clear section headings and bullet points.",
-                    ),
-                ],
-                interview_tips=[
-                    Tip(
-                        category="Preparation",
-                        advice="Research the company before your interview.",
-                    ),
-                    Tip(
-                        category="Behavioral",
-                        advice="Practice common behavioral questions.",
-                    ),
-                ],
-            )
+            result = result.strip()
+
+            start_index = result.find("{")
+            end_index = result.rfind("}") + 1
+
+            result = result[start_index:end_index]
+
+            error_flag = len(result) < 0
+
+            try:
+                return TipsData(**json.loads(result))
+
+            except json.JSONDecodeError:
+                error_flag = True
+
+            if error_flag:
+                return TipsData(
+                    resume_tips=[
+                        Tip(
+                            category="Content",
+                            advice="Keep your resume concise and relevant.",
+                        ),
+                        Tip(
+                            category="Formatting",
+                            advice="Use clear section headings and bullet points.",
+                        ),
+                    ],
+                    interview_tips=[
+                        Tip(
+                            category="Preparation",
+                            advice="Research the company before your interview.",
+                        ),
+                        Tip(
+                            category="Behavioral",
+                            advice="Practice common behavioral questions.",
+                        ),
+                    ],
+                )
 
     except Exception as e:
         print(f"Error in tips_llm: {e}")
@@ -72,6 +88,8 @@ def tips_llm(
             status_code=500,
             detail=f"Failed to generate tips: {str(e)}",
         )
+
+    raise ValueError("Unexpected result format from tips_generator_chain")
 
 
 def get_career_tips_service(

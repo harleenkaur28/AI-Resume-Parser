@@ -65,18 +65,25 @@ def format_resume_json_with_llm(
                 "extracted_resume_text": extracted_resume_text,
             }
         )
-        formatted_json = (
-            result if isinstance(result, dict) else raw_responce:= getattr(result, "content", {})
-        )
-        if ( 
-            not formatted_json and 
-            isinstance(raw_responce, str) and 
-            raw_responce.strip().startswith("```json")
+        if isinstance(result, dict):
+            formatted_json = result
+        else:
+            raw_responce = getattr(result, "content", {})
+            formatted_json = raw_responce
+        if (
+            not formatted_json
+            and isinstance(raw_responce, str)
+            and raw_responce.strip().startswith("```json")
         ):
             try:
-                json_str = raw_responce.strip().removeprefix("```json").removesuffix("```").strip()
+                json_str = (
+                    raw_responce.strip()
+                    .removeprefix("```json")
+                    .removesuffix("```")
+                    .strip()
+                )
                 formatted_json = json.loads(json_str)
-            
+
             except Exception:
                 formatted_json = {}
 
@@ -99,10 +106,10 @@ def comprehensive_analysis_llm(
     basic_info: dict,
 ) -> dict:
     """Performs a comprehensive analysis of the resume using LLM."""
-    
+
     if not resume_text:
         return {}
-    
+
     basic_info_json_str = json.dumps(basic_info)
 
     result = comprensive_analysis_chain.invoke(
@@ -112,18 +119,22 @@ def comprehensive_analysis_llm(
             "predicted_category": predicted_category,
         }
     )
-    formatted_json = (
-        result if isinstance(result, dict) else raw_responce:= getattr(result, "content", {})
-    )
-    if ( 
-        not formatted_json and 
-        isinstance(raw_responce, str) and 
-        raw_responce.strip().startswith("```json")
+    if isinstance(result, dict):
+        formatted_json = result
+    else:
+        raw_responce = getattr(result, "content", {})
+        formatted_json = raw_responce
+    if (
+        not formatted_json
+        and isinstance(raw_responce, str)
+        and raw_responce.strip().startswith("```json")
     ):
         try:
-            json_str = raw_responce.strip().removeprefix("```json").removesuffix("```").strip()
+            json_str = (
+                raw_responce.strip().removeprefix("```json").removesuffix("```").strip()
+            )
             formatted_json = json.loads(json_str)
-        
+
         except Exception:
             formatted_json = {}
 
@@ -135,28 +146,32 @@ def format_and_analyse_resumes(
     basic_info: dict,
 ) -> dict:
     """Formats and analyses the resume text and JSON using LLM."""
-    
+
     if not raw_text.strip():
         return {}
-    
+
     result = format_analyse_chain.invoke(
         {
             "extracted_resume_text": raw_text,
             "basic_info_json": json.dumps(basic_info),
         }
     )
-    formatted_json = (
-        result if isinstance(result, dict) else raw_responce:= getattr(result, "content", {})
-    )
-    if ( 
-        not formatted_json and 
-        isinstance(raw_responce, str) and 
-        raw_responce.strip().startswith("```json")
+    if isinstance(result, dict):
+        formatted_json = result
+    else:
+        raw_responce = getattr(result, "content", {})
+        formatted_json = raw_responce
+    if (
+        not formatted_json
+        and isinstance(raw_responce, str)
+        and raw_responce.strip().startswith("```json")
     ):
         try:
-            json_str = raw_responce.strip().removeprefix("```json").removesuffix("```").strip()
+            json_str = (
+                raw_responce.strip().removeprefix("```json").removesuffix("```").strip()
+            )
             formatted_json = json.loads(json_str)
-        
+
         except Exception:
             formatted_json = {}
 
