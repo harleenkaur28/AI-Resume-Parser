@@ -265,6 +265,7 @@ async def format_and_analyze_resume_service(file: UploadFile):
 
         os.makedirs(uploads_dir, exist_ok=True)
         file_bytes = await file.read()
+
         temp_file_path = os.path.join(
             uploads_dir,
             f"temp_format_analyze_{file.filename}",
@@ -273,7 +274,10 @@ async def format_and_analyze_resume_service(file: UploadFile):
         with open(temp_file_path, "wb") as buffer:
             buffer.write(file_bytes)
 
-        raw_resume_text = process_document(file_bytes, file.filename)
+        raw_resume_text = process_document(
+            file_bytes,
+            file.filename,
+        )
         os.remove(temp_file_path)
 
         if raw_resume_text is None:
