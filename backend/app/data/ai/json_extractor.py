@@ -1,4 +1,5 @@
 from langchain.prompts import PromptTemplate
+from app.core.llm import llm
 
 
 formatting_template_str = """
@@ -71,5 +72,7 @@ formatting_template = PromptTemplate(
     ],
     template=formatting_template_str,
 )
+
+josn_formatter_chain = formatting_template | llm
 
 # to be used in analuse resume

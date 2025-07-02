@@ -27,6 +27,7 @@ from app.core.llm import llm
 from app.data.skills import skills_list
 
 from app.services.llm import format_resume_text_with_llm
+from app.services.llm import format_resume_json_with_llm
 from app.services.llm import LLMNotFoundError
 
 
@@ -99,10 +100,13 @@ async def analyze_resume_service(file: UploadFile = File(...)):
             "upload_date": datetime.now(timezone.utc).isoformat(),
         }
 
-        initial_resume_json_str = json.dumps(initial_resume_data)
-
         try:
-            ...
+            resume_data = format_resume_json_with_llm(
+                resume_json=initial_resume_data,
+                extracted_resume_text=resume_text,
+            )
+            analysis_data = ResumeAnalysis(**resume_data)
+
         except LLMNotFoundError:
             analysis_data = ResumeAnalysis(**initial_resume_data)
 
@@ -114,6 +118,42 @@ async def analyze_resume_service(file: UploadFile = File(...)):
                     error_detail=str(e.errors()),
                 ).model_dump(),
             )
+
+        if analysis_data.work_experience:
+            filtered_work_experience = []
+            for exp in analysis_data.work_experience:
+                null_or_empty_count = 0
+                please_remove = False
+                if not exp.role:
+                    null_or_empty_count += 1
+                    if not exp.duration:
+                        please_remove = True
+                if not exp.company:
+                    null_or_empty_count += 1
+                if not exp.duration:
+                    null_or_empty_count += 1
+                if not exp.description:
+                    null_or_empty_count += 1
+                if null_or_empty_count <= 2 and not please_remove:
+                    filtered_work_experience.append(exp)
+
+            analysis_data.work_experience = filtered_work_experience
+
+        if analysis_data.projects:
+            filtered_projects = []
+            for proj in analysis_data.projects:
+                null_or_empty_count = 0
+                if not proj.title:
+                    null_or_empty_count += 1
+                if not proj.technologies_used:
+                    null_or_empty_count += 1
+                if not proj.description:
+                    null_or_empty_count += 1
+
+                if null_or_empty_count < 2:
+                    filtered_projects.append(proj)
+
+            analysis_data.projects = filtered_projects
 
         return ResumeUploadResponse(
             data=analysis_data,
@@ -133,7 +173,7 @@ async def analyze_resume_service(file: UploadFile = File(...)):
         )
 
 
-async def comprehensive_analysis_llm(
+def comprehensive_analysis_llm(
     resume_text,
     name,
     email,

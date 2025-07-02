@@ -1,6 +1,8 @@
-from core.config import google_api_key
-from core.llm import llm
-from data.ai.txt_processor import text_formater_chain as chain
+from app.core.config import google_api_key
+from app.core.llm import llm
+from app.data.ai.txt_processor import text_formater_chain
+from app.data.ai.json_extractor import josn_formatter_chain
+import json
 
 
 class LLMNotFoundError(Exception):
@@ -12,11 +14,6 @@ class LLMNotFoundError(Exception):
 
 def format_resume_text_with_llm(
     raw_text: str,
-    model_provider="Google",
-    model_name="gemini-2.0-flash",
-    api_keys_dict={
-        "Google": google_api_key,
-    },
 ) -> str:
     """Formats the extracted resume text using an LLM."""
 
@@ -24,7 +21,7 @@ def format_resume_text_with_llm(
         return ""
 
     try:
-        result = chain.invoke(
+        result = text_formater_chain.invoke(
             {
                 "raw_resume_text": raw_text,
             }
@@ -36,11 +33,6 @@ def format_resume_text_with_llm(
 
     except ValueError as ve:
         error_msg = str(ve)
-        provider_help = {
-            "Google": "Verify your Google API key at https://aistudio.google.com/app/apikey",
-            "OpenAI": "Verify your OpenAI API key at https://platform.openai.com/api-keys",
-            "Claude": "Verify your Anthropic API key at https://console.anthropic.com/",
-        }
         return raw_text
 
     except Exception as e:
@@ -53,3 +45,47 @@ def format_resume_text_with_llm(
             error_msg += "\n💡 API authentication issue. Using original text."
 
         return raw_text
+
+
+def format_resume_json_with_llm(
+    resume_json: dict,
+    extracted_resume_text: str,
+) -> dict:
+    """Formats the extracted resume JSON using an LLM."""
+
+    if not resume_json or not extracted_resume_text.strip():
+        return {}
+
+    try:
+        result = josn_formatter_chain.invoke(
+            {
+                "resume_json": resume_json,
+                "extracted_resume_text": extracted_resume_text,
+            }
+        )
+        formatted_json = (
+            result if isinstance(result, dict) else raw_responce:= getattr(result, "content", {})
+        )
+        if ( 
+            not formatted_json and 
+            isinstance(raw_responce, str) and 
+            raw_responce.strip().startswith("```json")
+        ):
+            try:
+                json_str = raw_responce.strip().removeprefix("```json").removesuffix("```").strip()
+                formatted_json = json.loads(json_str)
+            
+            except Exception:
+                formatted_json = {}
+
+        return formatted_json
+
+    except ValueError as ve:
+        error_msg = str(ve)
+        print(f"ValueError in format_resume_json_with_llm: {error_msg}")
+        return {}
+
+    except Exception as e:
+        error_msg = f"Error formatting resume JSON: {str(e)}"
+        print(f"Exception in format_resume_json_with_llm: {error_msg}")
+        return {}
