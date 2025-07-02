@@ -28,7 +28,10 @@ async def format_and_analyze_resume_v2(file: UploadFile = File(...)):
     tags=["V2"],
 )
 async def analyze_resume_v2(
-    formated_resume: str = Form(..., description="Formatted resume text"),
+    formated_resume: str = Form(
+        ...,
+        description="Formatted resume text",
+    ),
 ):
     return await resume.analyze_resume_v2_service(formated_resume)
 

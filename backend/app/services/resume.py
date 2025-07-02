@@ -328,25 +328,27 @@ async def analyze_resume_v2_service(formated_resume: str):
                 status_code=400, detail="Formatted resume text cannot be empty."
             )
 
+        formated_resume = formated_resume.strip()
+
         name, email = extract_name_and_email(formated_resume)
         contact = extract_contact_number_from_resume(formated_resume)
+
         cleaned_resume_for_prediction = clean_resume(formated_resume)
+
         predicted_category = predict_category(cleaned_resume_for_prediction)
-        analysis_dict = {
-            "skills_analysis": [],
-            "recommended_roles": [
-                "Software Engineer",
-                "Data Scientist",
-            ],
-            "languages": [],
-            "education": [],
-            "work_experience": [],
-            "projects": [],
+
+        basic_info = {
             "name": name,
             "email": email,
             "contact": contact,
-            "predicted_field": predicted_category,
         }
+
+        analysis_dict = comprehensive_analysis_llm(
+            resume_text=formated_resume,
+            predicted_category=predicted_category,
+            basic_info=basic_info,
+        )
+
         return ComprehensiveAnalysisData(**analysis_dict)
 
     except HTTPException:
