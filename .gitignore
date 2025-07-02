@@ -39,6 +39,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+.venv
+venv
+env
 
 .next
 node_modules

@@ -1,51 +1,22 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routes import router
-from .config import (
-    GOOGLE_API_KEY,
-    DEFAULT_MODEL_PROVIDER,
-    DEFAULT_MODEL_NAME,
-)
+from app.api.v1.endpoints import router as v1_router
+from app.api.v2.endpoints import router as v2_router
 
 app = FastAPI(
-    title="Resume Portal API",
-    description="API for resume analysis, hiring assistance, and cold email generation",
-    version="2.0.0",
+    title="Resume Analysis API",
+    description="API for analyzing resumes, extracting structured data, and providing tips for improvement.",
+    version="1.4.3",
 )
 
-# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(router)
-
-
-@app.get("/")
-async def root():
-    """Root endpoint returning API information."""
-    return {
-        "name": "Resume Portal API",
-        "version": "2.0.0",
-        "description": "API for resume analysis, hiring assistance, and cold email generation",
-        "documentation": "/docs",
-        "redoc": "/redoc",
-    }
-
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint."""
-    return {
-        "status": "healthy",
-        "version": "2.0.0",
-        "llm_provider": DEFAULT_MODEL_PROVIDER,
-        "llm_model": DEFAULT_MODEL_NAME,
-        "llm_available": bool(GOOGLE_API_KEY),
-    }
+app.include_router(v1_router, prefix="/api")
+app.include_router(v2_router, prefix="/api")
