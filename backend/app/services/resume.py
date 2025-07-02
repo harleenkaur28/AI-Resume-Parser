@@ -26,11 +26,13 @@ from app.services.utils import (
 from app.core.llm import llm
 from app.data.skills import skills_list
 
-from app.services.llm import format_resume_text_with_llm
-from app.services.llm import format_resume_json_with_llm
-from app.services.llm import comprehensive_analysis_llm
-from app.services.llm import format_and_analyse_resumes
-from app.services.llm import LLMNotFoundError
+from app.services.llm import (
+    format_resume_text_with_llm,
+    format_resume_json_with_llm,
+    comprehensive_analysis_llm,
+    format_and_analyse_resumes,
+    LLMNotFoundError,
+)
 
 
 async def analyze_resume_service(file: UploadFile = File(...)):
