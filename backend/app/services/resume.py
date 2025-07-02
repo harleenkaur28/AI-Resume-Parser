@@ -1,7 +1,7 @@
 import os
 import json
 from datetime import datetime, timezone
-from fastapi import HTTPException, UploadFile
+from fastapi import HTTPException, UploadFile, File
 from pydantic import ValidationError
 from app.models.schemas import (
     FormattedAndAnalyzedResumeResponse,
@@ -26,8 +26,10 @@ from app.services.utils import (
 from app.core.llm import llm
 from app.data.skills import skills_list
 
+from app.services.llm import format_resume_text_with_llm
 
-def analyze_resume_service(file: UploadFile):
+
+async def analyze_resume_service(file: UploadFile = File(...)):
     # This function implements the logic for /resume/analysis
     cleaned_data_dict = None
     try:
@@ -35,14 +37,23 @@ def analyze_resume_service(file: UploadFile):
             os.path.dirname(__file__),
             "../../uploads",
         )
-        os.makedirs(uploads_dir, exist_ok=True)
-        temp_file_path = os.path.join(uploads_dir, f"temp_{file.filename}")
-        file_bytes = file.file.read()
+        os.makedirs(
+            uploads_dir,
+            exist_ok=True,
+        )
+        temp_file_path = os.path.join(
+            uploads_dir,
+            f"temp_{file.filename}",
+        )
+        file_bytes = await file.read()
 
         with open(temp_file_path, "wb") as buffer:
             buffer.write(file_bytes)
 
-        resume_text = process_document(file_bytes, file.filename)
+        resume_text = process_document(
+            file_bytes,
+            file.filename,
+        )
 
         if resume_text is None:
             os.remove(temp_file_path)
@@ -56,12 +67,15 @@ def analyze_resume_service(file: UploadFile):
         )
 
         if resume_text.strip() and file_extension not in [".md", ".txt"]:
-            # TODO: format_resume_text_with_llm
-            pass
+            resume_text = format_resume_text_with_llm(resume_text)
+
         os.remove(temp_file_path)
 
         if not is_valid_resume(resume_text):
-            raise HTTPException(status_code=400, detail="Invalid resume format")
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid resume format",
+            )
 
         name, email = extract_name_and_email(resume_text)
         contact = extract_contact_number_from_resume(resume_text)
@@ -114,7 +128,9 @@ def analyze_resume_service(file: UploadFile):
         )
 
 
-def comprehensive_analysis_llm(resume_text, name, email, contact, predicted_category):
+async def comprehensive_analysis_llm(
+    resume_text, name, email, contact, predicted_category
+):
     # TODO: Replace with actual LLM logic
     return {
         "skills_analysis": [],
