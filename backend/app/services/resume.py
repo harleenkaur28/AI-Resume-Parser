@@ -28,6 +28,7 @@ from app.data.skills import skills_list
 
 from app.services.llm import format_resume_text_with_llm
 from app.services.llm import format_resume_json_with_llm
+from app.services.llm import comprehensive_analysis_llm
 from app.services.llm import LLMNotFoundError
 
 
@@ -173,42 +174,31 @@ async def analyze_resume_service(file: UploadFile = File(...)):
         )
 
 
-def comprehensive_analysis_llm(
-    resume_text,
-    name,
-    email,
-    contact,
-    predicted_category,
-):
-    # TODO: Replace with actual LLM logic
-    return {
-        "skills_analysis": [],
-        "recommended_roles": ["Software Engineer", "Data Scientist"],
-        "languages": [],
-        "education": [],
-        "work_experience": [],
-        "projects": [],
-        "name": name,
-        "email": email,
-        "contact": contact,
-        "predicted_field": predicted_category,
-    }
-
-
-def comprehensive_resume_analysis_service(file: UploadFile):
+async def comprehensive_resume_analysis_service(file: UploadFile):
     try:
         uploads_dir = os.path.join(
             os.path.dirname(__file__),
             "../../uploads",
         )
-        os.makedirs(uploads_dir, exist_ok=True)
-        file_bytes = file.file.read()
-        temp_file_path = os.path.join(uploads_dir, f"temp_comp_{file.filename}")
+        os.makedirs(
+            uploads_dir,
+            exist_ok=True,
+        )
+
+        file_bytes = await file.read()
+
+        temp_file_path = os.path.join(
+            uploads_dir,
+            f"temp_comp_{file.filename}",
+        )
 
         with open(temp_file_path, "wb") as buffer:
             buffer.write(file_bytes)
 
-        resume_text = process_document(file_bytes, file.filename)
+        resume_text = process_document(
+            file_bytes,
+            file.filename,
+        )
 
         if resume_text is None:
             os.remove(temp_file_path)
@@ -218,8 +208,7 @@ def comprehensive_resume_analysis_service(file: UploadFile):
             )
 
         if resume_text.strip():
-            # TODO: format_resume_text_with_llm
-            pass
+            resume_text = format_resume_text_with_llm(resume_text)
 
         os.remove(temp_file_path)
 
@@ -233,12 +222,17 @@ def comprehensive_resume_analysis_service(file: UploadFile):
         contact = extract_contact_number_from_resume(resume_text)
         cleaned_resume_for_prediction = clean_resume(resume_text)
         predicted_category = predict_category(cleaned_resume_for_prediction)
+
+        basic_info = {
+            "name": name,
+            "email": email,
+            "contact": contact,
+        }
+
         analysis_dict = comprehensive_analysis_llm(
             resume_text,
-            name,
-            email,
-            contact,
             predicted_category,
+            basic_info,
         )
 
         comprehensive_data = ComprehensiveAnalysisData(**analysis_dict)

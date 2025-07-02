@@ -14,6 +14,7 @@ from app.services import resume, cold_mail, hiring, tips
 router = APIRouter()
 
 
+# resume analysis
 @router.post(
     "/resume/analysis",
     summary="Analyze Resume",
@@ -24,6 +25,17 @@ async def analyze_resume(file: UploadFile = File(...)):
     return resume.analyze_resume_service(file)
 
 
+@router.post(
+    "/resume/comprehensive/analysis/",
+    response_model=ComprehensiveAnalysisResponse,
+    description="Performs a comprehensive analysis of the uploaded resume using LLM.",
+    tags=["V1"],
+)
+async def comprehensive_resume_analysis(file: UploadFile = File(...)):
+    return resume.comprehensive_resume_analysis_service(file)
+
+
+# hiring assistant
 @router.post(
     "/hiring-assistant/",
     description="Generates answers to interview questions based on the provided resume and inputs.",
@@ -50,6 +62,7 @@ async def hiring_assistant(
     )
 
 
+# cold mail
 @router.post(
     "/cold-mail/generator/",
     response_model=ColdMailResponse,
@@ -116,6 +129,27 @@ async def cold_mail_editor(
     )
 
 
+# tips generator
+@router.get(
+    "/generate/tips/",
+    response_model=TipsResponse,
+    description="Generates career & resume tips based on job category and skills.",
+    tags=["V1"],
+)
+async def get_career_tips(
+    job_category: Optional[str] = Query(
+        None,
+        description="Job category for tailored tips",
+    ),
+    skills: Optional[str] = Query(
+        None,
+        description="Comma-separated skills for tailored tips",
+    ),
+):
+    return tips.get_career_tips_service(job_category, skills)
+
+
+# postfres fetching endpoints
 @router.get(
     "/resumes/",
     response_model=ResumeListResponse,
@@ -134,32 +168,3 @@ async def get_resumes():
 )
 async def get_resumes_by_category(category: str):
     return resume.get_resumes_by_category_service(category)
-
-
-@router.post(
-    "/resume/comprehensive/analysis/",
-    response_model=ComprehensiveAnalysisResponse,
-    description="Performs a comprehensive analysis of the uploaded resume using LLM.",
-    tags=["V1"],
-)
-async def comprehensive_resume_analysis(file: UploadFile = File(...)):
-    return resume.comprehensive_resume_analysis_service(file)
-
-
-@router.get(
-    "/generate/tips/",
-    response_model=TipsResponse,
-    description="Generates career & resume tips based on job category and skills.",
-    tags=["V1"],
-)
-async def get_career_tips(
-    job_category: Optional[str] = Query(
-        None,
-        description="Job category for tailored tips",
-    ),
-    skills: Optional[str] = Query(
-        None,
-        description="Comma-separated skills for tailored tips",
-    ),
-):
-    return tips.get_career_tips_service(job_category, skills)
