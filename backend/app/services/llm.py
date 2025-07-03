@@ -6,6 +6,7 @@ from app.data.ai.txt_processor import text_formater_chain
 from app.data.ai.json_extractor import josn_formatter_chain
 from app.data.ai.comprehensive_analysis import comprensive_analysis_chain
 from app.data.ai.format_analyse import format_analyse_chain
+from app.data.ai.ats_analysis import ats_analysis_chain
 import json
 
 
@@ -274,3 +275,37 @@ def format_and_analyse_resumes(
         return {}
 
     return formatted_json
+
+
+def ats_analysis_llm(resume_text: str, jd_text: str) -> dict:
+    """Performs ATS scoring and analysis using LLM."""
+    if not resume_text.strip() or not jd_text.strip():
+        return {}
+    result = ats_analysis_chain.invoke(
+        {
+            "resume_text": resume_text,
+            "jd_text": jd_text,
+        }
+    )
+    if isinstance(result, dict):
+        return result
+    raw_response = str(result.content) if hasattr(result, "content") else str(result)
+    if raw_response.strip().startswith("```json"):
+        raw_response = raw_response.strip().removeprefix("```json").removesuffix("```")
+    try:
+        parsed = json.loads(raw_response)
+        if isinstance(parsed, dict):
+            return parsed
+    except Exception:
+        pass
+    # fallback: try to extract JSON substring
+    start = raw_response.find("{")
+    end = raw_response.rfind("}") + 1
+    if start != -1 and end != -1:
+        try:
+            parsed = json.loads(raw_response[start:end])
+            if isinstance(parsed, dict):
+                return parsed
+        except Exception:
+            pass
+    return {}

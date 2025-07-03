@@ -8,8 +8,11 @@ from app.models.schemas import (
     HiringAssistantResponse,
     ColdMailResponse,
     TipsResponse,
+    ScoreRequest,
+    ScoreResponse,
 )
 from app.services import resume, cold_mail, hiring, tips
+from app.services.ats.calculator import ATSCalculator
 
 router = APIRouter()
 
@@ -182,3 +185,11 @@ async def get_resumes():
 )
 async def get_resumes_by_category(category: str):
     return resume.get_resumes_by_category_service(category)
+
+
+@router.post("/ats/score", response_model=ScoreResponse, tags=["V1"])
+async def score_ats(req: ScoreRequest):
+    ats = ATSCalculator(weight_file="model/weights.npy", bias_file="model/bias.npy")
+    jd_text = req.jd_text or ""
+    career_level = req.career_level or "mid"
+    return await ats.batch_score(jd_text, req.resume_texts, career_level)

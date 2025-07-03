@@ -208,3 +208,46 @@ class FormattedAndAnalyzedResumeResponse(BaseModel):
     message: str = "Resume formatted and analyzed successfully"
     cleaned_text: str
     analysis: ComprehensiveAnalysisData
+
+
+class ScoreRequest(BaseModel):
+    jd_text: Optional[str]
+    resume_texts: List[str]
+    career_level: Optional[str] = "mid"
+
+
+class RecommendationItem(BaseModel):
+    id: str
+    title: str
+    description: str
+    category: str
+    priority: str
+    impact: str
+
+
+class ResumeResult(BaseModel):
+    composite: float
+    semantic: float
+    compatibility: float
+    contact: float
+    content: float
+    req_keyword_cov: float = Field(..., alias="req_keyword_cov")
+    opt_keyword_cov: float
+    formatting: float
+    keyword_density: float
+    found_keywords: List[str]
+    missing_keywords: List[str]
+    recommended_keywords: List[str]
+    recommendations: List[RecommendationItem]
+    strengths: List[str]
+    areas_for_improvement: List[str]
+    industry_average: float
+    percentile: int
+    summary: str
+
+
+class ScoreResponse(BaseModel):
+    timestamp: datetime
+    career_level: str
+    overall_score: float
+    results: List[ResumeResult]
