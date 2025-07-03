@@ -1,6 +1,13 @@
 from typing import Dict
 
-EXPECTED_FIELDS = ["name", "email", "phone", "education", "experience", "skills"]
+EXPECTED_FIELDS = [
+    "name",
+    "email",
+    "phone",
+    "education",
+    "experience",
+    "skills",
+]
 
 
 def assess_compatibility(feats: Dict) -> float:

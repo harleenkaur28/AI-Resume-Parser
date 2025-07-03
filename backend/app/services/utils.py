@@ -14,10 +14,16 @@ NLTK_DATA_PATH = os.path.join(
     os.path.dirname(__file__),
     "../model/nltk_data",
 )
-if not os.path.exists(NLTK_DATA_PATH):
-    os.makedirs(NLTK_DATA_PATH)
+if not os.path.exists(
+    NLTK_DATA_PATH,
+):
+    os.makedirs(
+        NLTK_DATA_PATH,
+    )
 
-nltk.data.path.append(NLTK_DATA_PATH)
+nltk.data.path.append(
+    NLTK_DATA_PATH,
+)
 nltk.download(
     "punkt",
     download_dir=NLTK_DATA_PATH,
@@ -27,8 +33,14 @@ nltk.download(
     download_dir=NLTK_DATA_PATH,
 )
 
-stop_words = set(stopwords.words("english"))
-nlp = spacy.load("en_core_web_sm")
+stop_words = set(
+    stopwords.words(
+        "english",
+    )
+)
+nlp = spacy.load(
+    "en_core_web_sm",
+)
 
 clf = pickle.load(
     open(

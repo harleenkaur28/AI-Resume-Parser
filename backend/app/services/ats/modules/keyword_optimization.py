@@ -7,10 +7,24 @@ def assess_keyword_optimization(
     skills: List[str],
 ) -> Tuple[float, float]:
 
-    req_cov = sum(1 for k in req_kw if k.lower() in map(str.lower, skills)) / max(
-        1, len(req_kw)
-    )
-    opt_cov = sum(1 for k in opt_kw if k.lower() in map(str.lower, skills)) / max(
-        1, len(opt_kw)
-    )
+    req_cov = sum(
+        1
+        for k in req_kw
+        if k.lower()
+        in map(
+            str.lower,
+            skills,
+        )
+    ) / max(1, len(req_kw))
+
+    opt_cov = sum(
+        1
+        for k in opt_kw
+        if k.lower()
+        in map(
+            str.lower,
+            skills,
+        )
+    ) / max(1, len(opt_kw))
+
     return req_cov, opt_cov

@@ -1,4 +1,3 @@
-# ATS Calculator module
 import asyncio
 import datetime
 import numpy as np
@@ -46,6 +45,7 @@ class ATSCalculator:
             jd_feats, jd_emb = await parse_jd(jd_text)
         else:
             jd_feats, jd_emb = {}, None
+
         req_kw = jd_feats.get("required_skills", [])
         opt_kw = jd_feats.get("optional_skills", [])
         all_kw = list(dict.fromkeys(req_kw + opt_kw))
@@ -53,23 +53,32 @@ class ATSCalculator:
         # Parse resumes
         parsed = await asyncio.gather(*[parse_resume(r) for r in resumes])
         results = []
+
         for (feats, r_emb), raw in zip(parsed, resumes):
             # Heuristic/module-based scores
             comp = assess_compatibility(feats)
             contact = assess_contact_info(feats)
             content = assess_content_quality(raw)
             req_cov, opt_cov = assess_keyword_optimization(
-                req_kw, opt_kw, feats.get("skills", [])
+                req_kw,
+                opt_kw,
+                feats.get("skills", []),
             )
             fmt = assess_structure_formatting(raw)
-            dens = compute_keyword_density(raw, all_kw)
+            dens = compute_keyword_density(
+                raw,
+                all_kw,
+            )
+
             found = [
                 kw
                 for kw in all_kw
                 if kw.lower() in map(str.lower, feats.get("skills", []))
             ]
+
             missing = [kw for kw in all_kw if kw not in found]
             x = feats.get("x", np.zeros_like(self.w))
+
             sw = compute_weighted(self.w, x)
             pl = predict_logistic(self.w, self.b, x)
             sem = cosine_sim(jd_emb, r_emb) if jd_emb is not None else 0.0
@@ -77,6 +86,7 @@ class ATSCalculator:
                 career_level.lower(), (0.4, 0.4, 0.2)
             )
             comp_score = alpha * sw + beta * pl + gamma * sem
+
             # LLM for recommendations, summary, strengths, areas
             llm_result = ats_analysis_llm(raw, jd_text)
             recs = llm_result.get("recommendations") or generate_recommendations(
@@ -92,10 +102,12 @@ class ATSCalculator:
                     "keyword_density": dens,
                 },
             )
+
             strengths = llm_result.get("strengths") or []
             areas = llm_result.get("areas_for_improvement") or []
             industry_avg, pct = compute_industry_stats(comp_score)
             summary = llm_result.get("summary") or ""
+
             # Compose result
             results.append(
                 {
@@ -119,7 +131,9 @@ class ATSCalculator:
                     "summary": summary,
                 }
             )
+
         overall = float(np.mean([r["composite"] for r in results]))
+
         return {
             "timestamp": datetime.datetime.utcnow().isoformat(),
             "career_level": career_level,
