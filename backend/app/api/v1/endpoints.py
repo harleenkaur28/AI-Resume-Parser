@@ -22,7 +22,7 @@ router = APIRouter()
     tags=["V1"],
 )
 async def analyze_resume(file: UploadFile = File(...)):
-    return resume.analyze_resume_service(file)
+    return await resume.analyze_resume_service(file)
 
 
 @router.post(
@@ -32,7 +32,7 @@ async def analyze_resume(file: UploadFile = File(...)):
     tags=["V1"],
 )
 async def comprehensive_resume_analysis(file: UploadFile = File(...)):
-    return resume.comprehensive_resume_analysis_service(file)
+    return await resume.comprehensive_resume_analysis_service(file)
 
 
 # hiring assistant
