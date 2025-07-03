@@ -6,11 +6,8 @@ from typing import Optional
 from fastapi import HTTPException, UploadFile
 from app.models.schemas import ColdMailResponse, ErrorResponse
 from app.services.utils import process_document, is_valid_resume
+from app.services.hiring import get_company_research
 from app.core.llm import llm
-
-
-def get_company_research(company_name, company_url):
-    return ""
 
 
 def generate_cold_mail_content(
@@ -74,9 +71,15 @@ def cold_mail_generator_service(
             os.path.dirname(__file__),
             "../../uploads",
         )
-        os.makedirs(uploads_dir, exist_ok=True)
+        os.makedirs(
+            uploads_dir,
+            exist_ok=True,
+        )
 
-        temp_file_path = os.path.join(uploads_dir, f"temp_cold_mail_{file.filename}")
+        temp_file_path = os.path.join(
+            uploads_dir,
+            f"temp_cold_mail_{file.filename}",
+        )
         file_bytes = file.file.read()
 
         with open(temp_file_path, "wb") as buffer:
