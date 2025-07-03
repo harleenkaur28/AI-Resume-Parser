@@ -21,8 +21,8 @@ RUN uv pip install --system --no-cache ".[dev]"
 # Explicitly install uvicorn to ensure it's available
 RUN uv pip install --system --no-cache uvicorn
 
-# Copy the server application code into the container
-COPY server.py .
+# Copy the entire app directory into the container
+COPY app ./app
 
 # Copy the model directory into the container
 COPY model ./model
@@ -32,4 +32,4 @@ EXPOSE 8000
 
 # Command to run the application
 # Using python -m uvicorn for more robust path handling
-CMD ["python", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
