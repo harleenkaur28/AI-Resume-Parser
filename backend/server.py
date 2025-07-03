@@ -659,6 +659,7 @@ format_analyse_prompt = PromptTemplate(
 
 NLTK_DATA_PATH = os.path.join(
     os.path.dirname(__file__),
+    "app",
     "model",
     "nltk_data",
 )
@@ -714,6 +715,7 @@ clf = pickle.load(
     open(
         os.path.join(
             os.path.dirname(__file__),
+            "app",
             "model",
             "best_model.pkl",
         ),
@@ -724,6 +726,7 @@ tfidf_vectorizer = pickle.load(
     open(
         os.path.join(
             os.path.dirname(__file__),
+            "app",
             "model",
             "tfidf.pkl",
         ),
