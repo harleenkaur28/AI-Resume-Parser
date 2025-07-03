@@ -109,6 +109,10 @@ async def analyze_resume_service(file: UploadFile = File(...)):
                 resume_json=initial_resume_data,
                 extracted_resume_text=resume_text,
             )
+            if not resume_data:
+                raise LLMNotFoundError(
+                    "LLM service is not available or returned empty data."
+                )
             analysis_data = ResumeAnalysis(**resume_data)
 
         except LLMNotFoundError:

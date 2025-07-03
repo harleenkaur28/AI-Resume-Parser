@@ -28,9 +28,13 @@ def format_resume_text_with_llm(
                 "raw_resume_text": raw_text,
             }
         )
-        formatted_text = (
-            result if isinstance(result, str) else getattr(result, "content", "")
-        )
+        try:
+            formatted_text = (
+                result if isinstance(result, str) else getattr(result, "content", "")
+            )
+        except:
+            formatted_text = str(result.content)
+
         return formatted_text.strip()
 
     except ValueError as ve:
@@ -41,10 +45,10 @@ def format_resume_text_with_llm(
         error_msg = f"Error formatting resume text: {str(e)}"
 
         if "rate limit" in str(e).lower():
-            error_msg += "\n💡 You may have hit API rate limits. Using original text."
+            error_msg += "\nYou may have hit API rate limits. Using original text."
 
         elif "authentication" in str(e).lower() or "unauthorized" in str(e).lower():
-            error_msg += "\n💡 API authentication issue. Using original text."
+            error_msg += "\nAPI authentication issue. Using original text."
 
         return raw_text
 
@@ -52,7 +56,7 @@ def format_resume_text_with_llm(
 def format_resume_json_with_llm(
     resume_json: dict,
     extracted_resume_text: str,
-) -> dict:
+) -> dict | None:
     """Formats the extracted resume JSON using an LLM."""
 
     if not resume_json or not extracted_resume_text.strip():
@@ -65,29 +69,39 @@ def format_resume_json_with_llm(
                 "extracted_resume_text": extracted_resume_text,
             }
         )
-        if isinstance(result, dict):
-            formatted_json = result
+        result = str(result.content)
+
+        if result.strip().startswith("```json"):
+            result = result.strip().removeprefix("```json").removesuffix("```").strip()
+
+            return json.loads(result)
+
+        elif result.strip().startswith("{"):
+            result = result.strip()
+
+            return json.loads(result)
+
         else:
-            raw_responce = getattr(result, "content", {})
-            formatted_json = raw_responce
-        if (
-            not formatted_json
-            and isinstance(raw_responce, str)
-            and raw_responce.strip().startswith("```json")
-        ):
+            result = result.strip()
+
+            start_index = result.find("{")
+            end_index = result.rfind("}") + 1
+
+            result = result[start_index:end_index]
+
+            error_flag = len(result) < 0
+
             try:
-                json_str = (
-                    raw_responce.strip()
-                    .removeprefix("```json")
-                    .removesuffix("```")
-                    .strip()
+                return (json.loads(result))
+
+            except json.JSONDecodeError:
+                error_flag = True
+
+            if error_flag:
+                print(
+                    "Error formatting resume JSON: Invalid JSON format in LLM response."
                 )
-                formatted_json = json.loads(json_str)
-
-            except Exception:
-                formatted_json = {}
-
-        return formatted_json
+                return {}
 
     except ValueError as ve:
         error_msg = str(ve)
@@ -119,25 +133,29 @@ def comprehensive_analysis_llm(
             "predicted_category": predicted_category,
         }
     )
-    if isinstance(result, dict):
-        formatted_json = result
-    else:
-        raw_responce = getattr(result, "content", {})
-        formatted_json = raw_responce
-    if (
-        not formatted_json
-        and isinstance(raw_responce, str)
-        and raw_responce.strip().startswith("```json")
-    ):
-        try:
-            json_str = (
-                raw_responce.strip().removeprefix("```json").removesuffix("```").strip()
-            )
-            formatted_json = json.loads(json_str)
+    try:
+        if isinstance(result, dict):
+            formatted_json = result
+        else:
+            raw_responce = getattr(result, "content", {})
+            formatted_json = raw_responce
+        if (
+            not formatted_json
+            and isinstance(raw_responce, str)
+            and raw_responce.strip().startswith("```json")
+        ):
+            try:
+                json_str = (
+                    raw_responce.strip().removeprefix("```json").removesuffix("```").strip()
+                )
+                formatted_json = json.loads(json_str)
 
-        except Exception:
-            formatted_json = {}
+            except Exception:
+                formatted_json = {}
 
+    if formatted_json is None:
+        return {}
+    
     return formatted_json
 
 
