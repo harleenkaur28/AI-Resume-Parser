@@ -1,5 +1,3 @@
-# Cold mail generation and editing logic will go here
-
 import os
 import json
 from typing import Optional
@@ -43,7 +41,11 @@ def generate_cold_mail_content(
     )
 
     try:
-        response = cold_main_generator_chain.invoke(formatted_prompt_str)
+        response = cold_main_generator_chain.invoke(
+            {
+                "input": formatted_prompt_str,
+            },
+        )
         response_content = (
             response.content if hasattr(response, "content") else str(response)
         )
@@ -160,7 +162,11 @@ def generate_cold_mail_edit_content(
         edit_instructions=edit_instructions,
     )
     try:
-        response = cold_mail_edit_chain.invoke(formatted_prompt_str)
+        response = cold_mail_edit_chain.invoke(
+            {
+                "input": formatted_prompt_str,
+            },
+        )
         response_content = (
             response.content if hasattr(response, "content") else str(response)
         )
