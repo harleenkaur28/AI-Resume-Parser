@@ -1,3 +1,5 @@
+from time import process_time_ns
+from nltk import pr
 from app.core.config import google_api_key
 from app.core.llm import llm
 from app.data.ai.txt_processor import text_formater_chain
@@ -34,7 +36,7 @@ def format_resume_text_with_llm(
             )
         except:
             formatted_text = str(result.content)
-
+        # print(formatted_text)
         return formatted_text.strip()
 
     except ValueError as ve:
@@ -73,26 +75,34 @@ def format_resume_json_with_llm(
 
         if result.strip().startswith("```json"):
             result = result.strip().removeprefix("```json").removesuffix("```").strip()
+            loaded = json.loads(result)
 
-            return json.loads(result)
+            if not isinstance(loaded, dict):
+                return {}
+
+            return loaded
 
         elif result.strip().startswith("{"):
             result = result.strip()
+            loaded = json.loads(result)
 
-            return json.loads(result)
+            if not isinstance(loaded, dict):
+                return {}
+
+            return loaded
 
         else:
             result = result.strip()
-
             start_index = result.find("{")
             end_index = result.rfind("}") + 1
-
             result = result[start_index:end_index]
-
             error_flag = len(result) < 0
 
             try:
-                return (json.loads(result))
+                loaded = json.loads(result)
+                if not isinstance(loaded, dict):
+                    return {}
+                return loaded
 
             except json.JSONDecodeError:
                 error_flag = True
@@ -118,13 +128,14 @@ def comprehensive_analysis_llm(
     resume_text: str,
     predicted_category: str,
     basic_info: dict,
-) -> dict:
+) -> dict | None:
     """Performs a comprehensive analysis of the resume using LLM."""
 
     if not resume_text:
         return {}
 
     basic_info_json_str = json.dumps(basic_info)
+    # print("hello")
 
     result = comprensive_analysis_chain.invoke(
         {
@@ -133,30 +144,62 @@ def comprehensive_analysis_llm(
             "predicted_category": predicted_category,
         }
     )
-    try:
-        if isinstance(result, dict):
-            formatted_json = result
-        else:
-            raw_responce = getattr(result, "content", {})
-            formatted_json = raw_responce
-        if (
-            not formatted_json
-            and isinstance(raw_responce, str)
-            and raw_responce.strip().startswith("```json")
-        ):
-            try:
-                json_str = (
-                    raw_responce.strip().removeprefix("```json").removesuffix("```").strip()
-                )
-                formatted_json = json.loads(json_str)
+    if isinstance(result, dict):
+        formatted_json = result
+        # print("i am the one 11111\n\n\n", formatted_json)
 
-            except Exception:
+    else:
+        raw_responce = str(result.content)
+        if raw_responce.strip().startswith("```json"):
+            result = (
+                raw_responce.strip().removeprefix("```json").removesuffix("```").strip()
+            )
+            try:
+                formatted_json = json.loads(result)
+                # print(formatted_json)
+
+            except json.JSONDecodeError:
                 formatted_json = {}
 
-    if formatted_json is None:
-        return {}
-    
-    return formatted_json
+        elif raw_responce.strip().startswith("{"):
+            result = raw_responce.strip()
+            try:
+                formatted_json = json.loads(result)
+                # print(formatted_json)
+
+            except json.JSONDecodeError:
+                formatted_json = {}
+
+        else:
+            result = raw_responce.strip()
+            start_index = result.find("{")
+            end_index = result.rfind("}") + 1
+            result = result[start_index:end_index]
+            try:
+                formatted_json = json.loads(result)
+
+            except json.JSONDecodeError:
+                formatted_json = {}
+
+        if formatted_json is None or not isinstance(formatted_json, dict):
+            return {}
+
+        return formatted_json
+
+    if (
+        not formatted_json
+        and isinstance(result, str)
+        and result.strip().startswith("```json")
+    ):
+        try:
+            json_str = (
+                result.strip().removeprefix("```json").removesuffix("```").strip()
+            )
+            formatted_json = json.loads(json_str)
+            # print("tum sab chutiye mai tha \n\n\n", formatted_json)
+
+        except Exception:
+            formatted_json = {}
 
 
 def format_and_analyse_resumes(
@@ -176,21 +219,58 @@ def format_and_analyse_resumes(
     )
     if isinstance(result, dict):
         formatted_json = result
+
     else:
-        raw_responce = getattr(result, "content", {})
-        formatted_json = raw_responce
+        raw_responce = str(result.content)
+        if raw_responce.strip().startswith("```json"):
+            result = (
+                raw_responce.strip().removeprefix("```json").removesuffix("```").strip()
+            )
+            try:
+                formatted_json = json.loads(result)
+
+            except json.JSONDecodeError:
+                formatted_json = {}
+
+        elif raw_responce.strip().startswith("{"):
+            result = raw_responce.strip()
+            try:
+                formatted_json = json.loads(result)
+
+            except json.JSONDecodeError:
+                formatted_json = {}
+
+        else:
+            result = raw_responce.strip()
+            start_index = result.find("{")
+            end_index = result.rfind("}") + 1
+            result = result[start_index:end_index]
+            try:
+                formatted_json = json.loads(result)
+
+            except json.JSONDecodeError:
+                formatted_json = {}
+
+        if formatted_json is None or not isinstance(formatted_json, dict):
+            return {}
+
+        return formatted_json
+
     if (
         not formatted_json
-        and isinstance(raw_responce, str)
-        and raw_responce.strip().startswith("```json")
+        and isinstance(result, str)
+        and result.strip().startswith("```json")
     ):
         try:
             json_str = (
-                raw_responce.strip().removeprefix("```json").removesuffix("```").strip()
+                result.strip().removeprefix("```json").removesuffix("```").strip()
             )
             formatted_json = json.loads(json_str)
 
         except Exception:
             formatted_json = {}
+
+    if formatted_json is None or not isinstance(formatted_json, dict):
+        return {}
 
     return formatted_json
