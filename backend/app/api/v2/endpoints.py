@@ -13,9 +13,8 @@ router = APIRouter()
 
 @router.post(
     "/resume/format-and-analyze",
-    summary="Format, Clean, and Analyze Resume from File (V2)",
+    summary="Format, Clean, and Analyze Resume from File V2",
     response_model=FormattedAndAnalyzedResumeResponse,
-    tags=["V2"],
 )
 async def format_and_analyze_resume_v2(file: UploadFile = File(...)):
     return await resume.format_and_analyze_resume_service(file)
@@ -23,9 +22,8 @@ async def format_and_analyze_resume_v2(file: UploadFile = File(...)):
 
 @router.post(
     "/resume/analysis",
-    summary="Analyze Resume (V2)",
+    summary="Analyze Resume V2",
     response_model=ComprehensiveAnalysisData,
-    tags=["V2"],
 )
 async def analyze_resume_v2(
     formated_resume: str = Form(
