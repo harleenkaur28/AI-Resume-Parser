@@ -1,0 +1,17 @@
+server.py
+.venv
+__pycache__ 
+.gitignore
+*.pyc
+*.pyo
+*.pyd
+.Python
+db.sqlite3
+.env
+*.db
+*.log
+*.pot
+*.mo
+uploads
+test.py
+app/model/nltk_data
