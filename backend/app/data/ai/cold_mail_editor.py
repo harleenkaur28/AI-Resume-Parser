@@ -1,5 +1,5 @@
 from app.core.llm import llm
-from langchain_core.prompts import PromptTemplate
+from langchain.prompts import PromptTemplate
 
 
 cold_mail_edit_prompt_template_str = """

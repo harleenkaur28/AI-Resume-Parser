@@ -7,14 +7,8 @@ from app.services.utils import process_document, is_valid_resume
 from app.services.hiring import get_company_research
 from app.core.llm import llm
 from app.services.llm import format_resume_text_with_llm
-from app.data.ai.cold_mail_gen import (
-    cold_main_generator_chain,
-    cold_mail_prompt,
-)
-from app.data.ai.cold_mail_editor import (
-    cold_mail_edit_chain,
-    cold_mail_edit_prompt,
-)
+from app.data.ai.cold_mail_gen import cold_main_generator_chain
+from app.data.ai.cold_mail_editor import cold_mail_edit_chain
 
 
 def generate_cold_mail_content(
@@ -28,23 +22,19 @@ def generate_cold_mail_content(
     additional_info_for_llm,
     company_research,
 ):
-    formatted_prompt_str = cold_mail_prompt.format(
-        resume_text=resume_text,
-        recipient_name=recipient_name,
-        recipient_designation=recipient_designation,
-        company_name=company_name,
-        sender_name=sender_name,
-        sender_role_or_goal=sender_role_or_goal,
-        key_points_to_include=key_points_to_include,
-        additional_info_for_llm=additional_info_for_llm,
-        company_research=company_research,
-    )
-
     try:
         response = cold_main_generator_chain.invoke(
             {
-                "input": formatted_prompt_str,
-            },
+                "resume_text": resume_text,
+                "recipient_name": recipient_name,
+                "recipient_designation": recipient_designation,
+                "company_name": company_name,
+                "sender_name": sender_name,
+                "sender_role_or_goal": sender_role_or_goal,
+                "key_points_to_include": key_points_to_include,
+                "additional_info_for_llm": additional_info_for_llm,
+                "company_research": company_research,
+            }
         )
         response_content = (
             response.content if hasattr(response, "content") else str(response)
@@ -147,25 +137,23 @@ def generate_cold_mail_edit_content(
     previous_email_body,
     edit_instructions,
 ):
-    formatted_prompt_str = cold_mail_edit_prompt.format(
-        resume_text=resume_text,
-        recipient_name=recipient_name,
-        recipient_designation=recipient_designation,
-        company_name=company_name,
-        sender_name=sender_name,
-        sender_role_or_goal=sender_role_or_goal,
-        key_points_to_include=key_points_to_include,
-        additional_info_for_llm=additional_info_for_llm,
-        company_research=company_research,
-        previous_email_subject=previous_email_subject,
-        previous_email_body=previous_email_body,
-        edit_instructions=edit_instructions,
-    )
+
     try:
         response = cold_mail_edit_chain.invoke(
             {
-                "input": formatted_prompt_str,
-            },
+                "resume_text": resume_text,
+                "recipient_name": recipient_name,
+                "recipient_designation": recipient_designation,
+                "company_name": company_name,
+                "sender_name": sender_name,
+                "sender_role_or_goal": sender_role_or_goal,
+                "key_points_to_include": key_points_to_include,
+                "additional_info_for_llm": additional_info_for_llm,
+                "company_research": company_research,
+                "previous_email_subject": previous_email_subject,
+                "previous_email_body": previous_email_body,
+                "edit_instructions": edit_instructions,
+            }
         )
         response_content = (
             response.content if hasattr(response, "content") else str(response)
