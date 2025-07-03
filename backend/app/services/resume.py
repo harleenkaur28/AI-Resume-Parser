@@ -241,7 +241,15 @@ async def comprehensive_resume_analysis_service(file: UploadFile):
             predicted_category,
             basic_info,
         )
-
+        if not isinstance(analysis_dict, dict):
+            raise HTTPException(
+                status_code=500,
+                detail=ErrorResponse(
+                    message="Analysis result is not a dictionary.",
+                    error_detail=str(type(analysis_dict)),
+                ).model_dump(),
+            )
+        analysis_dict = {str(k): v for k, v in analysis_dict.items()}
         comprehensive_data = ComprehensiveAnalysisData(**analysis_dict)
 
         return ComprehensiveAnalysisResponse(
@@ -354,6 +362,16 @@ async def analyze_resume_v2_service(formated_resume: str):
             predicted_category=predicted_category,
             basic_info=basic_info,
         )
+
+        if not isinstance(analysis_dict, dict):
+            raise HTTPException(
+                status_code=500,
+                detail=ErrorResponse(
+                    message="Analysis result is not a dictionary.",
+                    error_detail=str(type(analysis_dict)),
+                ).model_dump(),
+            )
+        analysis_dict = {str(k): v for k, v in analysis_dict.items()}
 
         return ComprehensiveAnalysisData(**analysis_dict)
 
