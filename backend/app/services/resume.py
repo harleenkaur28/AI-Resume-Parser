@@ -36,7 +36,6 @@ from app.services.llm import (
 
 
 async def analyze_resume_service(file: UploadFile = File(...)):
-    # This function implements the logic for /resume/analysis
     cleaned_data_dict = None
     try:
         uploads_dir = os.path.join(
@@ -113,6 +112,7 @@ async def analyze_resume_service(file: UploadFile = File(...)):
                 raise LLMNotFoundError(
                     "LLM service is not available or returned empty data."
                 )
+            cleaned_data_dict = resume_data
             analysis_data = ResumeAnalysis(**resume_data)
 
         except LLMNotFoundError:
