@@ -30,7 +30,6 @@ def generate_cold_mail_content(
     additional_info_for_llm,
     company_research,
 ):
-    # TODO: Replace with actual LLM logic
     formatted_prompt_str = cold_mail_prompt.format(
         resume_text=resume_text,
         recipient_name=recipient_name,
@@ -42,8 +41,85 @@ def generate_cold_mail_content(
         additional_info_for_llm=additional_info_for_llm,
         company_research=company_research,
     )
+
     try:
         response = cold_main_generator_chain.invoke(formatted_prompt_str)
+        response_content = (
+            response.content if hasattr(response, "content") else str(response)
+        )
+        response_content = str(response_content).strip()
+        if response_content.startswith("{") and response_content.endswith("}"):
+            try:
+                response_json = json.loads(response_content)
+                return {
+                    "subject": response_json.get("subject", ""),
+                    "body": response_json.get("body", ""),
+                }
+
+            except json.JSONDecodeError:
+                raise HTTPException(
+                    status_code=500,
+                    detail=ErrorResponse(
+                        message="Failed to parse LLM response as JSON."
+                    ).model_dump(),
+                )
+
+        elif response_content.startswith("```json") and response_content.endswith(
+            "```"
+        ):
+            try:
+                json_str = response_content[8:-3].strip()
+                response_json = json.loads(json_str)
+                return {
+                    "subject": response_json.get("subject", ""),
+                    "body": response_json.get("body", ""),
+                }
+
+            except json.JSONDecodeError:
+                raise HTTPException(
+                    status_code=500,
+                    detail=ErrorResponse(
+                        message="Failed to parse LLM response as JSON."
+                    ).model_dump(),
+                )
+
+        else:
+            start_index = response_content.find("{")
+            end_index = response_content.rfind("}")
+
+            if start_index != -1 and end_index != -1:
+                json_str = response_content[start_index : end_index + 1].strip()
+
+                if len(json_str) == 0:
+                    raise HTTPException(
+                        status_code=500,
+                        detail=ErrorResponse(
+                            message="LLM response does not contain valid JSON."
+                        ).model_dump(),
+                    )
+
+                try:
+                    response_json = json.loads(json_str)
+                    return {
+                        "subject": response_json.get("subject", ""),
+                        "body": response_json.get("body", ""),
+                    }
+
+                except json.JSONDecodeError:
+                    raise HTTPException(
+                        status_code=500,
+                        detail=ErrorResponse(
+                            message="Failed to parse LLM response as JSON."
+                        ).model_dump(),
+                    )
+
+            else:
+                raise HTTPException(
+                    status_code=500,
+                    detail=ErrorResponse(
+                        message="LLM response does not contain valid JSON."
+                    ).model_dump(),
+                )
 
     except Exception as e:
         raise HTTPException(
@@ -53,11 +129,6 @@ def generate_cold_mail_content(
                 error_detail=str(e),
             ).model_dump(),
         )
-
-    return {
-        "subject": f"Application for {sender_role_or_goal} at {company_name}",
-        "body": f"Dear {recipient_name},\n\nI am writing to express my interest in the {sender_role_or_goal} position at {company_name}. (Sample body...)\n\nBest regards,\n{sender_name}",
-    }
 
 
 def generate_cold_mail_edit_content(
@@ -158,6 +229,14 @@ def generate_cold_mail_edit_content(
                         ).model_dump(),
                     )
 
+            else:
+                raise HTTPException(
+                    status_code=500,
+                    detail=ErrorResponse(
+                        message="LLM response does not contain valid JSON."
+                    ).model_dump(),
+                )
+
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -166,11 +245,6 @@ def generate_cold_mail_edit_content(
                 error_detail=str(e),
             ).model_dump(),
         )
-
-    return {
-        "subject": f"[Edited] {previous_email_subject}",
-        "body": f"[Edited] {previous_email_body}\n\n(Edit instructions: {edit_instructions})",
-    }
 
 
 def cold_mail_generator_service(
@@ -287,16 +361,24 @@ def cold_mail_editor_service(
     if not llm:
         raise HTTPException(
             status_code=503,
-            detail=ErrorResponse(message="LLM service is not available.").model_dump(),
+            detail=ErrorResponse(
+                message="LLM service is not available.",
+            ).model_dump(),
         )
     try:
         uploads_dir = os.path.join(
             os.path.dirname(__file__),
             "../../uploads",
         )
-        os.makedirs(uploads_dir, exist_ok=True)
+        os.makedirs(
+            uploads_dir,
+            exist_ok=True,
+        )
 
-        temp_file_path = os.path.join(uploads_dir, f"temp_cold_mail_{file.filename}")
+        temp_file_path = os.path.join(
+            uploads_dir,
+            f"temp_cold_mail_{file.filename}",
+        )
         file_bytes = file.file.read()
 
         with open(temp_file_path, "wb") as buffer:
@@ -349,7 +431,8 @@ def cold_mail_editor_service(
         )
 
         return ColdMailResponse(
-            subject=email_content["subject"], body=email_content["body"]
+            subject=email_content["subject"],
+            body=email_content["body"],
         )
 
     except HTTPException:
@@ -359,7 +442,8 @@ def cold_mail_editor_service(
         raise HTTPException(
             status_code=500,
             detail=ErrorResponse(
-                message="Failed to generate cold mail content.", error_detail=str(e)
+                message="Failed to generate cold mail content.",
+                error_detail=str(e),
             ).model_dump(),
         )
 
@@ -378,7 +462,9 @@ async def cold_mail_generator_v2_service(
     if not llm:
         raise HTTPException(
             status_code=503,
-            detail=ErrorResponse(message="LLM service is not available.").model_dump(),
+            detail=ErrorResponse(
+                message="LLM service is not available.",
+            ).model_dump(),
         )
 
     try:
@@ -398,7 +484,8 @@ async def cold_mail_generator_v2_service(
             company_research=company_research_info,
         )
         return ColdMailResponse(
-            subject=email_content["subject"], body=email_content["body"]
+            subject=email_content["subject"],
+            body=email_content["body"],
         )
 
     except HTTPException:
@@ -408,7 +495,8 @@ async def cold_mail_generator_v2_service(
         raise HTTPException(
             status_code=500,
             detail=ErrorResponse(
-                message="Failed to generate cold mail content.", error_detail=str(e)
+                message="Failed to generate cold mail content.",
+                error_detail=str(e),
             ).model_dump(),
         )
 
@@ -430,7 +518,9 @@ async def cold_mail_editor_v2_service(
     if not llm:
         raise HTTPException(
             status_code=503,
-            detail=ErrorResponse(message="LLM service is not available.").model_dump(),
+            detail=ErrorResponse(
+                message="LLM service is not available.",
+            ).model_dump(),
         )
     try:
         company_research_info = ""
@@ -463,6 +553,7 @@ async def cold_mail_editor_v2_service(
         raise HTTPException(
             status_code=500,
             detail=ErrorResponse(
-                message="Failed to generate cold mail content.", error_detail=str(e)
+                message="Failed to generate cold mail content.",
+                error_detail=str(e),
             ).model_dump(),
         )
