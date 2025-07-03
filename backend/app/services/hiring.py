@@ -1,14 +1,48 @@
 import os
 import json
 from typing import Optional
+import requests
 from fastapi import HTTPException, UploadFile
 from app.models.schemas import HiringAssistantResponse, ErrorResponse
 from app.services.utils import process_document, is_valid_resume
+from app.services.llm import format_resume_text_with_llm
+from app.data.ai.hirring_assistant import hiring_assistant_chain
 from app.core.llm import llm
 
 
 def get_company_research(company_name, company_url):
-    return ""
+    """Gets basic company research information."""
+    url = company_url.strip()
+    try:
+        if not url or not url.startswith(("http://", "https://")):
+            return f"Research about {company_name}: Invalid or no URL provided for company research."
+
+        response = requests.get(
+            "https://r.jina.ai/" + url,
+            timeout=10,
+        )
+        response.raise_for_status()
+
+        if not response.text.strip():
+            return (
+                f"Research about {company_name}: No content found at the provided URL."
+            )
+
+        max_research_length = 20_000
+        research_text = response.text.strip()
+        if len(research_text) > max_research_length:
+            research_text = research_text[:max_research_length] + "..."
+
+        if not company_name.strip():
+            return f"The website content: {research_text}"
+
+        return f"Research about {company_name}: {research_text}"
+
+    except requests.exceptions.RequestException as e:
+        return f"Research about {company_name}: Error fetching data from URL: {e}"
+
+    except Exception as e:
+        return f"Research about {company_name}: An unexpected error occurred during company research: {e}"
 
 
 def generate_answers_for_geting_hired(
@@ -20,14 +54,52 @@ def generate_answers_for_geting_hired(
     user_company_knowledge,
     company_research,
 ):
-    # TODO: Replace with actual LLM logic
-    return [
-        {
-            "question": q,
-            "answer": f"Sample answer for: {q}",
-        }
-        for q in questions_list
-    ]
+
+    company_context = ""
+    if user_company_knowledge.strip():
+        company_context += f"\n\nAdditional information about {company}:\n{user_company_knowledge.strip()}"
+
+    if company_research.strip():
+        company_context += (
+            f"\n\nResearch findings about {company}:\n{company_research.strip()}"
+        )
+
+    results = []
+
+    for question in questions_list:
+        try:
+            response_content = hiring_assistant_chain.invoke(
+                {
+                    "resume": resume_text,
+                    "role": role,
+                    "company": company,
+                    "company_context": company_context,
+                    "question": question,
+                    "word_limit": word_limit,
+                }
+            )
+            answer = (
+                response_content
+                if isinstance(response_content, str)
+                else getattr(response_content, "content", "")
+            )
+
+            results.append(
+                {
+                    "question": question,
+                    "answer": answer.strip(),
+                }
+            )
+
+        except Exception as e:
+            results.append(
+                {
+                    "question": question,
+                    "answer": f"Error generating answer: {e}",
+                }
+            )
+
+    return results
 
 
 def hiring_assistant_service(
@@ -39,11 +111,6 @@ def hiring_assistant_service(
     company_url: Optional[str],
     word_limit: Optional[int],
 ):
-    if not llm:
-        raise HTTPException(
-            status_code=503,
-            detail=ErrorResponse(message="LLM service is not available.").model_dump(),
-        )
     try:
         try:
             questions_list = json.loads(questions)
@@ -67,7 +134,10 @@ def hiring_assistant_service(
             os.path.dirname(__file__),
             "../../uploads",
         )
-        os.makedirs(uploads_dir, exist_ok=True)
+        os.makedirs(
+            uploads_dir,
+            exist_ok=True,
+        )
 
         temp_file_path = os.path.join(
             uploads_dir,
@@ -78,7 +148,10 @@ def hiring_assistant_service(
         with open(temp_file_path, "wb") as buffer:
             buffer.write(file_bytes)
 
-        resume_text = process_document(file_bytes, file.filename)
+        resume_text = process_document(
+            file_bytes,
+            file.filename,
+        )
 
         if resume_text is None:
             os.remove(temp_file_path)
@@ -94,8 +167,8 @@ def hiring_assistant_service(
         )
 
         if resume_text.strip() and file_extension not in [".md", ".txt"]:
-            # TODO: format_resume_text_with_llm
-            pass
+            resume_text = format_resume_text_with_llm(resume_text)
+
         os.remove(temp_file_path)
 
         if not is_valid_resume(resume_text):
