@@ -227,6 +227,16 @@ export default function ColdMailGenerator() {
 				});
 				return;
 			}
+			// Enforce resume selection or upload in customDraft mode
+			if (!selectedResumeId && !resumeFile) {
+				toast({
+					title: "Resume Required",
+					description:
+						"Please select a resume from your saved resumes or upload a resume file to enhance your draft.",
+					variant: "destructive",
+				});
+				return;
+			}
 		}
 
 		if (
@@ -670,6 +680,15 @@ export default function ColdMailGenerator() {
 												handleCustomDraftEdit={handleCustomDraftEdit}
 												handleInputChange={handleInputChange}
 											/>
+											{/* Show a message in customDraft mode to require resume selection/upload */}
+											{resumeSelectionMode === "customDraft" && (
+												<div className="text-yellow-400 bg-yellow-900/20 rounded-lg px-4 py-2 text-sm font-medium">
+													<strong>Note:</strong> Please select a resume from
+													your saved resumes or upload a resume file. This is
+													required to enhance your draft with relevant
+													information from your resume.
+												</div>
+											)}
 											<EmailDetailsForm
 												formData={formData}
 												handleInputChange={handleInputChange}
