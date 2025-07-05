@@ -8,7 +8,15 @@ ENV NODE_ENV=production
 
 # Switch to root to install packages and set permissions
 USER root
-RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -y && \
+    apt-get install -y \
+    openssl \
+    texlive-latex-base \
+    texlive-latex-recommended \
+    texlive-latex-extra \
+    texlive-fonts-recommended \
+    texlive-fonts-extra \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy all application files first.
 COPY . .
@@ -38,7 +46,15 @@ ENV NODE_ENV=production
 
 # Switch to root for system operations like installing packages and changing ownership
 USER root
-RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -y && \
+    apt-get install -y \
+    openssl \
+    texlive-latex-base \
+    texlive-latex-recommended \
+    texlive-latex-extra \
+    texlive-fonts-recommended \
+    texlive-fonts-extra \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy necessary files from builder stage
 COPY --from=builder /app/package.json ./package.json
