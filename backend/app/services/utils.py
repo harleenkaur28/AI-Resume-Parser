@@ -76,6 +76,12 @@ def process_document(file_bytes, file_name):
 
         elif file_extension == ".docx":
             doc = Document(io.BytesIO(file_bytes))
+
+            for section in doc.sections:
+                header = section.header
+                for para in header.paragraphs:
+                    raw_text += para.text + "\n"
+
             for para in doc.paragraphs:
                 raw_text += para.text + "\n"
 
@@ -85,8 +91,12 @@ def process_document(file_bytes, file_name):
                     for cell in row.cells:
                         cell_text = cell.text.strip().replace("\n", " ")
                         row_text.append(cell_text)
-
                     raw_text += "\t".join(row_text) + "\n"
+
+            for section in doc.sections:
+                footer = section.footer
+                for para in footer.paragraphs:
+                    raw_text += para.text + "\n"
 
         else:
             print(
