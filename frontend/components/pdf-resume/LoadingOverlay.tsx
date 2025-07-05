@@ -31,7 +31,9 @@ export default function LoadingOverlay({
 					<Loader variant="pulse" size="xl" className="text-[#76ABAE]" />
 				</div>
 				<h3 className="text-[#EEEEEE] font-semibold text-xl mb-3">
-					{generationType === "pdf" ? "Generating PDF Resume" : "Generating LaTeX Code"}
+					{generationType === "pdf"
+						? "Generating PDF Resume"
+						: "Generating LaTeX Code"}
 				</h3>
 				<p className="text-[#EEEEEE]/70 text-sm leading-relaxed">
 					{generationType === "pdf"

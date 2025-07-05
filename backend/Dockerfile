@@ -24,9 +24,6 @@ RUN uv pip install --system --no-cache uvicorn
 # Copy the entire app directory into the container
 COPY app ./app
 
-# Copy the model directory into the container
-COPY model ./model
-
 # Expose port 8000 to the outside world
 EXPOSE 8000
 
