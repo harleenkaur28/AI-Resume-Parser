@@ -19,7 +19,7 @@ export async function POST(req: Request) {
 		const resumeId = data.get("resumeId") as string | null;
 		const resumeFile = data.get("file") as File | null;
 
-		let resumeText: string | null = null;
+		const backendFormData = new FormData();
 
 		if (resumeId) {
 			const resume = await prisma.resume.findUnique({
@@ -31,21 +31,18 @@ export async function POST(req: Request) {
 					{ status: 404 }
 				);
 			}
-			resumeText = resume.rawText;
+			const resumeText = resume.rawText;
+			const resumeBlob = new Blob([resumeText], { type: "text/plain" });
+			backendFormData.append("file", resumeBlob, "resume.txt");
 		} else if (resumeFile) {
-			resumeText = await resumeFile.text();
-		}
-
-		if (!resumeText) {
+			// Send the original uploaded file as-is
+			backendFormData.append("file", resumeFile, resumeFile.name);
+		} else {
 			return NextResponse.json(
 				{ success: false, message: "Resume content is missing" },
 				{ status: 400 }
 			);
 		}
-
-		const backendFormData = new FormData();
-		const resumeBlob = new Blob([resumeText], { type: "text/plain" });
-		backendFormData.append("file", resumeBlob, "resume.txt");
 
 		// Append other fields from the original form data
 		data.forEach((value, key) => {

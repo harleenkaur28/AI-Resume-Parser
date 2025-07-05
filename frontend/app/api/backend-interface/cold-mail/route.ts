@@ -31,7 +31,6 @@ interface ColdMailResponse {
   body: string;
 }
 
-// Helper function to validate required fields
 function validateColdMailRequest(data: any): { isValid: boolean; errors: string[] } {
   const errors: string[] = [];
   
@@ -53,13 +52,11 @@ function validateColdMailRequest(data: any): { isValid: boolean; errors: string[
   };
 }
 
-// Helper function to sanitize text content for React rendering
 function sanitizeTextForReact(text: string): string {
   if (!text || typeof text !== 'string') {
     return '';
   }
   
-  // Remove any potential HTML tags
   const sanitized = text
     .replace(/<[^>]*>/g, '')
     .replace(/&[^;]+;/g, (entity) => {
@@ -186,8 +183,6 @@ export async function POST(request: NextRequest) {
         backendResponse = await fetch(`${backendUrl}/api/v1/cold-mail/generator/`, {
           method: 'POST',
           body: backendFormData,
-          // Add timeout and other fetch options
-          signal: AbortSignal.timeout(30000), // 30 second timeout
         });
       } else if (resumeId) {
         // Scenario 2: Use existing resume from database - use v2 endpoint
