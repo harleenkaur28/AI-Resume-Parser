@@ -1,19 +1,21 @@
 "use client";
 
-import { FileText } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { FileText } from "lucide-react";
 
 export function PdfResumeButton() {
 	return (
-		<Link href="/pdf-resume">
-			<div className="fixed bottom-36 left-5 z-50">
-				<div className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer group">
-					<div className="flex items-center space-x-2">
-						<FileText className="h-6 w-6" />
-						<span className="font-medium hidden sm:inline">PDF Resume</span>
-					</div>
-				</div>
-			</div>
-		</Link>
+		<div className="fixed bottom-36 left-5 z-50">
+			<Link href="/pdf-resume">
+				<Button
+					size="lg"
+					className="bg-[#76ABAE] hover:bg-[#76ABAE]/90 text-white rounded-full shadow-xl p-4 transition-all duration-300 ease-in-out hover:scale-105 flex items-center"
+				>
+					<FileText className="h-6 w-6" />
+					<span className="ml-2 hidden sm:inline">PDF Resume</span>
+				</Button>
+			</Link>
+		</div>
 	);
 }
