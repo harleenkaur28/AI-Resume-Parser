@@ -38,7 +38,10 @@ class ATSCalculator:
         }
 
     async def batch_score(
-        self, jd_text: str, resumes: List[str], career_level: str = "mid"
+        self,
+        jd_text: str,
+        resumes: List[str],
+        career_level: str = "mid",
     ) -> Dict:
         # Parse JD
         if jd_text:
