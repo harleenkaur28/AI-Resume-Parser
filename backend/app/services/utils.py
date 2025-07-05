@@ -79,6 +79,15 @@ def process_document(file_bytes, file_name):
             for para in doc.paragraphs:
                 raw_text += para.text + "\n"
 
+            for table in doc.tables:
+                for row in table.rows:
+                    row_text = []
+                    for cell in row.cells:
+                        cell_text = cell.text.strip().replace("\n", " ")
+                        row_text.append(cell_text)
+
+                    raw_text += "\t".join(row_text) + "\n"
+
         else:
             print(
                 f"Unsupported file type: {file_extension}. Please upload TXT, MD, PDF, or DOCX."
