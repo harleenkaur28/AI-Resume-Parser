@@ -22,14 +22,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import MobileBottomNav from "./mobile-bottom-nav";
-// Temporarily remove dropdown menu until component is fixed
-// import {
-// 	DropdownMenu,
-// 	DropdownMenuContent,
-// 	DropdownMenuItem,
-// 	DropdownMenuTrigger,
-// 	DropdownMenuSeparator,
-// } from "@/components/ui/dropdown-menu";
+
 import banner from "@/public/banner-dark.svg";
 
 const navItems = [
