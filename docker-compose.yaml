@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16
+    restart: always
+    env_file:
+      - ./.env # Loads all variables from .env file
+    environment:
+      # These are standard for the postgres image and will use values from .env
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - TalentSync
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - ./.env # Loads all variables from .env file
+    environment:
+      # Example: If your backend needs a database URL, it would be:
+      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public"
+      # Add any other backend-specific environment variables that need to be explicitly set or overridden
+      # For example, if your backend uses Google Cloud services and you have the key file:
+      # GOOGLE_APPLICATION_CREDENTIALS: /app/secrets/google-service-account.json
+      # Ensure GOOGLE_API_KEY (if used by langchain_google_genai) is in your .env file
+    volumes:
+      - ./backend/uploads:/app/uploads # For persisting uploads
+      # Example: Mount a secrets directory if needed
+      # - ./secrets:/app/secrets:ro
+    depends_on:
+      - db # If backend directly interacts with the database
+    networks:
+      - TalentSync
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args: {} # Ensures 'args' is a valid empty mapping. Add build args here if needed.
+        # Example of how to pass build arguments (uncomment and define in .env):
+        # NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL_FROM_ENV}
+        # NEXT_PUBLIC_ANOTHER_VAR: ${NEXT_PUBLIC_ANOTHER_VAR_FROM_ENV}
+    restart: always
+    ports:
+      - "3000:3000" # Frontend is the only externally accessible service
+    env_file:
+      - ./.env # Loads all variables from .env file
+    environment:
+      NODE_ENV: production
+      # Overrides for Docker Compose networking:
+      NEXTAUTH_URL: https://talentsync.tashif.codes # Updated for your subdomain
+      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public"
+      BACKEND_URL: http://backend:8000 # Internal communication to backend service
+      # Other variables like NEXTAUTH_SECRET, OAuth credentials, Email server settings,
+      # JWT secrets will be sourced from the .env file via env_file.
+    command: sh -c "bunx prisma migrate deploy && bun prisma/seed.ts && bun run start"
+    depends_on:
+      - db # Ensure db is up before attempting to migrate
+      - backend
+    networks:
+      - TalentSync
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  TalentSync:
+    driver: bridge
+

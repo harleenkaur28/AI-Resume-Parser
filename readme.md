@@ -41,7 +41,7 @@ This project is an AI-powered, dual-sided platform designed to solve this proble
 
 ## Live Demo
 
-[Check out the live platform here!](https://ai-resume-parser.vercel.app/)
+[Check out the live platform here!](https://talentsync.tashif.codes/)
 
 <!--  will add a ss here
 <a href="#" target="_blank">

@@ -29,9 +29,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type
-    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'];
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: 'Invalid file type. Only PDF and Word documents are allowed.' }, { status: 400 });
+    const allowedTypes = [
+      'application/pdf', 
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
+      'application/msword',
+      'text/plain',
+      'text/markdown'
+    ];
+    if (!allowedTypes.includes(file.type) && 
+        !file.name.toLowerCase().endsWith('.pdf') &&
+        !file.name.toLowerCase().endsWith('.doc') &&
+        !file.name.toLowerCase().endsWith('.docx') &&
+        !file.name.toLowerCase().endsWith('.txt') &&
+        !file.name.toLowerCase().endsWith('.md')) {
+      return NextResponse.json({ error: 'Invalid file type. Only PDF, Word documents, TXT, and MD files are allowed.' }, { status: 400 });
     }
 
     // Create form data for backend

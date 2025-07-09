@@ -67,6 +67,15 @@ function sanitizeResponseData(data: any): any {
     return parseInterviewAnswers(data);
   }
   
+  // If data is already in the correct format (question -> answer mapping), return as is
+  if (typeof data === 'object' && !Array.isArray(data)) {
+    // Check if all values are strings (which would indicate question -> answer mapping)
+    const allValuesAreStrings = Object.values(data).every(value => typeof value === 'string');
+    if (allValuesAreStrings) {
+      return data; // Return the question -> answer mapping as is
+    }
+  }
+  
   const sanitized: any = {};
   for (const [key, value] of Object.entries(data)) {
     if (typeof value === 'string' && value.length > 500) {
@@ -167,12 +176,16 @@ function isValidFileType(file: File): boolean {
   const validTypes = [
     'application/pdf',
     'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'text/plain',
+    'text/markdown'
   ];
   return validTypes.includes(file.type) || 
          file.name.toLowerCase().endsWith('.pdf') ||
          file.name.toLowerCase().endsWith('.doc') ||
-         file.name.toLowerCase().endsWith('.docx');
+         file.name.toLowerCase().endsWith('.docx') ||
+         file.name.toLowerCase().endsWith('.txt') ||
+         file.name.toLowerCase().endsWith('.md');
 }
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
@@ -250,21 +263,86 @@ export async function POST(request: NextRequest) {
       const backendResponse = await fetch(`${BACKEND_URL}/api/v2/hiring-assistant/`, {
         method: 'POST',
         body: backendFormData,
+        signal: AbortSignal.timeout(30000), // 30 second timeout
       });
 
       if (!backendResponse.ok) {
         const errorText = await backendResponse.text();
-        console.error('Backend API v2 error:', errorText);
+        console.error('Backend API v2 error:', {
+          status: backendResponse.status,
+          statusText: backendResponse.statusText,
+          contentType: backendResponse.headers.get('content-type'),
+          error: errorText.substring(0, 300) + (errorText.length > 300 ? '...' : '')
+        });
+        
+        let errorMessage = "Backend processing failed";
+        
+        // Try to parse JSON error response
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.detail?.message) {
+            errorMessage = errorData.detail.message;
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          } else if (errorData.detail) {
+            errorMessage = typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData.detail);
+          }
+        } catch (e) {
+          // If JSON parsing fails, check if it's HTML and extract meaningful info
+          if (errorText.includes('<html') || errorText.includes('<!DOCTYPE')) {
+            const titleMatch = errorText.match(/<title>(.*?)<\/title>/i);
+            const h1Match = errorText.match(/<h1[^>]*>(.*?)<\/h1>/i);
+            
+            if (titleMatch?.[1]) {
+              errorMessage = `Server error: ${titleMatch[1].replace(/<[^>]*>/g, '').trim()}`;
+            } else if (h1Match?.[1]) {
+              errorMessage = `Server error: ${h1Match[1].replace(/<[^>]*>/g, '').trim()}`;
+            } else {
+              errorMessage = "Server returned an HTML error page";
+            }
+          } else if (errorText.length > 0 && errorText.length < 200) {
+            errorMessage = `Server error: ${errorText.trim()}`;
+          }
+        }
+        
         return NextResponse.json({ 
-          error: 'Backend processing failed', 
-          details: errorText 
+          error: errorMessage, 
+          details: process.env.NODE_ENV === 'development' ? {
+            status: backendResponse.status,
+            statusText: backendResponse.statusText,
+            contentType: backendResponse.headers.get('content-type'),
+            responsePreview: errorText.substring(0, 200)
+          } : undefined
         }, { status: backendResponse.status });
       }
 
-      const backendResult = await backendResponse.json();
+      // Try to parse JSON response, handle non-JSON responses gracefully
+      let backendResult: any;
+      const responseText = await backendResponse.text();
+      
+      try {
+        backendResult = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.error('Backend API v2 JSON parsing error:', {
+          jsonError: jsonError instanceof Error ? jsonError.message : 'Unknown',
+          responseText: responseText.substring(0, 500) + (responseText.length > 500 ? '...' : ''),
+          contentType: backendResponse.headers.get('content-type')
+        });
+        
+        return NextResponse.json({
+          error: "The interview service returned an invalid response. Please try again or contact support if the issue persists.",
+          details: process.env.NODE_ENV === 'development' ? {
+            responseText: responseText.substring(0, 200),
+            contentType: backendResponse.headers.get('content-type')
+          } : undefined
+        }, { status: 502 });
+      }
 
+      // Process and sanitize the response data to extract answers
+      const sanitizedData = backendResult.data || sanitizeResponseData(backendResult);
+      
       // Store the hiring assistant request in database
-      await prisma.interviewRequest.create({
+      const interviewRequest = await prisma.interviewRequest.create({
         data: {
           userId: (session.user as any).id,
           role,
@@ -276,10 +354,70 @@ export async function POST(request: NextRequest) {
         }
       });
 
+      // Extract and save individual answers
+      if (sanitizedData && typeof sanitizedData === 'object') {
+        const answerPromises = [];
+        console.log('Processing sanitized data for answer saving (existing resume):', Object.keys(sanitizedData));
+        
+        // Process each entry in sanitizedData - keys are questions, values are answers
+        for (const [question, answer] of Object.entries(sanitizedData)) {
+          if (typeof answer === 'string' && answer.trim()) {
+            console.log(`Saving answer for question: "${question}"`);
+            
+            // Save the answer to database
+            answerPromises.push(
+              prisma.interviewAnswer.create({
+                data: {
+                  requestId: interviewRequest.id,
+                  question: question.trim(),
+                  answer: answer.trim()
+                }
+              }).catch((error) => {
+                console.error(`Failed to save answer for question "${question}":`, error);
+                throw error;
+              })
+            );
+          } else if (typeof answer === 'object' && answer !== null) {
+            // Handle nested question-answer objects (fallback case)
+            for (const [subQuestion, subAnswer] of Object.entries(answer)) {
+              if (typeof subAnswer === 'string' && subAnswer.trim()) {
+                console.log(`Saving nested answer for question: "${subQuestion}"`);
+                answerPromises.push(
+                  prisma.interviewAnswer.create({
+                    data: {
+                      requestId: interviewRequest.id,
+                      question: subQuestion.trim(),
+                      answer: subAnswer.trim()
+                    }
+                  }).catch((error) => {
+                    console.error(`Failed to save nested answer for question "${subQuestion}":`, error);
+                    throw error;
+                  })
+                );
+              }
+            }
+          }
+        }
+        
+        // Wait for all answers to be saved
+        if (answerPromises.length > 0) {
+          console.log(`Attempting to save ${answerPromises.length} answers to database`);
+          try {
+            await Promise.all(answerPromises);
+            console.log('Successfully saved all answers to database');
+          } catch (error) {
+            console.error('Error saving answers to database:', error);
+            throw error;
+          }
+        } else {
+          console.warn('No valid question-answer pairs found to save');
+        }
+      }
+
       return NextResponse.json({
         success: true,
         message: 'Interview assistance generated successfully using existing resume',
-        data: sanitizeResponseData(backendResult),
+        data: sanitizedData,
         source: 'existing_resume',
         resumeId: resumeId
       });
@@ -290,7 +428,7 @@ export async function POST(request: NextRequest) {
       
       if (!isValidFileType(file)) {
         return NextResponse.json({ 
-          error: 'Invalid file type. Please upload a PDF or DOC file' 
+          error: 'Invalid file type. Please upload a PDF, DOC, DOCX, TXT, or MD file' 
         }, { status: 400 });
       }
 
@@ -310,21 +448,86 @@ export async function POST(request: NextRequest) {
       const backendResponse = await fetch(`${BACKEND_URL}/api/v1/hiring-assistant/`, {
         method: 'POST',
         body: backendFormData,
+        signal: AbortSignal.timeout(30000), // 30 second timeout
       });
 
       if (!backendResponse.ok) {
         const errorText = await backendResponse.text();
-        console.error('Backend API v1 error:', errorText);
+        console.error('Backend API v1 error:', {
+          status: backendResponse.status,
+          statusText: backendResponse.statusText,
+          contentType: backendResponse.headers.get('content-type'),
+          error: errorText.substring(0, 300) + (errorText.length > 300 ? '...' : '')
+        });
+        
+        let errorMessage = "Backend processing failed";
+        
+        // Try to parse JSON error response
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.detail?.message) {
+            errorMessage = errorData.detail.message;
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          } else if (errorData.detail) {
+            errorMessage = typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData.detail);
+          }
+        } catch (e) {
+          // If JSON parsing fails, check if it's HTML and extract meaningful info
+          if (errorText.includes('<html') || errorText.includes('<!DOCTYPE')) {
+            const titleMatch = errorText.match(/<title>(.*?)<\/title>/i);
+            const h1Match = errorText.match(/<h1[^>]*>(.*?)<\/h1>/i);
+            
+            if (titleMatch?.[1]) {
+              errorMessage = `Server error: ${titleMatch[1].replace(/<[^>]*>/g, '').trim()}`;
+            } else if (h1Match?.[1]) {
+              errorMessage = `Server error: ${h1Match[1].replace(/<[^>]*>/g, '').trim()}`;
+            } else {
+              errorMessage = "Server returned an HTML error page";
+            }
+          } else if (errorText.length > 0 && errorText.length < 200) {
+            errorMessage = `Server error: ${errorText.trim()}`;
+          }
+        }
+        
         return NextResponse.json({ 
-          error: 'Backend processing failed', 
-          details: errorText 
+          error: errorMessage, 
+          details: process.env.NODE_ENV === 'development' ? {
+            status: backendResponse.status,
+            statusText: backendResponse.statusText,
+            contentType: backendResponse.headers.get('content-type'),
+            responsePreview: errorText.substring(0, 200)
+          } : undefined
         }, { status: backendResponse.status });
       }
 
-      const backendResult = await backendResponse.json();
+      // Try to parse JSON response, handle non-JSON responses gracefully
+      let backendResult: any;
+      const responseText = await backendResponse.text();
+      
+      try {
+        backendResult = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.error('Backend API v1 JSON parsing error:', {
+          jsonError: jsonError instanceof Error ? jsonError.message : 'Unknown',
+          responseText: responseText.substring(0, 500) + (responseText.length > 500 ? '...' : ''),
+          contentType: backendResponse.headers.get('content-type')
+        });
+        
+        return NextResponse.json({
+          error: "The interview service returned an invalid response. Please try again or contact support if the issue persists.",
+          details: process.env.NODE_ENV === 'development' ? {
+            responseText: responseText.substring(0, 200),
+            contentType: backendResponse.headers.get('content-type')
+          } : undefined
+        }, { status: 502 });
+      }
+
+      // Process and sanitize the response data to extract answers
+      const sanitizedData = backendResult.data || sanitizeResponseData(backendResult);
 
       // Store the hiring assistant request in database
-      await prisma.interviewRequest.create({
+      const interviewRequest = await prisma.interviewRequest.create({
         data: {
           userId: (session.user as any).id,
           role,
@@ -336,10 +539,70 @@ export async function POST(request: NextRequest) {
         }
       });
 
+      // Extract and save individual answers
+      if (sanitizedData && typeof sanitizedData === 'object') {
+        const answerPromises = [];
+        console.log('Processing sanitized data for answer saving (file upload):', Object.keys(sanitizedData));
+        
+        // Process each entry in sanitizedData - keys are questions, values are answers
+        for (const [question, answer] of Object.entries(sanitizedData)) {
+          if (typeof answer === 'string' && answer.trim()) {
+            console.log(`Saving answer for question: "${question}"`);
+            
+            // Save the answer to database
+            answerPromises.push(
+              prisma.interviewAnswer.create({
+                data: {
+                  requestId: interviewRequest.id,
+                  question: question.trim(),
+                  answer: answer.trim()
+                }
+              }).catch((error) => {
+                console.error(`Failed to save answer for question "${question}":`, error);
+                throw error;
+              })
+            );
+          } else if (typeof answer === 'object' && answer !== null) {
+            // Handle nested question-answer objects (fallback case)
+            for (const [subQuestion, subAnswer] of Object.entries(answer)) {
+              if (typeof subAnswer === 'string' && subAnswer.trim()) {
+                console.log(`Saving nested answer for question: "${subQuestion}"`);
+                answerPromises.push(
+                  prisma.interviewAnswer.create({
+                    data: {
+                      requestId: interviewRequest.id,
+                      question: subQuestion.trim(),
+                      answer: subAnswer.trim()
+                    }
+                  }).catch((error) => {
+                    console.error(`Failed to save nested answer for question "${subQuestion}":`, error);
+                    throw error;
+                  })
+                );
+              }
+            }
+          }
+        }
+        
+        // Wait for all answers to be saved
+        if (answerPromises.length > 0) {
+          console.log(`Attempting to save ${answerPromises.length} answers to database`);
+          try {
+            await Promise.all(answerPromises);
+            console.log('Successfully saved all answers to database');
+          } catch (error) {
+            console.error('Error saving answers to database:', error);
+            throw error;
+          }
+        } else {
+          console.warn('No valid question-answer pairs found to save');
+        }
+      }
+
       return NextResponse.json({
         success: true,
         message: 'Interview assistance generated successfully using uploaded file',
-        data: sanitizeResponseData(backendResult),
+        data: sanitizedData,
         source: 'uploaded_file',
         fileName: file.name
       });

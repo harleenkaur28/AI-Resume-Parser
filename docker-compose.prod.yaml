@@ -1,0 +1,64 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:16
+    restart: always
+    env_file:
+      - ./.env 
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - talentsync_internal_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - ./.env 
+    environment:
+      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public"
+    volumes:
+      - ./backend/uploads:/app/uploads 
+    depends_on:
+      - db
+    networks:
+      - talentsync_internal_network
+      - nginxproxyman_network 
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args: {}
+    restart: always
+    env_file:
+      - ./.env 
+    environment:
+      NODE_ENV: production
+      NEXTAUTH_URL: https://talentsync.tashif.codes 
+      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public"
+      BACKEND_URL: http://backend:8000 
+    command: sh -c "bunx prisma migrate deploy && bun prisma/seed.ts && bun run start"
+    depends_on:
+      - db
+      - backend
+    networks:
+      - talentsync_internal_network
+      - nginxproxyman_network 
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  talentsync_internal_network: 
+    driver: bridge
+  nginxproxyman_network: 
+    external: true
+    name: nginxproxyman

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -43,6 +45,12 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+    --component-inactive-color: var(--muted-foreground);
+    --component-bg: var(--card);
+    --component-shadow: var(--border);
+    --component-active-bg: var(--secondary);
+    --component-line-inactive-color: var(--border);
+    --component-active-color-default: var(--accent-foreground);
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -69,6 +77,18 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    --component-inactive-color: var(--muted-foreground);
+    --component-bg: var(--card);
+    --component-shadow: var(--border);
+    --component-active-bg: var(--secondary);
+    --component-line-inactive-color: var(--muted-foreground);
+    --component-active-color-default: var(--accent-foreground);
+  }
+  .theme {
+    --color-chart-2: var(--color-chart-2);
+    --color-chart-3: var(--color-chart-3);
+    --color-chart-4: var(--color-chart-4);
+    --color-chart-5: var(--color-chart-5);
   }
 }
 
@@ -78,65 +98,113 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Comfortaa', sans-serif;
     overflow-x: hidden; /* Hide horizontal scrollbar */
   }
-  
+
   /* Hide horizontal scrollbar for webkit browsers */
   ::-webkit-scrollbar:horizontal {
     display: none;
   }
-  
+
   /* Hide horizontal scrollbar for Firefox */
   html {
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
   }
-  
+
   /* Ensure content doesn't overflow horizontally */
   html, body {
     max-width: 100vw;
     overflow-x: hidden;
   }
+
+  /* Mobile bottom navigation spacing */
+  @media (max-width: 640px) {
+    body {
+      padding-bottom: 90px; /* Space for mobile bottom navigation */
+    }
+  }
+
+  /* Ensure main content doesn't overlap with bottom nav */
+  @media (max-width: 640px) {
+    main, .main-content {
+      margin-bottom: 20px; /* Additional spacing for better UX */
+    }
+  }
+
+  /* Mobile navigation utilities */
+  .mobile-nav-spacing {
+    padding-bottom: 90px;
+  }
   
+  .mobile-safe-area {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+
+  /* Smooth transitions for mobile navigation */
+  .mobile-nav-transition {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
   /* Custom animations for dashboard */
   @keyframes float {
     0%, 100% { transform: translateY(0px); }
     50% { transform: translateY(-10px); }
   }
-  
+
   @keyframes glow {
     0%, 100% { box-shadow: 0 0 20px rgba(118, 171, 174, 0.3); }
     50% { box-shadow: 0 0 30px rgba(118, 171, 174, 0.5); }
   }
-  
+
   @keyframes shimmer {
     0% { background-position: -200px 0; }
     100% { background-position: calc(200px + 100%) 0; }
   }
-  
+
   .float-animation {
     animation: float 3s ease-in-out infinite;
   }
-  
+
   .glow-animation {
     animation: glow 2s ease-in-out infinite;
   }
-  
+
   .shimmer {
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
     background-size: 200px 100%;
     animation: shimmer 2s infinite;
   }
-  
+
   /* Enhanced hover effects */
   .card-hover:hover {
     transform: translateY(-8px) scale(1.02);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  
+
   .button-hover:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 25px rgba(0,0,0,0.2);
     transition: all 0.2s ease;
+  }
+
+  /* Icon bounce animation */
+  @keyframes iconBounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    20% {
+      transform: translateY(-0.3em);
+    }
+    40% {
+      transform: translateY(0);
+    }
+    60% {
+      transform: translateY(-0.1em);
+    }
+    80% {
+      transform: translateY(0);
+    }
   }
 }

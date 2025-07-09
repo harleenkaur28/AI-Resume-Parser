@@ -659,6 +659,7 @@ format_analyse_prompt = PromptTemplate(
 
 NLTK_DATA_PATH = os.path.join(
     os.path.dirname(__file__),
+    "app",
     "model",
     "nltk_data",
 )
@@ -714,6 +715,7 @@ clf = pickle.load(
     open(
         os.path.join(
             os.path.dirname(__file__),
+            "app",
             "model",
             "best_model.pkl",
         ),
@@ -724,6 +726,7 @@ tfidf_vectorizer = pickle.load(
     open(
         os.path.join(
             os.path.dirname(__file__),
+            "app",
             "model",
             "tfidf.pkl",
         ),
@@ -1261,6 +1264,228 @@ cold_mail_prompt = PromptTemplate(
 )
 
 
+cold_mail_edit_prompt_template_str = """
+You are an expert career advisor and professional communication assistant.
+Your task is to dredit a compelling, personalized, and concise cold email based
+on the provided information, following the style and structure of this fictional example:
+
+
+My name is Priya Desai, and I’m in my final year of B.Tech in Software Engineering at 
+IIT Bombay. I have a deep interest in cybersecurity and cloud computing—particularly in 
+autonomous intrusion detection and secure DevOps pipelines. Given SecureCloud Inc.’s 
+lead in developing self-healing network security solutions, I’m reaching out to express 
+my interest in contributing as a Security Engineering Intern.
+Previously, I interned at Google Cloud as a Security Analyst Intern, where I focused on 
+vulnerability assessment, incident response simulations, and automating security audits. 
+I’m also co-authoring a research paper on threat modeling for containerized environments, 
+currently under peer review. My personal projects include an open-source real-time anomaly
+detection tool built with Python, Flask, Docker, and Kubernetes. I’m proficient in Python, 
+Go, and familiar with AWS, Azure, Terraform, and security frameworks like MITRE ATT&CK. 
+With this tech stack and my theoretical background, I am confident in my ability to 
+quickly adapt to your workflows and contribute meaningfully to your security initiatives.
+As an aspiring security professional, I’m eager to learn from experienced engineers and 
+grow within a pioneering organization like SecureCloud Inc. I’ve attached my resume for 
+your review—please let me know if you need any further information.
+Thank you for your time and consideration.
+
+**Candidate's Resume (Markdown):**
+```
+{resume_text}
+```
+
+**Email Details:**
+- Recipient Name: {recipient_name}
+- Recipient Designation: {recipient_designation}
+- Company Name: {company_name}
+- Sender Name: {sender_name}
+- Sender Goal/Role: {sender_role_or_goal}
+- Key Points to Highlight:
+  {key_points_to_include}
+- Additional Context/Notes:
+  {additional_info_for_llm}
+- Company Research Insights (if any):
+  {company_research}
+
+**THis is the previsous Email you generated**
+Subject: {previous_email_subject}
+Body:
+{previous_email_body}
+
+**Edits Required / Edit Instructions**
+{edit_instructions}
+
+Instructions for Email Generation:
+
+1. Subject Line (8–12 words):
+   • Clear, concise, and engaging.
+   • Reflects your role/goal, name, and company.
+   • Example: "Security Intern Candidate | Priya Desai – Joining SecureCloud"
+
+2. Email Body (180–220 words):
+   a. Salutation:
+      • "Dear Mr./Ms. [Last Name],"" or "Dear [Full Name],"
+   b. Paragraph 1 – Introduction:
+      • State who you are, your current status/study, and your goal.
+      • Mention why you chose *this* recipient/company.
+   c. Paragraph 2 – Relevant Experience & Skills:
+      • Highlight 2–3 achievements or projects from the resume.
+      • Include internship, research, publications, personal projects.
+      • Cite specific technologies or frameworks.
+   d. Paragraph 3 – Fit & Value:
+      • Connect your skills/interests to the company’s work or values.
+      • Refer to any {company_research} details.
+   e. Paragraph 4 – Call to Action & Closing:
+      • Request consideration for internship/opportunity or a short chat.
+      • Offer to share more details or schedule a call.
+      • Thank them for their time.
+   f. Signature:
+      • "Sincerely," or "Best regards,"
+      • {sender_name}
+      • Optionally: contact info or “Resume attached.”
+
+3. Tone & Style:
+   • Professional, respectful, enthusiastic.
+   • Concise paragraphs, varied sentence structure.
+   • Mirror the example’s clarity and flow.
+   • Avoid jargon overload; focus on impact and fit.
+
+4. Formatting:
+   • Short subject line.
+   • 4 paragraphs max.
+   • Mention attachment: "I’ve attached my resume for reference."
+
+5. **Edit the previous email**:
+   • Use the previous email subject and body as a base.
+   • Make improvements to clarity, conciseness, and professionalism.
+   • Ensure the new email is still personalized and relevant to the recipient.
+   • Follow the instuctions given by the user VERY VERY STRICTLY.
+   • What ever the user has asked you to do, you MUST do it.
+
+Here are the edit instructions again:
+{edit_instructions}
+
+**Output:**
+Return only a JSON object with "subject" and "body" keys:
+```json
+{{
+  "subject": "Generated Subject Line",
+  "body": "Generated Email Body..."
+}}
+```
+"""
+
+cold_mail_edit_prompt = PromptTemplate(
+    input_variables=[
+        "resume_text",
+        "recipient_name",
+        "recipient_designation",
+        "company_name",
+        "sender_name",
+        "sender_role_or_goal",
+        "key_points_to_include",
+        "additional_info_for_llm",
+        "company_research",
+        "previous_email_subject",
+        "previous_email_body",
+        "edit_instructions",
+    ],
+    template=cold_mail_edit_prompt_template_str,
+)
+
+
+def generate_cold_mail_edit_content(
+    resume_text: str,
+    recipient_name: str,
+    recipient_designation: str,
+    company_name: str,
+    sender_name: str,
+    sender_role_or_goal: str,
+    key_points_to_include: str,
+    additional_info_for_llm: str,
+    company_research: str,
+    previous_email_subject: str,
+    previous_email_body: str,
+    edit_instructions: str,
+    model_provider="Google",
+    model_name="gemini-2.0-flash",
+    api_keys_dict={"Google": google_api_key},
+):
+    """Generates cold email content using LLM."""
+    if not llm:
+        raise ValueError("LLM service is not available or not initialized.")
+
+    current_llm = llm
+    if not current_llm:
+        try:
+            if model_provider == "Google":
+                if not api_keys_dict.get("Google"):
+                    raise ValueError("Google API Key not provided.")
+
+                current_llm = ChatGoogleGenerativeAI(
+                    model=model_name,
+                    temperature=0.4,
+                    google_api_key=api_keys_dict["Google"],
+                )
+
+            else:
+                raise ValueError(f"Unsupported model provider: {model_provider}")
+
+        except Exception as e:
+            raise ValueError(f"Error initializing LLM for cold mail: {e}")
+
+    formatted_prompt_str = cold_mail_edit_prompt.format(
+        resume_text=resume_text,
+        recipient_name=recipient_name,
+        recipient_designation=recipient_designation,
+        company_name=company_name,
+        sender_name=sender_name,
+        sender_role_or_goal=sender_role_or_goal,
+        key_points_to_include=key_points_to_include,
+        additional_info_for_llm=additional_info_for_llm,
+        company_research=company_research,
+        previous_email_subject=previous_email_subject,
+        previous_email_body=previous_email_body,
+        edit_instructions=edit_instructions,
+    )
+
+    try:
+        response = current_llm.invoke(formatted_prompt_str)
+        response_content = (
+            response.content if hasattr(response, "content") else str(response)
+        )
+
+        if response_content.strip().startswith("```json"):
+            response_content = response_content.strip()[7:]
+
+        if response_content.strip().endswith("```"):
+            response_content = response_content.strip()[:-3]
+
+        email_data = json.loads(response_content)
+        if (
+            not isinstance(email_data, dict)
+            or "subject" not in email_data
+            or "body" not in email_data
+        ):
+            raise ValueError(
+                "LLM did not return the expected JSON structure with 'subject' and 'body'."
+            )
+        return email_data
+
+    except json.JSONDecodeError:
+        print(f"LLM output (cold mail) was not valid JSON: {response_content}")
+
+        return {
+            "subject": "Error: Could not parse LLM response",
+            "body": "Failed to generate email content due to parsing error. Raw LLM output: "
+            + response_content[:500]
+            + "...",
+        }
+
+    except Exception as e:
+        print(f"Error during LLM invocation for cold mail: {e}")
+        raise
+
+
 def generate_cold_mail_content(
     resume_text: str,
     recipient_name: str,
@@ -1285,11 +1510,13 @@ def generate_cold_mail_content(
             if model_provider == "Google":
                 if not api_keys_dict.get("Google"):
                     raise ValueError("Google API Key not provided.")
+
                 current_llm = ChatGoogleGenerativeAI(
                     model=model_name,
                     temperature=0.4,
                     google_api_key=api_keys_dict["Google"],
                 )
+
             else:
                 raise ValueError(f"Unsupported model provider: {model_provider}")
 
@@ -1617,6 +1844,8 @@ def generate_answers_for_geting_hired(
     They are applying for the role of **{role}** at **{company}**{company_context}.
 
     Your task: craft a clear, concise answer (≤ {word_limit} words) to the interview question below.
+
+    Note: always use the first person to answer the question. act as the candidate. also use the resume suolimented with your own knowledge.
 
     Question:
     {question}
@@ -2321,6 +2550,124 @@ async def cold_mail_generator(
             status_code=500,
             detail=ErrorResponse(
                 message="Failed to generate cold mail content.", error_detail=str(e)
+            ).model_dump(),
+        )
+
+
+@v1_router.post(
+    "/cold-mail/editor/",
+    response_model=ColdMailResponse,
+    description="Edit a cold email based on the provided resume and user inputs.",
+    tags=[
+        "V1",
+    ],
+)
+async def cold_mail_editor(
+    file: UploadFile = File(...),
+    recipient_name: str = Form(...),
+    recipient_designation: str = Form(...),
+    company_name: str = Form(...),
+    sender_name: str = Form(...),
+    sender_role_or_goal: str = Form(...),
+    key_points_to_include: str = Form(...),
+    additional_info_for_llm: Optional[str] = Form(""),
+    company_url: Optional[str] = Form(None),
+    generated_email_subject: str = Form(""),
+    generated_email_body: str = Form(""),
+    edit_inscription: str = Form(""),
+):
+    if not llm:
+        raise HTTPException(
+            status_code=503,
+            detail=ErrorResponse(message="LLM service is not available.").model_dump(),
+        )
+
+    try:
+        uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+        os.makedirs(uploads_dir, exist_ok=True)
+
+        temp_file_path = os.path.join(uploads_dir, f"temp_cold_mail_{file.filename}")
+        file_bytes = await file.read()
+        with open(temp_file_path, "wb") as buffer:
+            buffer.write(file_bytes)
+
+        resume_text = process_document(file_bytes, file.filename)
+        if resume_text is None:
+            os.remove(temp_file_path)
+            raise HTTPException(
+                status_code=400,
+                detail=ErrorResponse(
+                    message=f"Unsupported file type or error processing file: {file.filename}"
+                ).model_dump(),
+            )
+
+        file_extension = os.path.splitext(file.filename)[1].lower()
+        if resume_text.strip() and file_extension not in [".md", ".txt"]:
+            resume_text = format_resume_text_with_llm(resume_text)
+
+        os.remove(temp_file_path)
+
+        if not is_valid_resume(resume_text):
+            raise HTTPException(
+                status_code=400,
+                detail=ErrorResponse(
+                    message="Invalid resume format or content."
+                ).model_dump(),
+            )
+
+        company_research_info = ""
+        if company_url:
+            company_research_info = get_company_research(company_name, company_url)
+
+        email_content = generate_cold_mail_edit_content(
+            resume_text=resume_text,
+            recipient_name=recipient_name,
+            recipient_designation=recipient_designation,
+            company_name=company_name,
+            sender_name=sender_name,
+            sender_role_or_goal=sender_role_or_goal,
+            key_points_to_include=key_points_to_include,
+            additional_info_for_llm=additional_info_for_llm,
+            company_research=company_research_info,
+            previous_email_subject=generated_email_subject,
+            previous_email_body=generated_email_body,
+            edit_instructions=edit_inscription,
+        )
+
+        if "Error:" in email_content["subject"] or "Error:" in email_content["body"]:
+            raise HTTPException(
+                status_code=500,
+                detail=ErrorResponse(
+                    message="Failed to generate email content due to an LLM or parsing error.",
+                    error_detail=f"Subject: {email_content['subject']}, Body: {email_content['body'][:200]}...",
+                ).model_dump(),
+            )
+
+        return ColdMailResponse(
+            subject=email_content["subject"], body=email_content["body"]
+        )
+
+    except HTTPException:
+        raise
+
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=422,
+            detail=ErrorResponse(
+                message="Input validation error.", error_detail=str(e.errors())
+            ).model_dump(),
+        )
+
+    except Exception as e:
+        print(f"Error in /cold-mail-editor/: {e}")
+        import traceback
+
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=ErrorResponse(
+                message="Failed to generate cold mail content.",
+                error_detail=str(e),
             ).model_dump(),
         )
 
@@ -3212,6 +3559,98 @@ async def cold_mail_generator_v2(
 
     except Exception as e:
         print(f"Error in /cold-mail-generator/: {e}")
+        import traceback
+
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=ErrorResponse(
+                message="Failed to generate cold mail content.",
+                error_detail=str(e),
+            ).model_dump(),
+        )
+
+
+@v2_router.post(
+    "/cold-mail/edit/",
+    response_model=ColdMailResponse,
+    description="Edit a cold email based on the provided resume text and user inputs.",
+)
+async def cold_mail_editor_v2(
+    resume_text: str = Form(...),
+    recipient_name: str = Form(...),
+    recipient_designation: str = Form(...),
+    company_name: str = Form(...),
+    sender_name: str = Form(...),
+    sender_role_or_goal: str = Form(...),
+    key_points_to_include: str = Form(...),
+    additional_info_for_llm: Optional[str] = Form(""),
+    company_url: Optional[str] = Form(None),
+    generated_email_subject: str = Form(...),
+    generated_email_body: str = Form(...),
+    edit_inscription: str = Form(""),
+):
+    if not llm:
+        raise HTTPException(
+            status_code=503,
+            detail=ErrorResponse(message="LLM service is not available.").model_dump(),
+        )
+
+    try:
+        # The resume_text is now a direct input, so we can validate it immediately.
+        if not is_valid_resume(resume_text):
+            raise HTTPException(
+                status_code=400,
+                detail=ErrorResponse(
+                    message="Invalid resume content. Text seems too short or malformed."
+                ).model_dump(),
+            )
+
+        company_research_info = ""
+        if company_url:
+            company_research_info = get_company_research(company_name, company_url)
+
+        email_content = generate_cold_mail_edit_content(
+            resume_text=resume_text,
+            recipient_name=recipient_name,
+            recipient_designation=recipient_designation,
+            company_name=company_name,
+            sender_name=sender_name,
+            sender_role_or_goal=sender_role_or_goal,
+            key_points_to_include=key_points_to_include,
+            additional_info_for_llm=additional_info_for_llm,
+            company_research=company_research_info,
+            previous_email_subject=generated_email_subject,
+            previous_email_body=generated_email_body,
+            edit_instructions=edit_inscription,
+        )
+
+        if "Error:" in email_content["subject"] or "Error:" in email_content["body"]:
+            raise HTTPException(
+                status_code=500,
+                detail=ErrorResponse(
+                    message="Failed to generate email content due to an LLM or parsing error.",
+                    error_detail=f"Subject: {email_content['subject']}, Body: {email_content['body'][:200]}...",
+                ).model_dump(),
+            )
+
+        return ColdMailResponse(
+            subject=email_content["subject"], body=email_content["body"]
+        )
+
+    except HTTPException:
+        raise
+
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=422,
+            detail=ErrorResponse(
+                message="Input validation error.", error_detail=str(e.errors())
+            ).model_dump(),
+        )
+
+    except Exception as e:
+        print(f"Error in /cold-mail-editor/: {e}")
         import traceback
 
         traceback.print_exc()

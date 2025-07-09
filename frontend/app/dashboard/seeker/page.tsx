@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FileUpload } from "@/components/file-upload";
 import { Button } from "@/components/ui/button";
@@ -21,10 +21,10 @@ export default function SeekerDashboard() {
 	const [isPageLoading, setIsPageLoading] = useState(true);
 
 	// Simulate page load
-	useState(() => {
+	useEffect(() => {
 		const timer = setTimeout(() => setIsPageLoading(false), 100);
 		return () => clearTimeout(timer);
-	});
+	}, []);
 
 	return (
 		<>

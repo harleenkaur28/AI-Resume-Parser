@@ -23,9 +23,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Find the role by name (since we're passing 'user' or 'admin')
+    // Map incoming roleId to actual Role.name in database
+    const roleName = roleId === 'user' ? 'User' : 'Recruiter';
     const role = await prisma.role.findUnique({
-      where: { name: roleId === 'user' ? 'User' : 'Admin' }
+      where: { name: roleName }
     });
 
     if (!role) {

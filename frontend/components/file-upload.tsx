@@ -57,13 +57,15 @@ interface AnalysisResult {
 	};
 }
 
-export function FileUpload() {
+interface FileUploadProps {
+	onUploadSuccess?: () => void;
+}
+
+export function FileUpload({ onUploadSuccess }: FileUploadProps) {
 	const [file, setFile] = useState<File | null>(null);
 	const [customName, setCustomName] = useState<string>("");
 	const [showInCentral, setShowInCentral] = useState<boolean>(false);
 	const [isUploading, setIsUploading] = useState(false);
-	const [isGettingDetailedAnalysis, setIsGettingDetailedAnalysis] =
-		useState(false);
 	const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(
 		null
 	);
@@ -117,6 +119,11 @@ export function FileUpload() {
 
 			const result: AnalysisResult = await response.json();
 			setAnalysisResult(result);
+
+			// Call the success callback if provided
+			if (onUploadSuccess) {
+				onUploadSuccess();
+			}
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Failed to analyze resume");
 		} finally {
@@ -125,39 +132,10 @@ export function FileUpload() {
 	};
 
 	const handleDetailedAnalysis = async () => {
-		if (!file || !customName.trim()) return;
+		if (!analysisResult?.data?.resumeId) return;
 
-		setIsGettingDetailedAnalysis(true);
-
-		try {
-			const formData = new FormData();
-			formData.append("file", file);
-			formData.append("customName", customName.trim());
-			formData.append("showInCentral", showInCentral.toString());
-
-			const response = await fetch(`/api/backend-interface/analysis`, {
-				method: "POST",
-				body: formData,
-			});
-
-			if (!response.ok) {
-				throw new Error(`HTTP error! status: ${response.status}`);
-			}
-
-			const result = await response.json();
-
-			// Store the analysis data in localStorage to pass to the analysis page
-			localStorage.setItem(
-				"analysisData",
-				JSON.stringify(result.data.analysis)
-			);
-			router.push("/dashboard/analysis/detailed");
-		} catch (err) {
-			setError(
-				err instanceof Error ? err.message : "Failed to get detailed analysis"
-			);
-			setIsGettingDetailedAnalysis(false);
-		}
+		// Navigate directly to the analysis page using the resume ID
+		router.push(`/dashboard/analysis/${analysisResult.data.resumeId}`);
 	};
 
 	const handleGetTips = () => {
@@ -215,16 +193,6 @@ export function FileUpload() {
 
 	return (
 		<>
-			<AnimatePresence>
-				{isGettingDetailedAnalysis && (
-					<LoaderOverlay
-						text="Performing detailed analysis..."
-						variant="default"
-						size="xl"
-					/>
-				)}
-			</AnimatePresence>
-
 			{/* Full-screen loading overlay for resume analysis */}
 			<AnimatePresence>
 				{isUploading && (
@@ -448,20 +416,11 @@ export function FileUpload() {
 									<div className="flex flex-col sm:flex-row gap-3">
 										<Button
 											onClick={handleDetailedAnalysis}
-											disabled={isGettingDetailedAnalysis}
+											disabled={!analysisResult?.data?.resumeId}
 											className="flex-1 bg-[#76ABAE] hover:bg-[#76ABAE]/90"
 										>
-											{isGettingDetailedAnalysis ? (
-												<div className="flex items-center space-x-2">
-													<Loader variant="spinner" size="sm" />
-													<span>Loading...</span>
-												</div>
-											) : (
-												<>
-													<Eye className="mr-2 h-4 w-4" />
-													View Detailed Analysis
-												</>
-											)}
+											<Eye className="mr-2 h-4 w-4" />
+											View Detailed Analysis
 										</Button>
 										<Button
 											onClick={handleGetTips}
