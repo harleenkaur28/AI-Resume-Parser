@@ -83,6 +83,10 @@ model Analysis {
     education        Json?
     workExperience   Json?
     projects         Json?
+    publications     Json?
+    positionsOfResponsibility Json?
+    certifications   Json?
+    achievements     Json?
     uploadedAt       DateTime @default(now())
 
     resume Resume @relation(fields: [resumeId], references: [id])
