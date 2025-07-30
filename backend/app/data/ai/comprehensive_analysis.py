@@ -25,6 +25,34 @@ class UIProjectEntry(BaseModel):
     technologies_used: List[str] = Field(default_factory=list)
     description: str
 
+class UIPublicationEntry(BaseModel):
+    title: str
+    authors: Optional[str] = None
+    journal_conference: Optional[str] = None
+    year: Optional[str] = None
+    doi: Optional[str] = None
+    url: Optional[str] = None
+
+class UIPositionOfResponsibilityEntry(BaseModel):
+    title: str
+    organization: str
+    duration: Optional[str] = None
+    description: Optional[str] = None
+
+class UICertificationEntry(BaseModel):
+    name: str
+    issuing_organization: str
+    issue_date: Optional[str] = None
+    expiry_date: Optional[str] = None
+    credential_id: Optional[str] = None
+    url: Optional[str] = None
+
+class UIAchievementEntry(BaseModel):
+    title: str
+    description: Optional[str] = None
+    year: Optional[str] = None
+    category: Optional[str] = None # e.g., "Academic", "Professional", "Competition", "Award"
+
 class LanguageEntry(BaseModel):
     language: str # e.g., "English (Native)", "Spanish (Professional)"
 
@@ -38,6 +66,10 @@ class ComprehensiveAnalysisData(BaseModel):
     education: List[EducationEntry] = Field(default_factory=list) # List all distinct education entries.
     work_experience: List[UIDetailedWorkExperienceEntry] = Field(default_factory=list) # List all significant work experiences.
     projects: List[UIProjectEntry] = Field(default_factory=list) # List all significant projects.
+    publications: List[UIPublicationEntry] = Field(default_factory=list) # List all research papers and publications.
+    positions_of_responsibility: List[UIPositionOfResponsibilityEntry] = Field(default_factory=list) # List all co-curricular activities and leadership roles.
+    certifications: List[UICertificationEntry] = Field(default_factory=list) # List all professional certifications.
+    achievements: List[UIAchievementEntry] = Field(default_factory=list) # List all awards, honors, and achievements.
     name: Optional[str] = None
     email: Optional[str] = None
     contact: Optional[str] = None
@@ -83,8 +115,38 @@ Instructions:
         *   Identify `technologies_used` as a list of technologies, frameworks, or tools used.
         *   Extract project `description` with key details about what was built/accomplished.
     *   If no projects are explicitly mentioned, infer 1-2 typical projects for the `predicted_category` and append `'(inferred)'` to the `title`.
+8.  **Publications**:
+    *   For each research paper, publication, or academic work mentioned:
+        *   Extract publication `title`.
+        *   Include `authors` if mentioned.
+        *   Include `journal_conference` name if available.
+        *   Include `year` of publication.
+        *   Include `doi` or `url` if available.
+    *   Look for research papers, journal articles, conference papers, book chapters, etc.
+9.  **Positions of Responsibility**:
+    *   For each leadership role, co-curricular activity, or position of responsibility:
+        *   Extract `title` of the position.
+        *   Include `organization` where the role was held.
+        *   Include `duration` if mentioned.
+        *   Include `description` of responsibilities if available.
+    *   Look for student council positions, club leadership, event organization, etc.
+10. **Certifications**:
+    *   For each professional certification mentioned:
+        *   Extract certification `name`.
+        *   Include `issuing_organization`.
+        *   Include `issue_date` and `expiry_date` if available.
+        *   Include `credential_id` if available.
+        *   Include `url` if available.
+    *   Look for professional certifications, online courses, training programs, etc.
+11. **Achievements**:
+    *   For each award, honor, or achievement mentioned:
+        *   Extract achievement `title`.
+        *   Include `description` if available.
+        *   Include `year` if mentioned.
+        *   Categorize as `category` (Academic, Professional, Competition, Award, etc.).
+    *   Look for academic awards, competition wins, honors, scholarships, etc.
 
-8.  **General Inference Rule**: Prioritize direct extraction. When inferring missing fields, use statistical averages for the `predicted_category` and clearly mark all inferred values by appending `"(inferred)"`.
+12. **General Inference Rule**: Prioritize direct extraction. When inferring missing fields, use statistical averages for the `predicted_category` and clearly mark all inferred values by appending `"(inferred)"`.
 
 Output:
 Return ONLY a single JSON object that would successfully instantiate `ComprehensiveAnalysisData(...)`. Ensure all fields are populated as accurately as possible. If a section is not present, use an empty list for list-based fields or null for optional fields.

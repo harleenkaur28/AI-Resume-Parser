@@ -17,6 +17,38 @@ class ProjectEntry(BaseModel):
     description: Optional[str] = None
 
 
+class PublicationEntry(BaseModel):
+    title: str
+    authors: Optional[str] = None
+    journal_conference: Optional[str] = None
+    year: Optional[str] = None
+    doi: Optional[str] = None
+    url: Optional[str] = None
+
+
+class PositionOfResponsibilityEntry(BaseModel):
+    title: str
+    organization: str
+    duration: Optional[str] = None
+    description: Optional[str] = None
+
+
+class CertificationEntry(BaseModel):
+    name: str
+    issuing_organization: str
+    issue_date: Optional[str] = None
+    expiry_date: Optional[str] = None
+    credential_id: Optional[str] = None
+    url: Optional[str] = None
+
+
+class AchievementEntry(BaseModel):
+    title: str
+    description: Optional[str] = None
+    year: Optional[str] = None
+    category: Optional[str] = None  # e.g., "Academic", "Professional", "Competition", "Award"
+
+
 class SkillProficiency(BaseModel):
     skill_name: str
     percentage: int
@@ -34,6 +66,38 @@ class UIProjectEntry(BaseModel):
     description: str
 
 
+class UIPublicationEntry(BaseModel):
+    title: str
+    authors: Optional[str] = None
+    journal_conference: Optional[str] = None
+    year: Optional[str] = None
+    doi: Optional[str] = None
+    url: Optional[str] = None
+
+
+class UIPositionOfResponsibilityEntry(BaseModel):
+    title: str
+    organization: str
+    duration: Optional[str] = None
+    description: Optional[str] = None
+
+
+class UICertificationEntry(BaseModel):
+    name: str
+    issuing_organization: str
+    issue_date: Optional[str] = None
+    expiry_date: Optional[str] = None
+    credential_id: Optional[str] = None
+    url: Optional[str] = None
+
+
+class UIAchievementEntry(BaseModel):
+    title: str
+    description: Optional[str] = None
+    year: Optional[str] = None
+    category: Optional[str] = None
+
+
 class LanguageEntry(BaseModel):
     language: str
 
@@ -49,6 +113,10 @@ class ComprehensiveAnalysisData(BaseModel):
     education: List[EducationEntry] = Field(default_factory=list)
     work_experience: List[UIDetailedWorkExperienceEntry] = Field(default_factory=list)
     projects: List[UIProjectEntry] = Field(default_factory=list)
+    publications: List[UIPublicationEntry] = Field(default_factory=list)
+    positions_of_responsibility: List[UIPositionOfResponsibilityEntry] = Field(default_factory=list)
+    certifications: List[UICertificationEntry] = Field(default_factory=list)
+    achievements: List[UIAchievementEntry] = Field(default_factory=list)
     name: Optional[str] = None
     email: Optional[str] = None
     contact: Optional[str] = None
