@@ -202,6 +202,8 @@ def comprehensive_analysis_llm(
         except Exception:
             formatted_json = {}
 
+    return formatted_json
+
 
 def format_and_analyse_resumes(
     raw_text: str,
