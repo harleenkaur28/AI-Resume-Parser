@@ -93,6 +93,10 @@ export async function POST(request: NextRequest) {
             education: data.education || [],
             workExperience: data.work_experience || [],
             projects: data.projects || [],
+            publications: data.publications || [],
+            positionsOfResponsibility: data.positions_of_responsibility || [],
+            certifications: data.certifications || [],
+            achievements: data.achievements || [],
           }
         }
       },
