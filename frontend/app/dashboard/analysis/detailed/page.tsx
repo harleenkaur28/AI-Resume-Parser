@@ -476,7 +476,7 @@ export default function DetailedAnalysisPage() {
 												</CardHeader>
 												<CardContent className="space-y-6">
 													{analysisData.publications
-														.filter(
+														?.filter(
 															(publication) =>
 																publication.title &&
 																publication.title.trim() !== ""
@@ -538,7 +538,7 @@ export default function DetailedAnalysisPage() {
 												</CardHeader>
 												<CardContent className="space-y-6">
 													{analysisData.positions_of_responsibility
-														.filter(
+														?.filter(
 															(position) =>
 																position.title && position.title.trim() !== ""
 														)
@@ -582,7 +582,7 @@ export default function DetailedAnalysisPage() {
 												</CardHeader>
 												<CardContent className="space-y-6">
 													{analysisData.certifications
-														.filter(
+														?.filter(
 															(certification) =>
 																certification.name &&
 																certification.name.trim() !== ""
@@ -642,7 +642,7 @@ export default function DetailedAnalysisPage() {
 												</CardHeader>
 												<CardContent className="space-y-6">
 													{analysisData.achievements
-														.filter(
+														?.filter(
 															(achievement) =>
 																achievement.title &&
 																achievement.title.trim() !== ""

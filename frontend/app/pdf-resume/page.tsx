@@ -73,6 +73,44 @@ const sampleJsonData = {
 				"Built a full-stack e-commerce platform with user authentication, payment processing, and inventory management.",
 		},
 	],
+	publications: [
+		{
+			title: "Modern Web Development Practices",
+			authors: "John Doe, Jane Smith",
+			journal_conference: "International Conference on Software Engineering",
+			year: "2023",
+			doi: "10.1000/example.2023.001",
+			url: "https://example.com/paper",
+		},
+	],
+	positions_of_responsibility: [
+		{
+			title: "Technical Lead",
+			organization: "University Coding Club",
+			duration: "2022-2023",
+			description:
+				"Led a team of 15 developers in building innovative software solutions.",
+		},
+	],
+	certifications: [
+		{
+			name: "AWS Certified Solutions Architect",
+			issuing_organization: "Amazon Web Services",
+			issue_date: "2023-06-15",
+			expiry_date: "2026-06-15",
+			credential_id: "AWS-123456",
+			url: "https://aws.amazon.com/certification",
+		},
+	],
+	achievements: [
+		{
+			title: "Best Developer Award",
+			description:
+				"Recognized for outstanding contributions to open-source projects",
+			year: "2023",
+			category: "Professional",
+		},
+	],
 	recommended_roles: [
 		"Full Stack Developer",
 		"Frontend Developer",
