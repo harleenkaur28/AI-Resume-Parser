@@ -18,6 +18,10 @@ import {
 	Mail,
 	Phone,
 	FolderOpen,
+	BookOpen,
+	Users,
+	Award,
+	Trophy,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -39,6 +43,38 @@ interface ProjectEntry {
 	description: string;
 }
 
+interface PublicationEntry {
+	title: string;
+	authors?: string;
+	journal_conference?: string;
+	year?: string;
+	doi?: string;
+	url?: string;
+}
+
+interface PositionOfResponsibilityEntry {
+	title: string;
+	organization: string;
+	duration?: string;
+	description?: string;
+}
+
+interface CertificationEntry {
+	name: string;
+	issuing_organization: string;
+	issue_date?: string;
+	expiry_date?: string;
+	credential_id?: string;
+	url?: string;
+}
+
+interface AchievementEntry {
+	title: string;
+	description?: string;
+	year?: string;
+	category?: string;
+}
+
 interface LanguageEntry {
 	language: string;
 }
@@ -58,6 +94,10 @@ interface AnalysisData {
 	education: EducationEntry[];
 	work_experience: WorkExperience[];
 	projects: ProjectEntry[];
+	publications: PublicationEntry[] | null;
+	positions_of_responsibility: PositionOfResponsibilityEntry[] | null;
+	certifications: CertificationEntry[] | null;
+	achievements: AchievementEntry[] | null;
 }
 
 export default function DetailedAnalysisPage() {
@@ -147,6 +187,50 @@ export default function DetailedAnalysisPage() {
 			analysisData.education.length > 0 &&
 			analysisData.education.some(
 				(edu) => edu.education_detail && edu.education_detail.trim() !== ""
+			)
+		);
+	};
+
+	// Helper function to check if publications should be rendered
+	const shouldRenderPublications = () => {
+		return (
+			analysisData?.publications &&
+			analysisData.publications.length > 0 &&
+			analysisData.publications.some(
+				(pub) => pub.title && pub.title.trim() !== ""
+			)
+		);
+	};
+
+	// Helper function to check if positions of responsibility should be rendered
+	const shouldRenderPositionsOfResponsibility = () => {
+		return (
+			analysisData?.positions_of_responsibility &&
+			analysisData.positions_of_responsibility.length > 0 &&
+			analysisData.positions_of_responsibility.some(
+				(pos) => pos.title && pos.title.trim() !== ""
+			)
+		);
+	};
+
+	// Helper function to check if certifications should be rendered
+	const shouldRenderCertifications = () => {
+		return (
+			analysisData?.certifications &&
+			analysisData.certifications.length > 0 &&
+			analysisData.certifications.some(
+				(cert) => cert.name && cert.name.trim() !== ""
+			)
+		);
+	};
+
+	// Helper function to check if achievements should be rendered
+	const shouldRenderAchievements = () => {
+		return (
+			analysisData?.achievements &&
+			analysisData.achievements.length > 0 &&
+			analysisData.achievements.some(
+				(ach) => ach.title && ach.title.trim() !== ""
 			)
 		);
 	};
@@ -375,6 +459,219 @@ export default function DetailedAnalysisPage() {
 																<p className="text-[#EEEEEE]/60 text-sm leading-relaxed">
 																	{project.description}
 																</p>
+															</div>
+														))}
+												</CardContent>
+											</Card>
+										)}
+
+										{/* Publications Section */}
+										{shouldRenderPublications() && (
+											<Card className="backdrop-blur-lg bg-white/5 border-white/10">
+												<CardHeader>
+													<CardTitle className="text-[#EEEEEE] flex items-center">
+														<BookOpen className="mr-2 h-5 w-5 text-[#76ABAE]" />
+														Publications
+													</CardTitle>
+												</CardHeader>
+												<CardContent className="space-y-6">
+													{analysisData.publications
+														.filter(
+															(publication) =>
+																publication.title &&
+																publication.title.trim() !== ""
+														)
+														.map((publication, index) => (
+															<div
+																key={index}
+																className="border-l-2 border-[#76ABAE] pl-4"
+															>
+																<h3 className="text-[#EEEEEE] font-semibold mb-2">
+																	{publication.title}
+																</h3>
+																<div className="space-y-1 text-sm">
+																	{publication.authors && (
+																		<p className="text-[#76ABAE]">
+																			Authors: {publication.authors}
+																		</p>
+																	)}
+																	{publication.journal_conference && (
+																		<p className="text-[#EEEEEE]/80">
+																			{publication.journal_conference}
+																		</p>
+																	)}
+																	{publication.year && (
+																		<p className="text-[#EEEEEE]/60">
+																			Year: {publication.year}
+																		</p>
+																	)}
+																	{publication.doi && (
+																		<p className="text-[#EEEEEE]/60">
+																			DOI: {publication.doi}
+																		</p>
+																	)}
+																	{publication.url && (
+																		<a
+																			href={publication.url}
+																			target="_blank"
+																			rel="noopener noreferrer"
+																			className="text-[#76ABAE] hover:underline"
+																		>
+																			View Publication
+																		</a>
+																	)}
+																</div>
+															</div>
+														))}
+												</CardContent>
+											</Card>
+										)}
+
+										{/* Positions of Responsibility Section */}
+										{shouldRenderPositionsOfResponsibility() && (
+											<Card className="backdrop-blur-lg bg-white/5 border-white/10">
+												<CardHeader>
+													<CardTitle className="text-[#EEEEEE] flex items-center">
+														<Users className="mr-2 h-5 w-5 text-[#76ABAE]" />
+														Positions of Responsibility
+													</CardTitle>
+												</CardHeader>
+												<CardContent className="space-y-6">
+													{analysisData.positions_of_responsibility
+														.filter(
+															(position) =>
+																position.title && position.title.trim() !== ""
+														)
+														.map((position, index) => (
+															<div
+																key={index}
+																className="border-l-2 border-[#76ABAE] pl-4"
+															>
+																<h3 className="text-[#EEEEEE] font-semibold mb-2">
+																	{position.title}
+																</h3>
+																<div className="space-y-1 text-sm">
+																	<p className="text-[#76ABAE]">
+																		{position.organization}
+																	</p>
+																	{position.duration && (
+																		<p className="text-[#EEEEEE]/80">
+																			{position.duration}
+																		</p>
+																	)}
+																	{position.description && (
+																		<p className="text-[#EEEEEE]/60 leading-relaxed">
+																			{position.description}
+																		</p>
+																	)}
+																</div>
+															</div>
+														))}
+												</CardContent>
+											</Card>
+										)}
+
+										{/* Certifications Section */}
+										{shouldRenderCertifications() && (
+											<Card className="backdrop-blur-lg bg-white/5 border-white/10">
+												<CardHeader>
+													<CardTitle className="text-[#EEEEEE] flex items-center">
+														<Award className="mr-2 h-5 w-5 text-[#76ABAE]" />
+														Certifications
+													</CardTitle>
+												</CardHeader>
+												<CardContent className="space-y-6">
+													{analysisData.certifications
+														.filter(
+															(certification) =>
+																certification.name &&
+																certification.name.trim() !== ""
+														)
+														.map((certification, index) => (
+															<div
+																key={index}
+																className="border-l-2 border-[#76ABAE] pl-4"
+															>
+																<h3 className="text-[#EEEEEE] font-semibold mb-2">
+																	{certification.name}
+																</h3>
+																<div className="space-y-1 text-sm">
+																	<p className="text-[#76ABAE]">
+																		{certification.issuing_organization}
+																	</p>
+																	{certification.issue_date && (
+																		<p className="text-[#EEEEEE]/80">
+																			Issued: {certification.issue_date}
+																		</p>
+																	)}
+																	{certification.expiry_date && (
+																		<p className="text-[#EEEEEE]/80">
+																			Expires: {certification.expiry_date}
+																		</p>
+																	)}
+																	{certification.credential_id && (
+																		<p className="text-[#EEEEEE]/60">
+																			ID: {certification.credential_id}
+																		</p>
+																	)}
+																	{certification.url && (
+																		<a
+																			href={certification.url}
+																			target="_blank"
+																			rel="noopener noreferrer"
+																			className="text-[#76ABAE] hover:underline"
+																		>
+																			View Certificate
+																		</a>
+																	)}
+																</div>
+															</div>
+														))}
+												</CardContent>
+											</Card>
+										)}
+
+										{/* Achievements Section */}
+										{shouldRenderAchievements() && (
+											<Card className="backdrop-blur-lg bg-white/5 border-white/10">
+												<CardHeader>
+													<CardTitle className="text-[#EEEEEE] flex items-center">
+														<Trophy className="mr-2 h-5 w-5 text-[#76ABAE]" />
+														Achievements
+													</CardTitle>
+												</CardHeader>
+												<CardContent className="space-y-6">
+													{analysisData.achievements
+														.filter(
+															(achievement) =>
+																achievement.title &&
+																achievement.title.trim() !== ""
+														)
+														.map((achievement, index) => (
+															<div
+																key={index}
+																className="border-l-2 border-[#76ABAE] pl-4"
+															>
+																<h3 className="text-[#EEEEEE] font-semibold mb-2">
+																	{achievement.title}
+																</h3>
+																<div className="space-y-1 text-sm">
+																	{achievement.category && (
+																		<Badge className="bg-[#76ABAE]/10 text-[#76ABAE] border border-[#76ABAE]/30 text-xs mb-2">
+																			{achievement.category}
+																		</Badge>
+																	)}
+																	{achievement.year && (
+																		<p className="text-[#76ABAE]">
+																			{achievement.year}
+																		</p>
+																	)}
+																	{achievement.description && (
+																		<p className="text-[#EEEEEE]/60 leading-relaxed">
+																			{achievement.description}
+																		</p>
+																	)}
+																</div>
 															</div>
 														))}
 												</CardContent>

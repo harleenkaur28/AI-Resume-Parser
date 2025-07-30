@@ -14,9 +14,7 @@ import {
 	Menu,
 	X,
 	Info,
-	User,
 	LogOut,
-	Settings,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -103,7 +101,7 @@ export function Navbar() {
 			>
 				<div className="backdrop-blur-xl bg-black/20 border-b border-white/10">
 					<div className="container mx-auto px-4 sm:px-6">
-						<div className="flex items-center justify-between h-16 sm:h-20">
+						<div className="flex items-center justify-between h-16">
 							<Link href="/" className="flex items-center space-x-3">
 								<Image src={banner} alt="TalentSync AI" width={200} />
 							</Link>

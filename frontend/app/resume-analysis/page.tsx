@@ -209,6 +209,162 @@ export default function ResumeAnalysisPage() {
 												</div>
 											</div>
 										)}
+
+									{/* Publications */}
+									{analysisResult.data.analysis.publications &&
+										analysisResult.data.analysis.publications.length > 0 && (
+											<div>
+												<h3 className="text-lg font-semibold mb-3">Publications</h3>
+												<div className="space-y-4">
+													{analysisResult.data.analysis.publications.map(
+														(publication: any, index: number) => (
+															<div
+																key={index}
+																className="p-4 border border-gray-200 rounded-lg"
+															>
+																<h4 className="font-semibold">
+																	{publication.title}
+																</h4>
+																<div className="text-sm text-gray-600 space-y-1">
+																	{publication.authors && (
+																		<p><strong>Authors:</strong> {publication.authors}</p>
+																	)}
+																	{publication.journal_conference && (
+																		<p><strong>Journal/Conference:</strong> {publication.journal_conference}</p>
+																	)}
+																	{publication.year && (
+																		<p><strong>Year:</strong> {publication.year}</p>
+																	)}
+																	{publication.doi && (
+																		<p><strong>DOI:</strong> {publication.doi}</p>
+																	)}
+																	{publication.url && (
+																		<a
+																			href={publication.url}
+																			target="_blank"
+																			rel="noopener noreferrer"
+																			className="text-blue-600 hover:underline"
+																		>
+																			View Publication
+																		</a>
+																	)}
+																</div>
+															</div>
+														)
+													)}
+												</div>
+											</div>
+										)}
+
+									{/* Positions of Responsibility */}
+									{analysisResult.data.analysis.positionsOfResponsibility &&
+										analysisResult.data.analysis.positionsOfResponsibility.length > 0 && (
+											<div>
+												<h3 className="text-lg font-semibold mb-3">Positions of Responsibility</h3>
+												<div className="space-y-4">
+													{analysisResult.data.analysis.positionsOfResponsibility.map(
+														(position: any, index: number) => (
+															<div
+																key={index}
+																className="p-4 border border-gray-200 rounded-lg"
+															>
+																<h4 className="font-semibold">
+																	{position.title}
+																</h4>
+																<div className="text-sm text-gray-600 space-y-1">
+																	<p><strong>Organization:</strong> {position.organization}</p>
+																	{position.duration && (
+																		<p><strong>Duration:</strong> {position.duration}</p>
+																	)}
+																	{position.description && (
+																		<p><strong>Description:</strong> {position.description}</p>
+																	)}
+																</div>
+															</div>
+														)
+													)}
+												</div>
+											</div>
+										)}
+
+									{/* Certifications */}
+									{analysisResult.data.analysis.certifications &&
+										analysisResult.data.analysis.certifications.length > 0 && (
+											<div>
+												<h3 className="text-lg font-semibold mb-3">Certifications</h3>
+												<div className="space-y-4">
+													{analysisResult.data.analysis.certifications.map(
+														(certification: any, index: number) => (
+															<div
+																key={index}
+																className="p-4 border border-gray-200 rounded-lg"
+															>
+																<h4 className="font-semibold">
+																	{certification.name}
+																</h4>
+																<div className="text-sm text-gray-600 space-y-1">
+																	<p><strong>Issuing Organization:</strong> {certification.issuing_organization}</p>
+																	{certification.issue_date && (
+																		<p><strong>Issue Date:</strong> {certification.issue_date}</p>
+																	)}
+																	{certification.expiry_date && (
+																		<p><strong>Expiry Date:</strong> {certification.expiry_date}</p>
+																	)}
+																	{certification.credential_id && (
+																		<p><strong>Credential ID:</strong> {certification.credential_id}</p>
+																	)}
+																	{certification.url && (
+																		<a
+																			href={certification.url}
+																			target="_blank"
+																			rel="noopener noreferrer"
+																			className="text-blue-600 hover:underline"
+																		>
+																			View Certificate
+																		</a>
+																	)}
+																</div>
+															</div>
+														)
+													)}
+												</div>
+											</div>
+										)}
+
+									{/* Achievements */}
+									{analysisResult.data.analysis.achievements &&
+										analysisResult.data.analysis.achievements.length > 0 && (
+											<div>
+												<h3 className="text-lg font-semibold mb-3">Achievements</h3>
+												<div className="space-y-4">
+													{analysisResult.data.analysis.achievements.map(
+														(achievement: any, index: number) => (
+															<div
+																key={index}
+																className="p-4 border border-gray-200 rounded-lg"
+															>
+																<h4 className="font-semibold">
+																	{achievement.title}
+																</h4>
+																<div className="text-sm text-gray-600 space-y-1">
+																	{achievement.category && (
+																		<span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs mb-2">
+																			{achievement.category}
+																		</span>
+																	)}
+																	{achievement.year && (
+																		<p><strong>Year:</strong> {achievement.year}</p>
+																	)}
+																	{achievement.description && (
+																		<p><strong>Description:</strong> {achievement.description}</p>
+																	)}
+																</div>
+															</div>
+														)
+													)}
+												</div>
+											</div>
+										)}
 								</div>
 							)}
 
