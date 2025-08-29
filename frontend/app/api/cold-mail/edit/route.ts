@@ -51,7 +51,8 @@ export async function POST(req: Request) {
 			}
 		});
 
-		const pythonApiUrl = "http://localhost:8000/api/v1/cold-mail/editor/";
+		const backendUrl = process.env.BACKEND_URL || "http://localhost:8000";
+		const pythonApiUrl = `${backendUrl}/api/v1/cold-mail/editor/`;
 		const response = await fetch(pythonApiUrl, {
 			method: "POST",
 			body: backendFormData,
@@ -71,21 +72,28 @@ export async function POST(req: Request) {
 
 		const result = await response.json();
 
-		if (!result.success) {
-			return NextResponse.json(
-				{
-					success: false,
-					message:
-						result.message || "Failed to edit email from external service",
-				},
-				{ status: 400 }
-			);
-		}
+		// Support both shapes: {subject, body} and {success, data: {subject, body}}
+		const mailDataCandidate =
+			result && typeof result === "object" && "data" in result && (result as any).data
+				? (result as any).data
+				: result;
 
-		const mailData = result.data || result;
-		const { subject, body } = mailData;
+		const subject = (mailDataCandidate as any)?.subject;
+		const body = (mailDataCandidate as any)?.body;
 
 		if (!subject || !body) {
+			// If backend explicitly returned a failure shape, respect it
+			if (result && typeof result === "object" && (result as any).success === false) {
+				return NextResponse.json(
+					{
+						success: false,
+						message:
+							(result as any).message || "Failed to edit email from external service",
+					},
+					{ status: 400 }
+				);
+			}
+
 			console.error(
 				"Python backend response missing 'subject' or 'body':",
 				result
