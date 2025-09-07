@@ -12,8 +12,10 @@ from app.models.schemas import (
     ScoreResponse,
     ResumeAnalyzerResponse,
     CompareToJDResponse,
+    PostGenerationRequest,
+    PostGenerationResponse,
 )
-from app.services import resume, cold_mail, hiring, tips
+from app.services import resume, cold_mail, hiring, tips, linkedin
 from app.services.ats.calculator import ATSCalculator
 from app.services.resume_analyzer import (
     analyze_resume_with_langgraph,
@@ -246,3 +248,36 @@ async def score_ats(req: ScoreRequest):
     jd_text = req.jd_text or ""
     career_level = req.career_level or "mid"
     return await ats.batch_score(jd_text, req.resume_texts, career_level)
+
+
+# LinkedIn Post Generation Endpoints
+@router.post(
+    "/linkedin/generate-posts",
+    response_model=PostGenerationResponse,
+    summary="Generate LinkedIn Posts",
+    description="Generate multiple LinkedIn posts based on topic, tone, and other parameters",
+    tags=["V1", "LinkedIn"],
+)
+async def generate_linkedin_posts(request: PostGenerationRequest):
+    """
+    Generate LinkedIn posts using AI based on the provided parameters.
+
+    Returns a structured response with generated posts, hashtags, and CTA suggestions.
+    """
+    return await linkedin.generate_linkedin_posts_service(request)
+
+
+@router.post(
+    "/linkedin/edit-post",
+    summary="Edit LinkedIn Post with AI",
+    description="Edit an existing LinkedIn post using AI based on user instructions",
+    tags=["V1", "LinkedIn"],
+)
+async def edit_linkedin_post(payload: dict):
+    """
+    Edit a LinkedIn post using AI based on user instructions.
+
+    Expected payload: {"post": {...}, "instruction": "Make it shorter"}
+    Returns the updated post.
+    """
+    return await linkedin.edit_post_llm_service(payload)
