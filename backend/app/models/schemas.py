@@ -46,7 +46,9 @@ class AchievementEntry(BaseModel):
     title: str
     description: Optional[str] = None
     year: Optional[str] = None
-    category: Optional[str] = None  # e.g., "Academic", "Professional", "Competition", "Award"
+    category: Optional[str] = (
+        None  # e.g., "Academic", "Professional", "Competition", "Award"
+    )
 
 
 class SkillProficiency(BaseModel):
@@ -114,7 +116,9 @@ class ComprehensiveAnalysisData(BaseModel):
     work_experience: List[UIDetailedWorkExperienceEntry] = Field(default_factory=list)
     projects: List[UIProjectEntry] = Field(default_factory=list)
     publications: List[UIPublicationEntry] = Field(default_factory=list)
-    positions_of_responsibility: List[UIPositionOfResponsibilityEntry] = Field(default_factory=list)
+    positions_of_responsibility: List[UIPositionOfResponsibilityEntry] = Field(
+        default_factory=list
+    )
     certifications: List[UICertificationEntry] = Field(default_factory=list)
     achievements: List[UIAchievementEntry] = Field(default_factory=list)
     name: Optional[str] = None
@@ -319,3 +323,23 @@ class ScoreResponse(BaseModel):
     career_level: str
     overall_score: float
     results: List[ResumeResult]
+
+
+class ResumeAnalyzerResponse(BaseModel):
+    success: bool = True
+    message: str
+    analysis: Dict[str, Any]
+    suggestions: Dict[str, Any]
+
+
+class CompareToJDResponse(BaseModel):
+    success: bool = True
+    message: str = "Comparison complete"
+    match_score: float
+    summary: str
+    strengths: List[str]
+    gaps: List[str]
+    missing_keywords: List[str]
+    top_fixes: List[str]
+    keyword_additions: List[str]
+    improved_summary: str

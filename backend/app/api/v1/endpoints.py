@@ -10,9 +10,15 @@ from app.models.schemas import (
     TipsResponse,
     ScoreRequest,
     ScoreResponse,
+    ResumeAnalyzerResponse,
+    CompareToJDResponse,
 )
 from app.services import resume, cold_mail, hiring, tips
 from app.services.ats.calculator import ATSCalculator
+from app.services.resume_analyzer import (
+    analyze_resume_with_langgraph,
+    compare_resume_to_jd,
+)
 
 router = APIRouter()
 
@@ -26,6 +32,53 @@ router = APIRouter()
 )
 async def analyze_resume(file: UploadFile = File(...)):
     return await resume.analyze_resume_service(file)
+
+
+@router.post(
+    "/resume/analyzer",
+    summary="LangGraph/Gemini Resume Analyzer",
+    response_model=ResumeAnalyzerResponse,
+    tags=["V1"],
+)
+async def resume_analyzer(
+    resume_file: UploadFile = File(...),
+    job_file: UploadFile | None = File(None),
+):
+    """
+    Analyze a resume (and optional job description) using LangChain + LangGraph with Gemini.
+    Returns JSON with analysis and improvement suggestions.
+    """
+    resume_bytes = await resume_file.read()
+    resume_text = resume_bytes.decode(errors="ignore")
+    job_text = ""
+    if job_file is not None:
+        job_bytes = await job_file.read()
+        job_text = job_bytes.decode(errors="ignore")
+
+    result = analyze_resume_with_langgraph(resume_text, job_text)
+    return {"success": True, "message": "Analysis complete", **result}
+
+
+@router.post(
+    "/resume/compare-to-jd",
+    summary="Compare Resume to Job Description (Gemini)",
+    response_model=CompareToJDResponse,
+    tags=["V1"],
+)
+async def resume_compare_to_jd(
+    resume_file: UploadFile = File(...),
+    job_file: UploadFile = File(...),
+):
+    """
+    Compare a resume to a job description using Gemini via LangGraph.
+    Returns a compact JSON with score, strengths, gaps, and suggested fixes.
+    """
+    resume_bytes = await resume_file.read()
+    job_bytes = await job_file.read()
+    resume_text = resume_bytes.decode(errors="ignore")
+    job_text = job_bytes.decode(errors="ignore")
+    compact = compare_resume_to_jd(resume_text, job_text)
+    return {"success": True, "message": "Comparison complete", **compact}
 
 
 @router.post(
