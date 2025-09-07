@@ -24,6 +24,7 @@ dependencies = [
     "numpy>=2.3.0",
     "sentence-transformers>=5.0.0",
     "faiss-cpu>=1.11.0",
+    "langgraph>=0.2.38",
 ]
 
 [dependency-groups]
