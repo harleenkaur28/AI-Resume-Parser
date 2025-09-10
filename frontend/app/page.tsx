@@ -29,7 +29,6 @@ function ConditionalButtons() {
 			<KnowButton />
 			<ColdMailButton />
 			<HiringAssistantButton />
-			<PdfResumeButton />
 		</>
 	);
 }
@@ -39,7 +38,7 @@ export default function Home() {
 		<main className="min-h-screen bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831]">
 			<LandingHero />
 			<MobileFeatures />
-			{ConditionalButtons()}
+			{/* {ConditionalButtons()} */}
 		</main>
 	);
 }

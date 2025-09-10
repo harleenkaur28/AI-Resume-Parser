@@ -1,9 +1,8 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { Comfortaa } from "next/font/google";
-import { Navbar } from "@/components/navbar";
-import { Toaster } from "@/components/ui/toaster";
 import { Providers } from "./providers";
+import { LayoutContent } from "./layout-content";
 
 const comfortaa = Comfortaa({ subsets: ["latin"] });
 
@@ -32,9 +31,7 @@ export default function RootLayout({
 			</head>
 			<body className="bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831]">
 				<Providers>
-					<Navbar />
-					<main className="pt-16">{children}</main>
-					<Toaster />
+					<LayoutContent>{children}</LayoutContent>
 				</Providers>
 			</body>
 		</html>
