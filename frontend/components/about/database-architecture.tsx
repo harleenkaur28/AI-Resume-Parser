@@ -6,7 +6,7 @@ import { Database, Server } from "lucide-react";
 
 export default function DatabaseArchitecture() {
 	return (
-		<section className="py-20 px-6">
+		<section id="data" className="py-20 px-6 scroll-mt-28">
 			<div className="max-w-6xl mx-auto">
 				<motion.div
 					initial={{ opacity: 0, y: 24 }}

@@ -3,15 +3,20 @@ import {
 	Pillars,
 	WorkflowStrip,
 	TeamFooter,
-} from "../../components/about/sections";
-import ProblemStats from "../../components/about/problem-stats";
-import MarketGrowth from "../../components/about/market-growth";
-import WorkflowInteractive from "../../components/about/workflow-interactive";
-import TechStackGrid from "../../components/about/tech-stack-grid";
-import DualValue from "../../components/about/dual-value";
-import CompetitiveEdgeTable from "../../components/about/competitive-edge-table";
-import TargetIndustries from "../../components/about/target-industries";
-import DatabaseArchitecture from "../../components/about/database-architecture";
+} from "@/components/about/sections";
+import ProblemStats from "@/components/about/problem-stats";
+import MarketGrowth from "@/components/about/market-growth";
+import WorkflowInteractive from "@/components/about/workflow-interactive";
+import TechStackGrid from "@/components/about/tech-stack-grid";
+import DualValue from "@/components/about/dual-value";
+import CompetitiveEdgeTable from "@/components/about/competitive-edge-table";
+import TargetIndustries from "@/components/about/target-industries";
+import DatabaseArchitecture from "@/components/about/database-architecture";
+import SectionNav from "@/components/about/section-nav";
+import ScrollProgress from "@/components/about/scroll-progress";
+import AmbientBackground from "../../components/about/ambient-bg";
+import BackToTop from "../../components/about/back-to-top";
+import SectionDivider from "../../components/about/section-divider";
 
 export const metadata = {
 	title: "About TalentSync | AI-Powered Hiring Intelligence",
@@ -28,18 +33,31 @@ export default function AboutPage() {
 				<div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:70px_70px] mix-blend-overlay opacity-20" />
 			</div>
 			{/* Sections */}
+			<ScrollProgress />
+			<AmbientBackground />
 			<AboutHero />
+			<SectionNav />
 			<ProblemStats />
+			<SectionDivider />
 			<MarketGrowth />
+			<SectionDivider subtle />
 			<WorkflowInteractive />
+			<SectionDivider />
 			<Pillars />
+			<SectionDivider subtle />
 			<TechStackGrid />
+			<SectionDivider />
 			<DualValue />
+			<SectionDivider subtle />
 			<CompetitiveEdgeTable />
+			<SectionDivider />
 			<TargetIndustries />
+			<SectionDivider subtle />
 			<DatabaseArchitecture />
+			<SectionDivider />
 			<WorkflowStrip />
 			<TeamFooter />
+			<BackToTop />
 		</main>
 	);
 }

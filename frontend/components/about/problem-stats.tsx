@@ -23,7 +23,7 @@ const stats = [
 
 export default function ProblemStats() {
 	return (
-		<section className="relative py-20 px-6">
+		<section id="problem" className="relative scroll-mt-28 py-20 px-6">
 			<div className="mx-auto max-w-6xl">
 				<motion.div
 					initial={{ opacity: 0, y: 24 }}

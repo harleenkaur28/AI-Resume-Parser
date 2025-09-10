@@ -22,7 +22,7 @@ function cell(val: boolean | string) {
 
 export default function CompetitiveEdgeTable() {
 	return (
-		<section className="py-20 px-6">
+		<section id="edge" className="py-20 px-6 scroll-mt-28">
 			<div className="max-w-6xl mx-auto">
 				<motion.div
 					initial={{ opacity: 0, y: 24 }}
