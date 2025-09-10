@@ -12,7 +12,10 @@ import Image from "next/image";
 
 export function AboutHero() {
 	return (
-		<section className="relative pt-36 pb-24 overflow-hidden">
+		<section
+			id="top"
+			className="relative pt-36 pb-24 overflow-hidden scroll-mt-28"
+		>
 			<div className="pointer-events-none absolute inset-0">
 				<div className="absolute -top-40 -right-20 w-[40rem] h-[40rem] bg-[#76ABAE]/15 blur-[140px] rounded-full" />
 				<div className="absolute -bottom-40 -left-20 w-[30rem] h-[30rem] bg-[#76ABAE]/10 blur-[120px] rounded-full" />
@@ -68,7 +71,7 @@ const pillars = [
 
 export function Pillars() {
 	return (
-		<section className="relative py-24">
+		<section id="pillars" className="relative py-24 scroll-mt-28">
 			<div className="container mx-auto px-6 max-w-6xl">
 				<motion.h2
 					initial={{ opacity: 0, y: 24 }}
@@ -138,45 +141,54 @@ const timeline = [
 
 export function WorkflowStrip() {
 	return (
-		<section className="relative py-20">
+		<section id="flow" className="relative py-20 scroll-mt-28">
 			<div className="container mx-auto px-6 max-w-7xl">
 				<motion.h2
 					initial={{ opacity: 0, y: 24 }}
 					whileInView={{ opacity: 1, y: 0 }}
 					viewport={{ once: true, amount: 0.4 }}
 					transition={{ duration: 0.6 }}
-					className="text-3xl md:text-5xl font-bold tracking-tight text-[#EEEEEE] text-center mb-16"
+					className="text-3xl md:text-5xl font-bold tracking-tight text-[#F4F8F8] text-center mb-16"
 				>
 					From Raw Text To Decisions
 				</motion.h2>
-				<div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0f1417]/80 backdrop-blur-xl">
-					<div className="relative">
-						<div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:60px_60px] opacity-20" />
-						<div className="grid md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-white/10">
-							{timeline.map((t, i) => (
-								<div key={t.phase} className="p-6 md:p-8 relative">
-									<div className="flex items-center gap-3 mb-4">
-										<div className="h-8 w-8 rounded-lg bg-[#76ABAE]/15 ring-1 ring-inset ring-[#76ABAE]/40 flex items-center justify-center text-[#76ABAE] font-medium text-xs">
+				<div className="overflow-hidden rounded-2xl border border-white/10 backdrop-blur-xl relative">
+					<div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,#76ABAE14,transparent_65%),radial-gradient(circle_at_80%_75%,#76ABAE10,transparent_60%)] opacity-70" />
+					<div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:60px_60px] opacity-20" />
+					<div className="relative grid md:grid-cols-5">
+						{timeline.map((t, i) => (
+							<div
+								key={t.phase}
+								className="group/phase relative p-6 md:p-8 border-t md:border-t-0 border-white/5 md:border-l first:md:border-l-0 border-dashed md:border-white/10 flex flex-col"
+							>
+								{/* Hover glow */}
+								<div className="pointer-events-none absolute inset-0 opacity-0 group-hover/phase:opacity-100 transition duration-500 bg-[radial-gradient(circle_at_50%_35%,#76ABAE22,transparent_65%)]" />
+								<div className="flex items-center gap-3 mb-5 relative">
+									<div className="relative">
+										<div className="h-8 w-8 rounded-lg bg-[#0d1619]/80 ring-1 ring-inset ring-[#76ABAE]/40 flex items-center justify-center text-[#76ABAE] font-medium text-xs shadow-[0_0_0_1px_#76ABAE22,0_4px_18px_-4px_#76ABAE40]">
 											{i + 1}
 										</div>
-										<h3 className="text-base md:text-lg font-semibold text-[#EEEEEE]">
-											{t.phase}
-										</h3>
+										<div className="absolute -inset-px rounded-lg bg-gradient-to-br from-[#76ABAE]/30 to-transparent opacity-0 group-hover/phase:opacity-100 blur-sm transition" />
 									</div>
-									<ul className="space-y-2">
-										{t.points.map((p) => (
-											<li
-												key={p}
-												className="flex gap-2 text-sm text-[#EEEEEE]/65"
-											>
-												<CheckCircle2 className="h-4 w-4 text-[#76ABAE] mt-0.5" />{" "}
-												{p}
-											</li>
-										))}
-									</ul>
+									<h3 className="text-base md:text-lg font-semibold text-[#F1F7F7] tracking-tight">
+										{t.phase}
+									</h3>
 								</div>
-							))}
-						</div>
+								<ul className="space-y-2 relative">
+									{t.points.map((p) => (
+										<li
+											key={p}
+											className="flex items-start gap-2 text-[13px] md:text-sm text-[#E6F3F3]/75 leading-relaxed"
+										>
+											<CheckCircle2 className="h-4 w-4 text-[#76ABAE] mt-0.5 flex-shrink-0" />
+											<span className="group-hover/phase:text-[#F5FCFC] transition-colors">
+												{p}
+											</span>
+										</li>
+									))}
+								</ul>
+							</div>
+						))}
 					</div>
 				</div>
 			</div>
