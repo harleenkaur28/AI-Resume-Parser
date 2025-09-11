@@ -110,7 +110,12 @@ export function Navbar() {
 			>
 				<div className="flex flex-col h-full backdrop-blur-xl bg-black/20 border-r border-white/10">
 					{/* Header */}
-					<div className="flex items-center justify-between p-4 border-b border-white/10">
+					<div
+						className={cn(
+							"flex items-center p-4 border-b border-white/10",
+							isCollapsed ? "justify-center" : "justify-between"
+						)}
+					>
 						{!isCollapsed && (
 							<Link href="/" className="flex items-center space-x-3">
 								<Image src={banner} alt="TalentSync AI" width={160} />
@@ -141,7 +146,8 @@ export function Navbar() {
 										key={item.href}
 										href={item.href}
 										className={cn(
-											"flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 group",
+											"flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 group",
+											isCollapsed ? "justify-center" : "space-x-3",
 											isActive
 												? "text-[#76ABAE] bg-[#76ABAE]/10 shadow-inner shadow-[#76ABAE]/5"
 												: "text-[#EEEEEE]/80 hover:text-[#EEEEEE] hover:bg-white/[0.08]"
@@ -173,7 +179,8 @@ export function Navbar() {
 												key={item.href}
 												href={item.href}
 												className={cn(
-													"flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 group",
+													"flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 group",
+													isCollapsed ? "justify-center" : "space-x-3",
 													isActive
 														? "text-[#76ABAE] bg-[#76ABAE]/10 shadow-inner shadow-[#76ABAE]/5"
 														: "text-[#EEEEEE]/70 hover:text-[#EEEEEE] hover:bg-white/[0.08]"
@@ -207,8 +214,8 @@ export function Navbar() {
 								<Link href="/account">
 									<div
 										className={cn(
-											"flex items-center space-x-3 p-3 rounded-lg text-[#EEEEEE]/90 hover:text-[#76ABAE] hover:bg-[#76ABAE]/10 cursor-pointer transition-colors",
-											isCollapsed && "justify-center"
+											"flex items-center p-3 rounded-lg text-[#EEEEEE]/90 hover:text-[#76ABAE] hover:bg-[#76ABAE]/10 cursor-pointer transition-colors",
+											isCollapsed ? "justify-center" : "space-x-3"
 										)}
 									>
 										<Avatar
@@ -239,7 +246,7 @@ export function Navbar() {
 										variant="ghost"
 										className={cn(
 											"w-full text-[#EEEEEE]/90 hover:text-[#76ABAE] hover:bg-[#76ABAE]/10",
-											isCollapsed ? "px-2" : "justify-start"
+											isCollapsed ? "justify-center px-2" : "justify-start"
 										)}
 									>
 										<LayoutDashboard className="h-4 w-4" />
@@ -253,7 +260,7 @@ export function Navbar() {
 									variant="ghost"
 									className={cn(
 										"w-full text-[#EEEEEE]/90 hover:text-red-400 hover:bg-red-500/10",
-										isCollapsed ? "px-2" : "justify-start"
+										isCollapsed ? "justify-center px-2" : "justify-start"
 									)}
 								>
 									<LogOut className="h-4 w-4" />
@@ -267,7 +274,7 @@ export function Navbar() {
 										variant="ghost"
 										className={cn(
 											"w-full text-[#EEEEEE]/90 hover:text-[#76ABAE] hover:bg-[#76ABAE]/10",
-											isCollapsed ? "px-2" : "justify-start"
+											isCollapsed ? "justify-center px-2" : "justify-start"
 										)}
 									>
 										<LogIn className="h-4 w-4" />
@@ -278,10 +285,10 @@ export function Navbar() {
 									<Button
 										className={cn(
 											"w-full bg-[#76ABAE] hover:bg-[#76ABAE]/90 font-medium shadow-lg shadow-[#76ABAE]/20",
-											isCollapsed && "px-2"
+											isCollapsed ? "justify-center px-2" : ""
 										)}
 									>
-										{isCollapsed ? "+" : "Get Started"}
+										{isCollapsed ? <Plus className="h-4 w-4" /> : "Get Started"}
 									</Button>
 								</Link>
 							</div>
