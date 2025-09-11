@@ -570,14 +570,6 @@ export default function LinkedInPostsGenerator() {
 													)}
 												</Button>
 											</motion.div>
-											<p className="text-[11px] text-[#888] leading-relaxed">
-												This tool bridges to the backend endpoint{" "}
-												<code className="text-[#76ABAE]">
-													/api/v1/linkedin/generate-posts
-												</code>
-												. Patterns reused from Cold Mail & Hiring Assistant
-												modules for consistency.
-											</p>
 										</CardContent>
 									</Card>
 								</motion.div>
