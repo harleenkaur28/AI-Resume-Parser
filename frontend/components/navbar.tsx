@@ -21,6 +21,7 @@ import {
 	Mail,
 	MessageSquare,
 	Lightbulb,
+	Hash,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -71,6 +72,12 @@ const actionItems = [
 		href: "/dashboard/hiring-assistant",
 		icon: MessageSquare,
 		description: "Get AI-powered interview prep",
+	},
+	{
+		label: "LinkedIn Posts",
+		href: "/dashboard/linkedin-posts",
+		icon: Hash,
+		description: "Generate LinkedIn content",
 	},
 	{
 		label: "Get Suggestions",

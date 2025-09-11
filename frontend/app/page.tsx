@@ -11,7 +11,7 @@ import {
 import { KnowButton } from "@/components/know-more-button";
 import { ColdMailButton } from "@/components/cold-mail-button";
 import { HiringAssistantButton } from "@/components/hiring-assistant-button";
-import { PdfResumeButton } from "@/components/pdf-resume-button";
+import { LinkedInPostsButton } from "@/components/linkedin-posts-button";
 import { useEffect, useState } from "react";
 
 function useIsMobile() {
@@ -35,6 +35,7 @@ function ConditionalButtons() {
 			<KnowButton />
 			<ColdMailButton />
 			<HiringAssistantButton />
+			<LinkedInPostsButton />
 		</>
 	);
 }

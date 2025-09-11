@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Mail, MessageSquare, Plus, X, FileText } from "lucide-react";
+import { Mail, MessageSquare, Plus, X, FileText, Hash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -17,7 +17,9 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
 		setIsOpen(!isOpen);
 	};
 
-	const handleAction = (action: "cold-mail" | "interview" | "pdf-resume") => {
+	const handleAction = (
+		action: "cold-mail" | "interview" | "pdf-resume" | "linkedin"
+	) => {
 		setIsOpen(false);
 		if (action === "cold-mail") {
 			router.push("/dashboard/cold-mail");
@@ -25,6 +27,8 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
 			router.push("/dashboard/hiring-assistant");
 		} else if (action === "pdf-resume") {
 			router.push("/pdf-resume");
+		} else if (action === "linkedin") {
+			router.push("/dashboard/linkedin-posts");
 		}
 	};
 
@@ -49,6 +53,13 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
 			icon: FileText,
 			color: "hsl(24 100% 50%)",
 			action: () => handleAction("pdf-resume"),
+		},
+		{
+			id: "linkedin",
+			label: "LinkedIn Posts",
+			icon: Hash,
+			color: "hsl(188 39% 48%)",
+			action: () => handleAction("linkedin"),
 		},
 	];
 
