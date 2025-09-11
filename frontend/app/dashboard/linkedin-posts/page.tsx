@@ -223,11 +223,11 @@ export default function LinkedInPostsGenerator() {
 					}\n`
 			)
 			.join("\n-------------------------\n");
-		const blob = new Blob([content], { type: "text/plain" });
+		const blob = new Blob([content], { type: "text/markdown" });
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement("a");
 		a.href = url;
-		a.download = "linkedin-posts.txt";
+		a.download = "linkedin-posts.md";
 		document.body.appendChild(a);
 		a.click();
 		document.body.removeChild(a);
@@ -669,7 +669,7 @@ export default function LinkedInPostsGenerator() {
 															initial={{ opacity: 0, y: 12 }}
 															animate={{ opacity: 1, y: 0 }}
 															transition={{ duration: 0.4, delay: i * 0.1 }}
-															className="group bg-[#1A1F25]/80 backdrop-blur-sm rounded-xl p-6 border border-[#76ABAE]/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:border-[#76ABAE]/40 space-y-4"
+															className="group bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-[#76ABAE]/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:border-[#76ABAE]/40 space-y-4"
 														>
 															<div className="flex items-center justify-between mb-4">
 																<div className="flex items-center gap-3">
