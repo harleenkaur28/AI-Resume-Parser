@@ -15,6 +15,11 @@ from app.models.schemas import (
     PostGenerationRequest,
     PostGenerationResponse,
 )
+from app.services.linkedin_page_generator import (
+    LinkedInPageRequest,
+    LinkedInPageResponse,
+    generate_comprehensive_linkedin_page,
+)
 from app.services import resume, cold_mail, hiring, tips, linkedin
 from app.services.ats.calculator import ATSCalculator
 from app.services.resume_analyzer import (
@@ -281,3 +286,25 @@ async def edit_linkedin_post(payload: dict):
     Returns the updated post.
     """
     return await linkedin.edit_post_llm_service(payload)
+
+
+@router.post(
+    "/linkedin/generate-page",
+    response_model=LinkedInPageResponse,
+    summary="Generate Complete LinkedIn Page",
+    description="Generate comprehensive LinkedIn page content including profile, posts, and engagement strategy",
+    tags=["V1", "LinkedIn"],
+)
+async def generate_linkedin_page(request: LinkedInPageRequest):
+    """
+    Generate comprehensive LinkedIn page content including:
+    - Professional profile content (headline, summary, about section)
+    - Experience highlights and skills
+    - Featured projects from GitHub
+    - Suggested posts for content calendar
+    - Engagement tips and strategy
+
+    This endpoint combines web research, GitHub analysis, and AI-powered content generation
+    to create a complete LinkedIn presence strategy.
+    """
+    return await generate_comprehensive_linkedin_page(request)
