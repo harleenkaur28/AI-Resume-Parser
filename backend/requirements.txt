@@ -115,3 +115,6 @@ wrapt==1.17.2
 xxhash==3.5.0
 zope-interface==7.2
 zstandard==0.23.0
+
+# Optional repository ingestion (used by GitHubAgent for deep repo context)
+gitingest==0.5.7

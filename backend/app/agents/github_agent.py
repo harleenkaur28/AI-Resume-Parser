@@ -3,10 +3,47 @@ GitHub Agent for extracting project information and insights
 """
 
 import re
+import asyncio
+from typing import Dict, List, Optional, Any, Tuple
+
 import requests
-from typing import Dict, List, Optional, Any
-from urllib.parse import urlparse
 from app.core.llm import llm
+
+try:  # Prefer async ingest if available
+    from gitingest import ingest_async as _gitingest_async  # type: ignore
+
+    _HAS_GITINGEST = True
+    _HAS_GITINGEST_ASYNC = True
+
+except ImportError:  # Fallback to sync ingest
+    try:
+        from gitingest import ingest as _gitingest_sync  # type: ignore
+
+        _HAS_GITINGEST = True
+        _HAS_GITINGEST_ASYNC = False
+
+    except ImportError:  # Completely optional dependency
+        _HAS_GITINGEST = False
+        _HAS_GITINGEST_ASYNC = False
+
+
+from pydantic import BaseModel, HttpUrl
+
+
+class IngestedContent(BaseModel):
+    """Structured representation of repository ingestion output."""
+
+    tree: str
+    summary: str
+    content: str
+
+    def excerpt(self, max_chars: int = 4000) -> str:  # type: ignore
+        """Return a safe excerpt of the combined content for LLM prompts."""
+        content = getattr(self, "content", "")  # compatibility
+        if len(content) <= max_chars:
+            return content
+
+        return content[: max_chars - 500] + "\n...\n[truncated]" + content[-400:]
 
 
 class GitHubAgent:
@@ -24,6 +61,11 @@ class GitHubAgent:
         Parse GitHub URL to extract owner and repository name
         """
         try:
+            if not url:
+                return None
+            # Normalize (allow user to omit scheme)
+            if not re.match(r"^https?://", url):
+                url = f"https://{url.lstrip('/') }"
             # Handle different GitHub URL formats
             patterns = [
                 r"github\.com/([^/]+)/([^/]+?)(?:\.git)?/?$",
@@ -116,6 +158,49 @@ class GitHubAgent:
             print(f"Error fetching repository info: {e}")
             return {"error": f"Failed to fetch repository information: {str(e)}"}
 
+    async def _ingest_repository(
+        self, url: str, timeout: float = 60.0
+    ) -> Optional[IngestedContent]:
+        """Ingest repository codebase (if gitingest installed).
+
+        Returns None if ingestion library not available or any failure occurs.
+        Heavy content is truncated later when used in prompts.
+        """
+        if not _HAS_GITINGEST:
+            return None
+
+        async def _run_ingest() -> Tuple[str, str, str]:
+            if _HAS_GITINGEST_ASYNC:
+                return await _gitingest_async(url)  # summary, tree, content
+            # Run sync version in thread to avoid blocking event loop
+            loop = asyncio.get_running_loop()
+            return await loop.run_in_executor(None, lambda: _gitingest_sync(url))  # type: ignore
+
+        try:
+            summary, tree, content = await asyncio.wait_for(
+                _run_ingest(), timeout=timeout
+            )
+            # Guard against extremely large content (keep first ~1.8M chars max)
+            max_len = 5 * 3 * 600_000
+            if len(content) > max_len:
+                content = (
+                    content[: max_len - 1000]
+                    + "\n...\n[large repository content truncated]"
+                )
+            return IngestedContent(tree=tree, summary=summary, content=content)
+        except Exception as e:  # Broad except OK for optional feature
+            print(f"[GitHubAgent] Ingestion skipped: {e}")
+            return None
+
+    async def convert_github_repo_to_markdown(
+        self, repo_link: str
+    ) -> Optional[IngestedContent]:
+        """Public helper mirroring standalone snippet to ingest repository.
+
+        Returns IngestedContent or None if ingestion unavailable or fails.
+        """
+        return await self._ingest_repository(repo_link)
+
     def _get_readme_content(self, owner: str, repo: str) -> str:
         """
         Get README content from repository
@@ -145,6 +230,16 @@ class GitHubAgent:
         if repo_info.get("error"):
             return repo_info
 
+        # Attempt deep ingestion for richer context (best-effort)
+        ingested: Optional[IngestedContent] = await self._ingest_repository(url)
+        if ingested:
+            repo_info["code_tree"] = ingested.tree[:5000]
+            repo_info["repo_summary"] = ingested.summary
+            repo_info["repo_content_excerpt"] = ingested.excerpt(6000)
+            repo_info["_ingestion_used"] = True
+        else:
+            repo_info["_ingestion_used"] = False
+
         # Generate project analysis using LLM
         analysis = await self._generate_project_insights(repo_info)
 
@@ -158,27 +253,35 @@ class GitHubAgent:
         """
         try:
             # Prepare project context
-            context = f"""
-Project: {repo_info.get('name', 'Unknown')}
-Description: {repo_info.get('description', 'No description')}
-Main Language: {repo_info.get('language', 'Not specified')}
-Stars: {repo_info.get('stars', 0)}
-Topics: {', '.join(repo_info.get('topics', []))}
-README excerpt: {repo_info.get('readme_content', '')[:500]}
-"""
+            context = (
+                f"Project: {repo_info.get('name', 'Unknown')}\n"
+                f"Description: {repo_info.get('description', 'No description')}\n"
+                f"Main Language: {repo_info.get('language', 'Not specified')}\n"
+                f"Stars: {repo_info.get('stars', 0)}\n"
+                f"Topics: {', '.join(repo_info.get('topics', []))}\n"
+                f"README excerpt: {repo_info.get('readme_content', '')[:500]}\n"
+                + (
+                    "Code Summary: "
+                    + repo_info.get("repo_summary", "")[:600]
+                    + "\nCode Tree (partial):\n"
+                    + repo_info.get("code_tree", "")[:1200]
+                    if repo_info.get("_ingestion_used")
+                    else ""
+                )
+            )
 
             # Generate insights using LLM
-            prompt = f"""Analyze this GitHub project and provide LinkedIn-friendly insights:
-
-{context}
-
-Provide insights in the following format:
-1. Key Achievement: What makes this project notable?
-2. Technical Highlights: Key technologies and innovations
-3. Impact Statement: What problem does it solve or value does it provide?
-4. LinkedIn Hooks: 3 engaging ways to present this project on LinkedIn
-
-Keep each point concise and professional."""
+            prompt = (
+                f"Analyze this GitHub project and provide LinkedIn-friendly insights:\n\n"
+                f"{context}\n\n"
+                f"Provide insights in the following format:\n"
+                f"1. Key Achievement: What makes this project notable?\n"
+                f"2. Technical Highlights: Key technologies and innovations\n"
+                f"3. Impact Statement: What problem does it solve or value does it provide?\n"
+                f"4. LinkedIn Hooks: 3 engaging ways to present this project on LinkedIn\n"
+                f"\n"
+                f"Keep each point concise and professional."
+            )
 
             response = await llm.ainvoke(prompt)
             insights_text = (
