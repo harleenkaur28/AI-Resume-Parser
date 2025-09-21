@@ -428,3 +428,33 @@ class GitHubAnalysisResponse(BaseModel):
     repository_info: Dict[str, Any]
     linkedin_insights: GitHubInsights
     timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+
+# Tailored Resume Generation Models
+class TailoredResumeRequest(BaseModel):
+    resume_text: str
+    job: str
+    company_name: Optional[str] = None
+    company_website: Optional[str] = None
+    job_description: Optional[str] = None
+
+
+class TailoredResumeResponse(BaseModel):
+    success: bool = True
+    message: str = "Tailored resume generated successfully"
+    tailored_resume: str
+
+
+# ATS Evaluation Models
+class ATSEvaluationRequest(BaseModel):
+    resume_text: str
+    jd_text: str
+    company_name: Optional[str] = None
+    company_website: Optional[str] = None
+
+
+class ATSEvaluationResponse(BaseModel):
+    success: bool = True
+    message: str = "ATS evaluation completed successfully"
+    analysis: Dict[str, Any]
+    narrative: str
