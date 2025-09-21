@@ -1,6 +1,4 @@
-import json
 import re
-from typing import List, Optional
 from fastapi import HTTPException
 from datetime import datetime
 
@@ -11,10 +9,9 @@ from app.models.schemas import (
 )
 from app.core.llm import llm
 
-# Import agents for enhanced content generation
+
 try:
     from app.agents.websearch_agent import WebSearchAgent
-    from app.agents.github_agent import GitHubAgent
 
     HAS_AGENTS = True
 
@@ -68,17 +65,7 @@ def clean_post_content(content: str) -> str:
 
 
 def scrape_github_project_info(repo_url: str) -> dict:
-    """Enhanced GitHub scraping function using GitHubAgent"""
-    if HAS_AGENTS:
-        try:
-            agent = GitHubAgent()
-            # Note: This would need to be async in a real implementation
-            # For now, using the mock fallback
-            pass
-        except Exception as e:
-            print(f"Error using GitHub agent: {e}")
-
-    # Fallback to mock implementation
+    """Mock GitHub scraping function"""
     match = re.match(r"https://github.com/([^/]+)/([^/]+)", repo_url)
     if not match:
         return {"error": "Invalid GitHub URL"}
@@ -105,6 +92,7 @@ async def research_topic_with_web(topic: str, context: str = "") -> dict:
         agent = WebSearchAgent()
         research = await agent.research_topic(topic, context)
         return research
+
     except Exception as e:
         print(f"Error researching topic: {e}")
         return {
@@ -148,21 +136,24 @@ async def generate_single_post(
     enhanced_context = ""
     if github_context:
         enhanced_context += f"\nProject Context: {github_context}"
+
     if research_context:
         enhanced_context += f"\nResearch Insights: {research_context}"
 
     # Create the enhanced prompt
-    prompt = f"""Generate ONLY the LinkedIn post content ({length_guidance}) about {request.topic}.
-Tone: {request.tone or 'Professional'}
-Audience: {request.audience or 'General'}
-Use {emoji_guidance}.
-{enhanced_context}
-
-Make the post engaging, authentic, and valuable to your professional network. Include insights, personal thoughts, or industry perspectives when relevant.
-
-IMPORTANT: Return ONLY the post text without any explanatory lines, introductions, or meta-commentary. 
-Do not include lines like 'Here's a LinkedIn post about...' or similar. 
-Just return the actual post content that would be posted directly to LinkedIn."""
+    prompt = (
+        f"Generate ONLY the LinkedIn post content ({length_guidance}) about {request.topic}.\n"
+        "Tone: {request.tone or 'Professional'}\n"
+        "Audience: {request.audience or 'General'}\n"
+        f"Use {emoji_guidance}.\n"
+        f"{enhanced_context}\n"
+        "\n"
+        "Make the post engaging, authentic, and valuable to your professional network. Include insights, personal thoughts, or industry perspectives when relevant.\n"
+        "\n"
+        "IMPORTANT: Return ONLY the post text without any explanatory lines, introductions, or meta-commentary. \n"
+        "Do not include lines like 'Here's a LinkedIn post about...' or similar. \n"
+        "Just return the actual post content that would be posted directly to LinkedIn."
+    )
 
     try:
         # Generate the post content
@@ -225,23 +216,10 @@ Just return the actual post content that would be posted directly to LinkedIn.""
         )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating post: {str(e)}")
-        if github_context and "Project:" in github_context:
-            # Extract project name from context
-            match = re.search(r"Project: ([^-]+)", github_context)
-            if match:
-                github_project_name = match.group(1).strip()
-
-        return GeneratedPost(
-            text=post_text,
-            hashtags=hashtags,
-            cta_suggestion=cta,
-            token_info={"prompt_tokens": 0, "completion_tokens": 0},
-            github_project_name=github_project_name,
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating post: {str(e)}",
         )
-
-    except Exception as e:  # type: ignore
-        raise HTTPException(status_code=500, detail=f"Error generating post: {str(e)}")
 
 
 async def generate_linkedin_posts_service(
@@ -256,6 +234,7 @@ async def generate_linkedin_posts_service(
             try:
                 research_data = await research_topic_with_web(request.topic)
                 research_context = research_data.get("research_summary", "")
+
             except Exception as e:
                 print(f"Research failed, continuing without: {e}")
 
@@ -270,7 +249,10 @@ async def generate_linkedin_posts_service(
         posts = []
         for i in range(request.post_count):
             post = await generate_single_post(
-                request, i + 1, github_context, research_context
+                request,
+                i + 1,
+                github_context,
+                research_context,
             )
             posts.append(post)
 
@@ -282,14 +264,20 @@ async def generate_linkedin_posts_service(
         )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating posts: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating posts: {str(e)}",
+        )
 
 
 async def edit_post_llm_service(payload: dict) -> dict:
     """Edit a post using LLM according to user instruction"""
 
     if not llm:
-        raise HTTPException(status_code=500, detail="LLM is not available")
+        raise HTTPException(
+            status_code=500,
+            detail="LLM is not available",
+        )
 
     try:
         post = payload.get("post", {})
@@ -298,11 +286,13 @@ async def edit_post_llm_service(payload: dict) -> dict:
         if not post or not instruction:
             return post
 
-        prompt = f"""You are an assistant that edits LinkedIn posts. 
-Instruction: {instruction}
-Post: {post.get('text', '')}
-
-Return only the edited post text without any explanatory comments."""
+        prompt = (
+            "You are an assistant that edits LinkedIn posts.\n"
+            f"Instruction: {instruction}\n"
+            f"Post: {post.get('text', '')}\n"
+            "\n"
+            "Return only the edited post text without any explanatory comments."
+        )
 
         response = await llm.ainvoke(prompt)
         edited_text = clean_post_content(
@@ -314,4 +304,7 @@ Return only the edited post text without any explanatory comments."""
         return post
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error editing post: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error editing post: {str(e)}",
+        )
