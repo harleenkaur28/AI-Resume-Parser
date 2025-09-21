@@ -1,341 +1,256 @@
-"""
-WebSearch Agent for gathering real-time information from the web
-"""
+from __future__ import annotations
+
+import logging
+import os
+import random
+import time
+from typing import Any, Dict, List, Optional
 
 import requests
-from typing import List, Dict, Optional, Any
-from urllib.parse import quote
-import re
+from tavily import TavilyClient
+from dotenv import load_dotenv
+
+load_dotenv()
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+REQUEST_TIMEOUT = 15
+MAX_RETRIES = 2
+BACKOFF_BASE = 0.7
+
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Safari/605.1.15",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+]
+
+
+def _headers() -> Dict[str, str]:
+    return {
+        "User-Agent": random.choice(USER_AGENTS),
+    }
+
+
+def _get(url: str, params: Optional[Dict[str, Any]] = None) -> requests.Response:
+    last_exc: Optional[Exception] = None
+    for attempt in range(MAX_RETRIES + 1):
+        try:
+            resp = requests.get(
+                url,
+                params=params,
+                headers=_headers(),
+                timeout=REQUEST_TIMEOUT,
+            )
+
+            if resp.status_code in (429, 500, 502, 503, 504):
+                raise requests.HTTPError(f"Transient HTTP {resp.status_code} on {url}")
+
+            return resp
+
+        except Exception as e:
+            last_exc = e
+            time.sleep(BACKOFF_BASE * (2**attempt))
+
+    assert last_exc is not None
+    raise last_exc
+
+
+def extract_text_from_url(url: str) -> str:
+    jina_url = "https://r.jina.ai/" + url
+    try:
+        res = requests.get(jina_url)
+        return res.text if res.status_code == 200 and res.text else ""
+
+    except Exception as e:
+        logger.warning(f"Error fetching content from {url}: {e}")
+        return f"Error fetching content from {url}: {str(e)}"
+
+
+def return_markdown(url: str) -> str:
+    return extract_text_from_url(url)
+
+
+# Tavily search client
+_TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
+_tavily: Optional[TavilyClient] = (
+    TavilyClient(api_key=_TAVILY_API_KEY) if _TAVILY_API_KEY else None
+)
+
+
+def search_and_get_urls(
+    query: str, num_results: int = 10, lang: str = "en"
+) -> List[str]:
+    if not _tavily:
+        logger.warning("TAVILY_API_KEY missing; returning empty list.")
+        return []
+    try:
+        # Use 'search' for general queries; you can also use 'qna' when you want synthesized answers.
+        res = _tavily.search(
+            query=query,
+            max_results=num_results,
+            search_depth="advanced",  # or "basic" for speed
+            include_answer=False,
+            include_raw_content=False,
+            include_images=False,
+        )
+        urls: List[str] = []
+        for item in res.get("results", []):
+            u = item.get("url")
+            if u:
+                urls.append(u)
+            if len(urls) >= num_results:
+                break
+        return urls
+    except Exception as e:
+        logger.warning(f"Tavily search failed: {e}")
+        return []
+
+
+def get_cleaned_texts(urls: List[str]) -> List[Dict[str, str]]:
+    texts: List[Dict[str, str]] = []
+    for u in urls:
+        md = extract_text_from_url(u)
+        if md and md.strip():
+            texts.append({"url": u, "md_body_content": md})
+    return texts
+
+
+def web_search_pipeline(query: str, max_results: int = 10) -> List[Dict[str, str]]:
+    urls = search_and_get_urls(query, num_results=max_results)
+    if not urls:
+        return []
+    return get_cleaned_texts(urls)
+
+
+# Agents (same external API)
 from app.core.llm import llm
-
-try:
-    from bs4 import BeautifulSoup
-
-    HAS_BS4 = True
-
-except ImportError:
-    HAS_BS4 = False
+import asyncio
 
 
 class WebSearchAgent:
-    """Agent for performing web searches and extracting content"""
+    def __init__(self, max_results: int = 10):
+        self.max_results = max_results
 
-    def __init__(self):
-        self.search_engines = {
-            "duckduckgo": "https://duckduckgo.com/html/?q=",
-            "bing": "https://www.bing.com/search?q=",
-        }
-        self.headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
-
-    def search_web(self, query: str, max_results: int = 5) -> List[Dict[str, str]]:
-        """
-        Search the web and return a list of results with titles, URLs, and snippets
-        """
-        try:
-            search_url = f"https://duckduckgo.com/html/?q={quote(query)}"
-
-            response = requests.get(search_url, headers=self.headers, timeout=10)
-            html = response.text
-
-            if not HAS_BS4:
-                # Simple fallback without BeautifulSoup
-                return [
-                    {
-                        "title": query,
-                        "url": "",
-                        "snippet": "Search functionality limited without BeautifulSoup",
-                    }
-                ]
-
-            soup = BeautifulSoup(html, "html.parser")
-            results = []
-
-            # Parse DuckDuckGo results
-            result_elements = soup.find_all("div", class_="web-result")[:max_results]
-
-            for element in result_elements:
-                try:
-                    title_elem = element.find("a", class_="result__a")
-                    snippet_elem = element.find("div", class_="result__snippet")
-
-                    if title_elem and snippet_elem:
-                        title = title_elem.get_text().strip()
-                        url = title_elem.get("href", "")
-                        snippet = snippet_elem.get_text().strip()
-
-                        # Clean up URL if it's a DuckDuckGo redirect
-                        if url.startswith("/l/?uddg="):
-                            url = url.split("uddg=")[1] if "uddg=" in url else url
-
-                        results.append({"title": title, "url": url, "snippet": snippet})
-                except Exception as e:
-                    print(f"Error parsing result: {e}")
-                    continue
-
-            return results
-
-        except Exception as e:
-            print(f"Error in web search: {e}")
-            return []
+    def search_web(
+        self, query: str, max_results: Optional[int] = None
+    ) -> List[Dict[str, str]]:
+        max_r = max_results or self.max_results
+        urls = search_and_get_urls(query, num_results=max_r)
+        return [{"title": u, "url": u, "snippet": ""} for u in urls]
 
     def extract_page_content(self, url: str) -> str:
-        """
-        Extract clean text content from a webpage
-        """
-        try:
-            response = requests.get(url, headers=self.headers, timeout=15)
-            html = response.text
-
-            if not HAS_BS4:
-                # Simple text extraction without BeautifulSoup
-                # Remove common HTML tags manually
-                text = re.sub(r"<script[^>]*>.*?</script>", "", html, flags=re.DOTALL)
-                text = re.sub(r"<style[^>]*>.*?</style>", "", text, flags=re.DOTALL)
-                text = re.sub(r"<[^>]+>", "", text)
-                return text[:3000] if len(text) > 3000 else text
-
-            soup = BeautifulSoup(html, "html.parser")
-
-            # Remove script and style elements
-            for script in soup.find_all(["script", "style"]):
-                script.decompose()
-
-            # Get text content
-            text = soup.get_text()
-
-            # Clean up text
-            lines = (line.strip() for line in text.splitlines())
-            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-            text = " ".join(chunk for chunk in chunks if chunk)
-
-            # Limit content length
-            return text[:3000] if len(text) > 3000 else text
-
-        except Exception as e:
-            print(f"Error extracting content from {url}: {e}")
-            return ""
+        return extract_text_from_url(url)
 
     async def research_topic(self, topic: str, context: str = "") -> Dict[str, Any]:
-        """
-        Research a topic by searching the web and extracting relevant information
-        """
-        search_query = f"{topic} trends insights latest news"
-        search_results = self.search_web(search_query, max_results=3)
-
-        # Extract content from top results
-        valid_contents = []
-        for result in search_results[:2]:  # Limit to avoid timeouts
-            if result["url"].startswith("http"):
-                content = self.extract_page_content(result["url"])
-                if content:
-                    valid_contents.append(content)
-
+        query = f"{topic} trends insights latest news" if topic else context
+        results = self.search_web(query, max_results=3)
+        contents: List[str] = []
+        for r in results[:2]:
+            if r["url"].startswith("http"):
+                contents.append(self.extract_page_content(r["url"]))
+        summary = await self._summarize_research(topic, results, contents)
         return {
-            "search_results": search_results,
-            "extracted_content": valid_contents,
-            "research_summary": await self._summarize_research(
-                topic, search_results, valid_contents
-            ),
+            "search_results": results,
+            "extracted_content": contents,
+            "research_summary": summary,
         }
 
     async def _summarize_research(
-        self, topic: str, search_results: List[Dict], content: List[str]
+        self, topic: str, search_results: List[Dict[str, str]], contents: List[str]
     ) -> str:
-        """
-        Use LLM to summarize research findings
-        """
-        try:
-            if not search_results and not content:
-                return f"No recent information found about {topic}"
-
-            # Prepare research data
-            research_text = f"Topic: {topic}\n\n"
-
-            if search_results:
-                research_text += "Search Results:\n"
-                for i, result in enumerate(search_results[:3], 1):
-                    research_text += (
-                        f"{i}. {result['title']}\n   {result['snippet']}\n\n"
-                    )
-
-            if content:
-                research_text += "Detailed Content:\n"
-                for i, text in enumerate(content[:2], 1):
-                    research_text += f"Source {i}: {text[:800]}...\n\n"
-
-            # Generate summary using LLM
-            prompt = f"""Based on the following research about "{topic}", provide a concise summary of key insights, trends, and relevant information that would be useful for creating LinkedIn content:
-
-{research_text}
-
-Summary (2-3 sentences focusing on key insights and trends):"""
-
-            response = await llm.ainvoke(prompt)
-            summary = (
-                str(response.content) if hasattr(response, "content") else str(response)
-            )
-
-            return summary.strip()
-
-        except Exception as e:
-            print(f"Error summarizing research: {e}")
-            return f"Research data gathered about {topic} - ready for content creation"
-
-    def get_trending_topics(self, industry: str = "") -> List[str]:
-        """
-        Get trending topics in a specific industry or general trends
-        """
-        try:
-            query = (
-                f"{industry} trending topics 2024"
-                if industry
-                else "trending topics 2024"
-            )
-            search_results = self.search_web(query, max_results=3)
-
-            # Extract trending topics from search results
-            trends = []
-            for result in search_results:
-                snippet = result["snippet"].lower()
-                # Simple extraction of potential trending topics
-                words = re.findall(
-                    r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b",
-                    result["title"] + " " + result["snippet"],
-                )
-                trends.extend(words[:3])
-
-            # Remove duplicates and return top trends
-            unique_trends = list(dict.fromkeys(trends))[:5]
+        if not llm:
             return (
-                unique_trends if unique_trends else ["AI", "Technology", "Innovation"]
+                "LLM unavailable; raw content gathered."
+                if contents
+                else f"No information found about {topic}."
             )
-
-        except Exception as e:
-            print(f"Error getting trending topics: {e}")
-            return ["AI", "Technology", "Innovation"]
-
-
-# Convenience function for easy import
-async def search_web_for_linkedin(topic: str, context: str = "") -> Dict[str, Any]:
-    """
-    Convenience function to research a topic for LinkedIn content
-    """
-    agent = WebSearchAgent()
-    return await agent.research_topic(topic, context)
-
-    async def research_topic(self, topic: str, context: str = "") -> Dict[str, Any]:
-        """
-        Research a topic by searching the web and extracting relevant information
-        """
-        search_query = f"{topic} trends insights latest news"
-        search_results = await self.search_web(search_query, max_results=3)
-
-        # Extract content from top results
-        content_tasks = []
-        for result in search_results[:2]:  # Limit to avoid timeouts
-            if result["url"].startswith("http"):
-                content_tasks.append(self.extract_page_content(result["url"]))
-
-        if content_tasks:
-            try:
-                contents = await asyncio.gather(*content_tasks, return_exceptions=True)
-                valid_contents = [c for c in contents if isinstance(c, str) and c]
-            except:
-                valid_contents = []
-        else:
-            valid_contents = []
-
-        return {
-            "search_results": search_results,
-            "extracted_content": valid_contents,
-            "research_summary": await self._summarize_research(
-                topic, search_results, valid_contents
-            ),
-        }
-
-    async def _summarize_research(
-        self, topic: str, search_results: List[Dict], content: List[str]
-    ) -> str:
-        """
-        Use LLM to summarize research findings
-        """
         try:
-            if not search_results and not content:
-                return f"No recent information found about {topic}"
-
-            # Prepare research data
             research_text = f"Topic: {topic}\n\n"
-
             if search_results:
-                research_text += "Search Results:\n"
-                for i, result in enumerate(search_results[:3], 1):
-                    research_text += (
-                        f"{i}. {result['title']}\n   {result['snippet']}\n\n"
+                research_text += (
+                    "Search Results:\n"
+                    + "\n".join(
+                        f"{i}. {r['url']}" for i, r in enumerate(search_results[:3], 1)
                     )
-
-            if content:
-                research_text += "Detailed Content:\n"
-                for i, text in enumerate(content[:2], 1):
-                    research_text += f"Source {i}: {text[:800]}...\n\n"
-
-            # Generate summary using LLM
-            prompt = f"""Based on the following research about "{topic}", provide a concise summary of key insights, trends, and relevant information that would be useful for creating LinkedIn content:
-
-{research_text}
-
-Summary (2-3 sentences focusing on key insights and trends):"""
-
-            response = await llm.ainvoke(prompt)
-            summary = (
-                str(response.content) if hasattr(response, "content") else str(response)
-            )
-
-            return summary.strip()
-
-        except Exception as e:
-            print(f"Error summarizing research: {e}")
-            return f"Research data gathered about {topic} - ready for content creation"
-
-    async def get_trending_topics(self, industry: str = "") -> List[str]:
-        """
-        Get trending topics in a specific industry or general trends
-        """
-        try:
-            query = (
-                f"{industry} trending topics 2024"
-                if industry
-                else "trending topics 2024"
-            )
-            search_results = await self.search_web(query, max_results=3)
-
-            # Extract trending topics from search results
-            trends = []
-            for result in search_results:
-                snippet = result["snippet"].lower()
-                # Simple extraction of potential trending topics
-                words = re.findall(
-                    r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b",
-                    result["title"] + " " + result["snippet"],
+                    + "\n"
                 )
-                trends.extend(words[:3])
-
-            # Remove duplicates and return top trends
-            unique_trends = list(dict.fromkeys(trends))[:5]
-            return (
-                unique_trends if unique_trends else ["AI", "Technology", "Innovation"]
+            if contents:
+                research_text += "\nContent Excerpts:\n" + "\n\n".join(
+                    f"Source {i}: {c[:600]}..." for i, c in enumerate(contents[:2], 1)
+                )
+            prompt = (
+                f"Summarize key insights, trends, and takeaways about '{topic}' for a professional LinkedIn post. "
+                f"Base it ONLY on the following material. Be concise (2-3 sentences).\n\n{research_text}\nSummary:"
             )
-
+            resp = await llm.ainvoke(prompt)
+            return str(getattr(resp, "content", resp)).strip()
         except Exception as e:
-            print(f"Error getting trending topics: {e}")
-            return ["AI", "Technology", "Innovation"]
+            logger.warning(f"[websearch] summarization failed: {e}")
+            return "Summary unavailable; see extracted content."
 
 
-# Convenience function for easy import
-async def search_web_for_linkedin(topic: str, context: str = "") -> Dict[str, Any]:
-    """
-    Convenience function to research a topic for LinkedIn content
-    """
-    agent = WebSearchAgent()
-    return await agent.research_topic(topic, context)
+class LinkedInResearcher(WebSearchAgent):
+    def __init__(self, max_results: int = 10, sentences: int = 3):
+        super().__init__(max_results=max_results)
+        self.sentences = sentences
+
+    async def generate_post(self, topic: str):
+        research = await self.research_topic(topic)
+        summary = research.get("research_summary", "")
+        if not llm or not summary:
+            research["linkedin_post"] = (
+                f"{topic.title()} – Key update: {summary or 'Insights gathered; see sources.'}"[
+                    :800
+                ]
+            )
+            return research
+        try:
+            prompt = (
+                "You are a professional LinkedIn content strategist. Using ONLY the following summary, "
+                f"draft a concise LinkedIn post (max {self.sentences} sentences). First sentence: a hook. "
+                "Avoid hashtags except at most 2 at end if they add clarity. Maintain professional, optimistic tone.\n\n"
+                f"SUMMARY:\n{summary}\n\nPOST:"
+            )
+            resp = await llm.ainvoke(prompt)
+            research["linkedin_post"] = str(getattr(resp, "content", resp)).strip()
+            return research
+        except Exception as e:
+            logger.warning(f"[linkedin_researcher] post generation failed: {e}")
+            research["linkedin_post"] = summary
+            return research
+
+
+async def main() -> None:
+    print("Running websearch_agent self-test\n")
+
+    agent = WebSearchAgent(max_results=3)
+    query = "Python typing improvements 2024"
+    print(f"Searching for: {query}")
+    results = agent.search_web(query, max_results=3)
+    print("Search results:")
+    for i, r in enumerate(results, 1):
+        print(f"{i}. {r['url']}")
+
+    if results:
+        first_url = results[0]["url"]
+        print(f"\nFetching content for first result: {first_url}")
+        snippet = agent.extract_page_content(first_url)
+        print("Content snippet:")
+        print(snippet[:500] + ("..." if len(snippet) > 500 else ""))
+
+    researcher = LinkedInResearcher(max_results=3, sentences=2)
+    topic = "Python typing"
+    print(f"\nGenerating LinkedIn post for topic: {topic} (LLM may be unavailable)")
+    post_result = await researcher.generate_post(topic)
+    print("\nGenerated LinkedIn post:")
+    print(post_result.get("linkedin_post", "<no post returned>"))
+
+
+if __name__ == "__main__":
+    try:
+        import asyncio
+
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass

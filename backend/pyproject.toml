@@ -27,6 +27,8 @@ dependencies = [
     "langgraph>=0.2.38",
     "bs4>=0.0.2",
     "gitingest>=0.3.1",
+    "langchain-tavily>=0.2.11",
+    "tavily-python>=0.7.12",
 ]
 
 [dependency-groups]
