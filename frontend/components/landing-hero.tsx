@@ -36,7 +36,7 @@ function LandingHero() {
 			: ["Bulk parsing", "Candidate signal ranking", "Cold outreach drafts"];
 
 	return (
-		<div className="relative min-h-[88vh] flex items-center pt-32 md:pt-40 pb-16 overflow-hidden px-4">
+		<div className="relative min-h-[100vh] flex items-center pt-32 md:pt-40 pb-16 overflow-hidden px-4">
 			{/* Ambient shapes */}
 			<div className="pointer-events-none absolute inset-0">
 				<div className="absolute -top-32 -right-40 w-[38rem] h-[38rem] bg-[#76ABAE]/20 blur-[140px] rounded-full" />
@@ -58,9 +58,10 @@ function LandingHero() {
 							</div>
 							<h1 className="font-bold tracking-tight text-4xl sm:text-5xl md:text-6xl xl:text-7xl leading-[1.05] bg-clip-text text-transparent bg-gradient-to-b from-[#F5F7F7] via-[#E5EFEF] to-[#76ABAE]">
 								Turn Resumes Into{" "}
-								<span className="relative inline-block">
+								<span className="">
 									<span className="pr-1">Decisions</span>
-									<span className="absolute inset-x-0 bottom-1 h-2 bg-[#76ABAE]/30 blur-sm rounded" />
+									{/* decorative underline - allow it to overflow and ignore pointer events */}
+									<span className="absolute inset-x-0 bottom-1 h-2 bg-[#76ABAE]/30 blur-sm rounded pointer-events-none" />
 								</span>
 							</h1>
 							<p className="mt-6 text-lg sm:text-xl text-[#EEEEEE]/70 max-w-xl mx-auto lg:mx-0 leading-relaxed">
@@ -108,7 +109,7 @@ function LandingHero() {
 									<Button
 										size="lg"
 										variant="outline"
-										className="border-white/15 text-[#EEEEEE]/80 hover:text-white hover:bg-white/10"
+										className="border-white/15 text-[#76ABAE]/90 hover:text-white hover:bg-white/10"
 									>
 										<PlayCircle className="mr-2 h-5 w-5" /> Live Demo
 									</Button>
