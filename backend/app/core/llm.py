@@ -5,6 +5,10 @@ from langchain.output_parsers import StructuredOutputParser, ResponseSchema
 from app.core.config import google_api_key
 
 llm = None
+MODEL_NAME = "gemini-2.0-flash"
+MODEL_PROVIDER = "google"
+
+
 try:
     if not google_api_key:
         print(
@@ -12,7 +16,7 @@ try:
         )
     else:
         llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
+            model=MODEL_NAME,
             google_api_key=google_api_key,
             temperature=0.1,
         )
