@@ -15,7 +15,7 @@ from app.models.schemas import (
     PostGenerationRequest,
     PostGenerationResponse,
 )
-from app.services.linkedin_profile_generator import (
+from app.services.linkedin_profile import (
     LinkedInPageRequest,
     LinkedInPageResponse,
     generate_comprehensive_linkedin_page,
