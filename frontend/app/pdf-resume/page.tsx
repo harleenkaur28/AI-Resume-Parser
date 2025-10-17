@@ -713,7 +713,8 @@ export default function PdfResumePage() {
 													Preview of your resume data
 												</p>
 											</CardHeader>
-											<CardContent className="space-y-4">
+											<CardContent className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+												{/* Header */}
 												<div className="text-center border-b border-white/10 pb-4">
 													<h2 className="text-xl font-bold text-[#EEEEEE]">
 														{parsedData.name}
@@ -728,60 +729,221 @@ export default function PdfResumePage() {
 													)}
 												</div>
 
-												<div className="space-y-3 text-sm">
+												{/* Main content sections */}
+												<div className="space-y-4 text-sm">
+													{/* Education */}
 													{parsedData.education?.length > 0 && (
 														<div>
 															<h3 className="font-semibold text-[#EEEEEE] mb-2">
 																Education
 															</h3>
 															{parsedData.education.map((edu, index) => (
-																<p key={index} className="text-[#EEEEEE]/70">
+																<div
+																	key={index}
+																	className="text-[#EEEEEE]/70 mb-2"
+																>
 																	{edu.education_detail}
-																</p>
+																</div>
 															))}
 														</div>
 													)}
 
+													{/* Skills */}
 													{parsedData.skills_analysis?.length > 0 && (
 														<div>
 															<h3 className="font-semibold text-[#EEEEEE] mb-2">
 																Skills
 															</h3>
-															<div className="flex flex-wrap gap-1">
-																{parsedData.skills_analysis
-																	.slice(0, 6)
-																	.map((skill, index) => (
+															<div className="flex flex-wrap gap-2">
+																{parsedData.skills_analysis.map(
+																	(skill, index) => (
 																		<span
 																			key={index}
 																			className="px-2 py-1 bg-white/10 text-[#EEEEEE]/80 text-xs rounded border border-white/20"
 																		>
 																			{skill.skill_name}
 																		</span>
-																	))}
-																{parsedData.skills_analysis.length > 6 && (
-																	<span className="px-2 py-1 bg-white/10 text-[#EEEEEE]/80 text-xs rounded border border-white/20">
-																		+{parsedData.skills_analysis.length - 6}{" "}
-																		more
-																	</span>
+																	)
 																)}
 															</div>
 														</div>
 													)}
 
+													{/* Languages */}
+													{parsedData.languages?.length > 0 && (
+														<div>
+															<h3 className="font-semibold text-[#EEEEEE] mb-2">
+																Languages
+															</h3>
+															<div className="flex flex-wrap gap-2">
+																{parsedData.languages.map((lang, i) => (
+																	<span
+																		key={i}
+																		className="px-2 py-1 bg-white/10 text-[#EEEEEE]/80 text-xs rounded border border-white/20"
+																	>
+																		{lang.language}
+																	</span>
+																))}
+															</div>
+														</div>
+													)}
+
+													{/* Work Experience */}
 													{parsedData.work_experience?.length > 0 && (
 														<div>
 															<h3 className="font-semibold text-[#EEEEEE] mb-2">
 																Experience
 															</h3>
-															{parsedData.work_experience
-																.slice(0, 2)
-																.map((exp, index) => (
-																	<div key={index} className="mb-2">
-																		<p className="font-medium text-xs text-[#EEEEEE]">
-																			{exp.role} - {exp.company_and_duration}
+															{parsedData.work_experience.map((exp, index) => (
+																<div key={index} className="mb-3">
+																	<p className="font-medium text-sm text-[#EEEEEE]">
+																		{exp.role} - {exp.company_and_duration}
+																	</p>
+																	{exp.bullet_points && (
+																		<ul className="list-disc list-inside text-[#EEEEEE]/70 text-xs mt-1 space-y-1">
+																			{exp.bullet_points.map((bp, bi) => (
+																				<li key={bi}>{bp}</li>
+																			))}
+																		</ul>
+																	)}
+																</div>
+															))}
+														</div>
+													)}
+
+													{/* Projects */}
+													{parsedData.projects?.length > 0 && (
+														<div>
+															<h3 className="font-semibold text-[#EEEEEE] mb-2">
+																Projects
+															</h3>
+															{parsedData.projects.map((proj, i) => (
+																<div key={i} className="mb-3 text-[#EEEEEE]/70">
+																	<p className="font-medium text-sm text-[#EEEEEE]">
+																		{proj.title}
+																	</p>
+																	{proj.technologies_used && (
+																		<p className="text-xs mt-1">
+																			{proj.technologies_used.join(", ")}
 																		</p>
+																	)}
+																	{proj.description && (
+																		<p className="text-xs mt-1">
+																			{proj.description}
+																		</p>
+																	)}
+																</div>
+															))}
+														</div>
+													)}
+
+													{/* Publications */}
+													{parsedData.publications?.length > 0 && (
+														<div>
+															<h3 className="font-semibold text-[#EEEEEE] mb-2">
+																Publications
+															</h3>
+															{parsedData.publications.map((pub, i) => (
+																<div key={i} className="mb-2 text-[#EEEEEE]/70">
+																	<p className="font-medium text-sm text-[#EEEEEE]">
+																		{pub.title}
+																	</p>
+																	<p className="text-xs">
+																		{pub.authors} — {pub.journal_conference} (
+																		{pub.year})
+																	</p>
+																	{pub.doi && (
+																		<p className="text-xs">DOI: {pub.doi}</p>
+																	)}
+																	{pub.url && (
+																		<a
+																			href={pub.url}
+																			target="_blank"
+																			className="text-[#76ABAE] text-xs hover:underline"
+																		>
+																			Link
+																		</a>
+																	)}
+																</div>
+															))}
+														</div>
+													)}
+
+													{/* Positions of responsibility */}
+													{parsedData.positions_of_responsibility?.length >
+														0 && (
+														<div>
+															<h3 className="font-semibold text-[#EEEEEE] mb-2">
+																Positions
+															</h3>
+															{parsedData.positions_of_responsibility.map(
+																(pos, i) => (
+																	<div
+																		key={i}
+																		className="mb-2 text-[#EEEEEE]/70"
+																	>
+																		<p className="font-medium text-sm text-[#EEEEEE]">
+																			{pos.title} — {pos.organization}
+																		</p>
+																		{pos.duration && (
+																			<p className="text-xs">{pos.duration}</p>
+																		)}
+																		{pos.description && (
+																			<p className="text-xs mt-1">
+																				{pos.description}
+																			</p>
+																		)}
 																	</div>
-																))}
+																)
+															)}
+														</div>
+													)}
+
+													{/* Certifications */}
+													{parsedData.certifications?.length > 0 && (
+														<div>
+															<h3 className="font-semibold text-[#EEEEEE] mb-2">
+																Certifications
+															</h3>
+															{parsedData.certifications.map((cert, i) => (
+																<div key={i} className="mb-2 text-[#EEEEEE]/70">
+																	<p className="font-medium text-sm text-[#EEEEEE]">
+																		{cert.name}
+																	</p>
+																	<p className="text-xs">
+																		{cert.issuing_organization} —{" "}
+																		{cert.issue_date}
+																		{cert.expiry_date
+																			? ` to ${cert.expiry_date}`
+																			: ""}
+																	</p>
+																	{cert.credential_id && (
+																		<p className="text-xs">
+																			ID: {cert.credential_id}
+																		</p>
+																	)}
+																</div>
+															))}
+														</div>
+													)}
+
+													{/* Achievements */}
+													{parsedData.achievements?.length > 0 && (
+														<div>
+															<h3 className="font-semibold text-[#EEEEEE] mb-2">
+																Achievements
+															</h3>
+															{parsedData.achievements.map((ach, i) => (
+																<div key={i} className="mb-2 text-[#EEEEEE]/70">
+																	<p className="font-medium text-sm text-[#EEEEEE]">
+																		{ach.title}{" "}
+																		{ach.year ? `— ${ach.year}` : ""}
+																	</p>
+																	{ach.description && (
+																		<p className="text-xs">{ach.description}</p>
+																	)}
+																</div>
+															))}
 														</div>
 													)}
 												</div>
