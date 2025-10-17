@@ -37,23 +37,7 @@ def _try_init_tavily() -> list:
         return []
 
 
-def return_markdown(url: str, timeout: int = 5000) -> str:
-    if not url:
-        return ""
-
-    try:
-        res = requests.get(
-            "https://r.jina.ai/" + url.lstrip("/"),
-            timeout=timeout,
-        )
-
-        if res.status_code == 200 and res.text:
-            return res.text
-
-        return ""
-
-    except Exception:
-        return ""
+from app.agents.web_content_agent import return_markdown
 
 
 ATS_PROMPT = ChatPromptTemplate.from_template(

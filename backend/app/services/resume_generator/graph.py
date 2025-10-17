@@ -19,19 +19,7 @@ import re
 from app.core.llm import MODEL_NAME
 
 
-def return_markdown(url: str) -> str:
-    """Fetch markdown content for a URL using the Jina AI text service.
-
-    This is best-effort and will return an error string on failure.
-    """
-    if not url:
-        return ""
-    jina_url = "https://r.jina.ai/" + url
-    try:
-        res = requests.get(jina_url, timeout=10)
-        return res.text
-    except Exception as e:
-        return f"Error fetching content from {url}: {str(e)}"
+from app.agents.web_content_agent import return_markdown
 
 
 class GraphBuilder:

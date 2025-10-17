@@ -102,6 +102,7 @@ def search_and_get_urls(
             if len(urls) >= num_results:
                 break
         return urls
+
     except Exception as e:
         logger.warning(f"Tavily search failed: {e}")
         return []
@@ -112,12 +113,20 @@ def get_cleaned_texts(urls: List[str]) -> List[Dict[str, str]]:
     for u in urls:
         md = extract_text_from_url(u)
         if md and md.strip():
-            texts.append({"url": u, "md_body_content": md})
+            texts.append(
+                {
+                    "url": u,
+                    "md_body_content": md,
+                }
+            )
     return texts
 
 
 def web_search_pipeline(query: str, max_results: int = 10) -> List[Dict[str, str]]:
-    urls = search_and_get_urls(query, num_results=max_results)
+    urls = search_and_get_urls(
+        query,
+        num_results=max_results,
+    )
     if not urls:
         return []
     return get_cleaned_texts(urls)
@@ -137,7 +146,14 @@ class WebSearchAgent:
     ) -> List[Dict[str, str]]:
         max_r = max_results or self.max_results
         urls = search_and_get_urls(query, num_results=max_r)
-        return [{"title": u, "url": u, "snippet": ""} for u in urls]
+        return [
+            {
+                "title": u,
+                "url": u,
+                "snippet": "",
+            }
+            for u in urls
+        ]
 
     def extract_page_content(self, url: str) -> str:
         return extract_text_from_url(url)
@@ -146,10 +162,17 @@ class WebSearchAgent:
         query = f"{topic} trends insights latest news" if topic else context
         results = self.search_web(query, max_results=3)
         contents: List[str] = []
+
         for r in results[:2]:
             if r["url"].startswith("http"):
                 contents.append(self.extract_page_content(r["url"]))
-        summary = await self._summarize_research(topic, results, contents)
+
+        summary = await self._summarize_research(
+            topic,
+            results,
+            contents,
+        )
+
         return {
             "search_results": results,
             "extracted_content": contents,
@@ -198,6 +221,7 @@ class LinkedInResearcher(WebSearchAgent):
     async def generate_post(self, topic: str):
         research = await self.research_topic(topic)
         summary = research.get("research_summary", "")
+
         if not llm or not summary:
             research["linkedin_post"] = (
                 f"{topic.title()} – Key update: {summary or 'Insights gathered; see sources.'}"[
@@ -215,6 +239,7 @@ class LinkedInResearcher(WebSearchAgent):
             resp = await llm.ainvoke(prompt)
             research["linkedin_post"] = str(getattr(resp, "content", resp)).strip()
             return research
+
         except Exception as e:
             logger.warning(f"[linkedin_researcher] post generation failed: {e}")
             research["linkedin_post"] = summary
