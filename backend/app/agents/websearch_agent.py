@@ -10,6 +10,9 @@ import requests
 from tavily import TavilyClient
 from dotenv import load_dotenv
 
+from app.agents.web_content_agent import return_markdown
+
+
 load_dotenv()
 
 logger = logging.getLogger(__name__)
@@ -56,21 +59,6 @@ def _get(url: str, params: Optional[Dict[str, Any]] = None) -> requests.Response
     raise last_exc
 
 
-def extract_text_from_url(url: str) -> str:
-    jina_url = "https://r.jina.ai/" + url
-    try:
-        res = requests.get(jina_url)
-        return res.text if res.status_code == 200 and res.text else ""
-
-    except Exception as e:
-        logger.warning(f"Error fetching content from {url}: {e}")
-        return f"Error fetching content from {url}: {str(e)}"
-
-
-def return_markdown(url: str) -> str:
-    return extract_text_from_url(url)
-
-
 # Tavily search client
 _TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 _tavily: Optional[TavilyClient] = (
@@ -111,7 +99,7 @@ def search_and_get_urls(
 def get_cleaned_texts(urls: List[str]) -> List[Dict[str, str]]:
     texts: List[Dict[str, str]] = []
     for u in urls:
-        md = extract_text_from_url(u)
+        md = return_markdown(u)
         if md and md.strip():
             texts.append(
                 {
@@ -129,6 +117,7 @@ def web_search_pipeline(query: str, max_results: int = 10) -> List[Dict[str, str
     )
     if not urls:
         return []
+
     return get_cleaned_texts(urls)
 
 
@@ -156,7 +145,7 @@ class WebSearchAgent:
         ]
 
     def extract_page_content(self, url: str) -> str:
-        return extract_text_from_url(url)
+        return return_markdown(url)
 
     async def research_topic(self, topic: str, context: str = "") -> Dict[str, Any]:
         query = f"{topic} trends insights latest news" if topic else context
