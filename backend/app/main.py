@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.file_based.endpoints import router as v1_router
-from app.api.v2.endpoints import router as v2_router
+from app.api.text_based.endpoints import router as v2_router
 
 app = FastAPI(
     title="Resume Analysis API",
