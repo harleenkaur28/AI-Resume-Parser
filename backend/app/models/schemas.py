@@ -1,4 +1,3 @@
-# All Pydantic models for the backend
 from typing import List, Optional, Dict, Any, Literal
 from datetime import datetime, timezone
 from pydantic import BaseModel, Field, HttpUrl
@@ -458,3 +457,29 @@ class ATSEvaluationResponse(BaseModel):
     message: str = "ATS evaluation completed successfully"
     analysis: Dict[str, Any]
     narrative: str
+
+
+# JD Evaluator specific models
+class JDEvaluatorRequest(BaseModel):
+    """Input model for the JD evaluator agent.
+
+    Fields mirror the prompt inputs used by the JD evaluator.
+    """
+
+    company_name: Optional[str] = None
+    company_website_content: Optional[str] = None
+    jd: str = Field(..., min_length=1)
+    resume: str = Field(..., min_length=1)
+
+
+class JDEvaluatorResponse(BaseModel):
+    """Structured response expected from the JD evaluator.
+
+    Matches the strict JSON schema required by the JD evaluator prompt.
+    """
+
+    success: bool = True
+    message: str = "JD evaluation completed"
+    score: int
+    reasons_for_the_score: List[str] = Field(default_factory=list)
+    suggestions: List[str] = Field(default_factory=list)
