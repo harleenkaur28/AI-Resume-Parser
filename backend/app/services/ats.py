@@ -17,7 +17,7 @@ from app.models.schemas import JDEvaluatorRequest
 from app.models.schemas import JDEvaluatorResponse
 
 
-def ats_evaluate_service(
+async def ats_evaluate_service(
     resume_text: str,
     jd_text: str | None,
     jd_link: str | None = None,

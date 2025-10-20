@@ -17,7 +17,7 @@ from app.models.schemas import (
 )
 
 
-def tailor_resume(
+async def tailor_resume(
     resume_text: str,
     job_role: str,
     company_name: Optional[str] = None,
