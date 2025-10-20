@@ -25,6 +25,8 @@ from app.api.hiring_assistant import file_based_router as hiring_file_based_rout
 from app.api.hiring_assistant import text_based_router as hiring_text_based_router
 from app.api.resume_analysis import file_based_router as resume_file_based_router
 from app.api.resume_analysis import text_based_router as resume_text_based_router
+from app.api.ats import router as ats_router
+from app.api.tailored_resume import router as tailored_resume_router
 
 app.include_router(
     linkedin_router,
@@ -103,5 +105,21 @@ app.include_router(
     prefix="/api/v2",
     tags=[
         "Resume Analysis",
+    ],
+)
+
+app.include_router(
+    ats_router,
+    prefix="/api/v2",
+    tags=[
+        "ATS Evaluation",
+    ],
+)
+
+app.include_router(
+    tailored_resume_router,
+    prefix="/api/v2",
+    tags=[
+        "Tailored Resume",
     ],
 )
