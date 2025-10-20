@@ -17,6 +17,8 @@ Operating principles:
 Inputs:
 - Job Description: <<JD>>
 - Resume: <<RESUME>>
+- Company Name: <<COMPANY_NAME>>
+- Company Website Content: <<COMPANY_WEBSITE_CONTENT>>
 
 Processing steps:
 1) Pre-check binary requirements:
@@ -171,6 +173,12 @@ Examples for suggestions:
 - "List relevant certifications (e.g., AWS SAA) if held, as JD emphasizes cloud proficiency."
 
 Invocation format:
+
+Comapny: {company_name}
+
+Company Website Content:
+{company_website_content}
+
 Job Description:
 {jd}
 
@@ -184,6 +192,8 @@ jd_evaluator_prompt_template = PromptTemplate(
     input_variables=[
         "jd",
         "resume",
+        "company_name",
+        "company_website_content",
     ],
     template=jd_evaluator_prompt_template_str,
 )
