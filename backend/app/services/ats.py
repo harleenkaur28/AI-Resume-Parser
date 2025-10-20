@@ -19,7 +19,7 @@ from app.models.schemas import JDEvaluatorResponse
 
 def ats_evaluate_service(
     resume_text: str,
-    jd_text: str,
+    jd_text: str | None,
     jd_link: str | None = None,
     company_name: Optional[str] = None,
     company_website: Optional[str] = None,
@@ -32,6 +32,26 @@ def ats_evaluate_service(
       "narrative": "Analysis Narrative ..."
     }
     """
+
+    if jd_text is None:
+        if jd_link is not None:
+            import app.agents.web_content_agent as web_agent
+
+            try:
+                jd_text = web_agent.return_markdown(jd_link)
+
+            except Exception:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Failed to retrieve job description from link.",
+                )
+
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Either jd_text or jd_link must be provided.",
+            )
+
     try:
         # Validate inputs using JDEvaluatorRequest Pydantic model
         try:
