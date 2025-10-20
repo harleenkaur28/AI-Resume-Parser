@@ -19,7 +19,16 @@ try:
 except Exception:
     default_llm = None
 
+
+from app.core.llm import MODEL_NAME
+
 load_dotenv()
+
+
+from app.agents.web_content_agent import return_markdown
+
+
+from app.data.ai.jd_evaluator import jd_evaluator_prompt_template as ATS_PROMPT
 
 
 def _try_init_tavily() -> list:
@@ -37,71 +46,9 @@ def _try_init_tavily() -> list:
         return []
 
 
-from app.agents.web_content_agent import return_markdown
-
-
-ATS_PROMPT = ChatPromptTemplate.from_template(
-    """
-    You are an expert ATS and resume analysis system. Analyze the candidate's resume against the provided Job Description (JD) and company context to produce:
-
-    1) A comprehensive, structured JSON report with the following keys:
-       - ats_score: number (0-100)
-       - summary: string
-       - keyword_match: {
-           matched_keywords: string[]
-           missing_keywords: string[]
-           coverage_ratio: number (0-1)
-         }
-       - skills_alignment: {
-           strong: string[]
-           medium: string[]
-           gaps: string[]
-         }
-       - experience_alignment: {
-           relevance_notes: string[]
-           quantification_quality: string  // poor | fair | good | excellent
-           seniority_fit: string           // underqualified | appropriate | overqualified
-         }
-       - formatting_and_ats: {
-           sections_present: string[]      // e.g., ["Summary", "Skills", ...]
-           parseability_risk: string       // low | medium | high (tables/images/special formatting)
-           recommendations: string[]
-         }
-       - jd_matching: {
-           role_specific_requirements_met: string[]
-           role_specific_requirements_missing: string[]
-           culture_values_alignment: string[]
-         }
-       - action_items: string[]            // prioritized, concrete improvements
-
-    2) A short human-readable narrative (2–4 paragraphs) titled "Analysis Narrative" that explains the score, the most important gaps, and the top improvements that would most increase the score.
-
-    Guidance:
-    - Be precise and practical; quote relevant keywords where useful.
-    - Reflect terminology from the JD and company context for accurate matching, without fabricating experiences.
-    - If the JD is broad or ambiguous, state assumptions.
-    - The ATS score should reflect keyword coverage, seniority fit, experience relevance, and formatting risk.
-
-    Company: {company_name}
-
-    Company website content:
-    {company_website_content}
-
-    Job description:
-    {jd}
-
-    Resume:
-    {resume}
-
-    Respond with a JSON object followed by a newline and then the narrative.
-    The JSON must be the first thing in the response.
-    """
-)
-
-
 @dataclass
 class GraphConfig:
-    model: str = "gemini-2.0-flash"
+    model: str = MODEL_NAME
     temperature: float = 0.1
 
 
@@ -132,10 +79,15 @@ class ATSEvaluatorGraph:
 
         self.tools = _try_init_tavily()
         self.llm_with_tools = (
-            self.llm.bind_tools(tools=self.tools) if self.tools else self.llm
+            self.llm.bind_tools(
+                tools=self.tools,
+            )
+            if self.tools
+            else self.llm
         )
 
         site_md = return_markdown(company_website) if company_website else ""
+
         self.system_prompt = ATS_PROMPT.format_messages(
             resume=resume_text.strip(),
             jd=(jd_text or "").strip(),
@@ -152,15 +104,22 @@ class ATSEvaluatorGraph:
 
     def build(self):
         g = StateGraph(MessagesState)
+
         g.add_node("agent", self.agent)
+
         if self.tools:
             g.add_node("tools", ToolNode(tools=self.tools))
+
         g.add_edge(START, "agent")
+
         if self.tools:
             g.add_conditional_edges("agent", tools_condition)
             g.add_edge("tools", "agent")
+
         g.add_edge("agent", END)
+
         self.graph = g.compile()
+
         return self.graph
 
     def __call__(self):

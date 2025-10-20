@@ -1,4 +1,4 @@
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 from app.core.llm import llm
 
 jd_evaluator_prompt_template_str = """
@@ -188,16 +188,9 @@ Resume:
 Now process the above using the framework and output only the JSON object matching the schema.
 """
 
-jd_evaluator_prompt_template = PromptTemplate(
-    input_variables=[
-        "jd",
-        "resume",
-        "company_name",
-        "company_website_content",
-    ],
-    template=jd_evaluator_prompt_template_str,
-)
 
-jd_evaluator_chain = jd_evaluator_prompt_template | llm
+jd_evaluator_prompt_template = ChatPromptTemplate.from_template(
+    jd_evaluator_prompt_template_str,
+)
 
 # to be used in ats thingy
