@@ -110,7 +110,7 @@ app.include_router(
 
 app.include_router(
     ats_router,
-    prefix="/api/v2",
+    prefix="/api/v1",
     tags=[
         "ATS Evaluation",
     ],
@@ -118,7 +118,7 @@ app.include_router(
 
 app.include_router(
     tailored_resume_router,
-    prefix="/api/v2",
+    prefix="/api/v1",
     tags=[
         "Tailored Resume",
     ],
