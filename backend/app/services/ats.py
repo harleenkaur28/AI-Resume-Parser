@@ -24,14 +24,7 @@ def ats_evaluate_service(
     company_name: Optional[str] = None,
     company_website: Optional[str] = None,
 ) -> JDEvaluatorResponse:
-    """Return a detailed ATS analysis including JD matching and suggestions.
-
-    Response shape:
-    {
-      "analysis": { ...structured JSON... },
-      "narrative": "Analysis Narrative ..."
-    }
-    """
+    """Return a detailed ATS analysis including JD matching and suggestions."""
 
     if jd_text is None:
         if jd_link is not None:

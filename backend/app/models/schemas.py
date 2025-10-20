@@ -468,7 +468,8 @@ class JDEvaluatorRequest(BaseModel):
 
     company_name: Optional[str] = None
     company_website_content: Optional[str] = None
-    jd: str = Field(..., min_length=1)
+    jd: Optional[str] = Field(..., min_length=1)
+    jd_link: Optional[str] = None
     resume: str = Field(..., min_length=1)
 
 
