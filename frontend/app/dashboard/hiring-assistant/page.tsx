@@ -107,7 +107,7 @@ export default function HiringAssistant() {
 	const fetchUserResumes = async () => {
 		setIsLoadingResumes(true);
 		try {
-			const response = await fetch("/api/backend-interface/gen-answer", {
+			const response = await fetch("/api/gen-answer", {
 				method: "GET",
 			});
 
@@ -318,7 +318,7 @@ export default function HiringAssistant() {
 				formDataToSend.append("company_url", formData.company_url);
 			}
 
-			const response = await fetch("/api/backend-interface/gen-answer", {
+			const response = await fetch("/api/gen-answer", {
 				method: "POST",
 				body: formDataToSend,
 			});

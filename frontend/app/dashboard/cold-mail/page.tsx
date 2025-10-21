@@ -75,7 +75,7 @@ export default function ColdMailGenerator() {
 	const fetchUserResumes = async () => {
 		setIsLoadingResumes(true);
 		try {
-			const response = await fetch("/api/backend-interface/cold-mail", {
+			const response = await fetch("/api/cold-mail", {
 				method: "GET",
 			});
 
@@ -305,7 +305,7 @@ export default function ColdMailGenerator() {
 			const endpoint =
 				resumeSelectionMode === "customDraft"
 					? "/api/cold-mail/edit"
-					: "/api/backend-interface/cold-mail";
+					: "/api/cold-mail";
 
 			const response = await fetch(endpoint, {
 				method: "POST",

@@ -40,7 +40,7 @@ export default function UploadResume({
 			formData.append("customName", customName.trim());
 			formData.append("showInCentral", showInCentral.toString());
 
-			const response = await fetch("/api/backend-interface/analysis", {
+			const response = await fetch("/api/analysis", {
 				method: "POST",
 				body: formData,
 			});

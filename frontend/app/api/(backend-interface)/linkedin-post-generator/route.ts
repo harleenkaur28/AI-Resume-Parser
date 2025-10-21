@@ -179,8 +179,8 @@ export async function GET() {
 			postCountRange: { min: 1, max: 5 },
 		},
 		reference: {
-			hiringAssistant: "/api/backend-interface/gen-answer",
-			coldMail: "/api/backend-interface/cold-mail",
+			hiringAssistant: "/api/gen-answer",
+			coldMail: "/api/cold-mail",
 			linkedinPosts: "/api/linkedin-post-generator",
 			backendEndpoint: "/api/v1/linkedin/generate-posts",
 		},

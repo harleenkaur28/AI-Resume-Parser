@@ -79,7 +79,7 @@ export default function PdfResumePage() {
 	const fetchUserResumes = async () => {
 		setIsLoadingResumes(true);
 		try {
-			const response = await fetch("/api/backend-interface/cold-mail", {
+			const response = await fetch("/api/cold-mail", {
 				method: "GET",
 			});
 
@@ -148,7 +148,7 @@ export default function PdfResumePage() {
 				formData.append("job_role", "General");
 			}
 
-			const response = await fetch("/api/backend-interface/tailored-resume", {
+			const response = await fetch("/api/tailored-resume", {
 				method: "POST",
 				body: formData,
 			});

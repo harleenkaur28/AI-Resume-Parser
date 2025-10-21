@@ -43,9 +43,7 @@ export default function TipsClient() {
 				if (category) params.append("job_category", category);
 				if (skills) params.append("skills", skills);
 
-				const response = await fetch(
-					`/api/backend-interface/tips/?${params.toString()}`
-				);
+				const response = await fetch(`/api/tips/?${params.toString()}`);
 
 				if (!response.ok) {
 					throw new Error(`HTTP error! status: ${response.status}`);
