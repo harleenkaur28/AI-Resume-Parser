@@ -57,7 +57,7 @@ const navItems = [
 const actionItems = [
 	{
 		label: "Create Resume",
-		href: "/pdf-resume",
+		href: "/dashboard/pdf-resume",
 		icon: Plus,
 		description: "Build a professional resume",
 	},

@@ -26,7 +26,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
 		} else if (action === "interview") {
 			router.push("/dashboard/hiring-assistant");
 		} else if (action === "pdf-resume") {
-			router.push("/pdf-resume");
+			router.push("/dashboard/pdf-resume");
 		} else if (action === "linkedin") {
 			router.push("/dashboard/linkedin-posts");
 		}

@@ -303,7 +303,7 @@ define(["./workbox-1bb06f5e"], function (e) {
 					revision: "VWafiOeo6jk5CEZqIKUmk",
 				},
 				{
-					url: "/_next/static/chunks/app/pdf-resume/page-9b5698ad18434e88.js",
+					url: "/_next/static/chunks/app/dashboard/pdf-resume/page-9b5698ad18434e88.js",
 					revision: "VWafiOeo6jk5CEZqIKUmk",
 				},
 				{
