@@ -16,21 +16,24 @@ app.add_middleware(
 )
 
 
-from app.api.linkedin import router as linkedin_router
-from app.api.postgres import router as postgres_router
-from app.api.tips import router as tips_router
-from app.api.cold_mail import file_based_router as cold_mail_file_based_router
-from app.api.cold_mail import text_based_router as cold_mail_text_based_router
-from app.api.hiring_assistant import file_based_router as hiring_file_based_router
-from app.api.hiring_assistant import text_based_router as hiring_text_based_router
-from app.api.resume_analysis import file_based_router as resume_file_based_router
-from app.api.resume_analysis import text_based_router as resume_text_based_router
-from app.api.ats import file_based_router as ats_file_based_router
-from app.api.ats import text_based_router as ats_text_based_router
-from app.api.tailored_resume import (
+from app.routes.linkedin import router as linkedin_router
+from app.routes.postgres import router as postgres_router
+from app.routes.tips import router as tips_router
+from app.routes.cold_mail import file_based_router as cold_mail_file_based_router
+from app.routes.cold_mail import text_based_router as cold_mail_text_based_router
+from app.routes.hiring_assistant import file_based_router as hiring_file_based_router
+from app.routes.hiring_assistant import text_based_router as hiring_text_based_router
+from app.routes.resume_analysis import file_based_router as resume_file_based_router
+from app.routes.resume_analysis import text_based_router as resume_text_based_router
+from app.routes.ats import file_based_router as ats_file_based_router
+from app.routes.ats import text_based_router as ats_text_based_router
+from app.routes.tailored_resume import (
     file_based_router as tailored_resume_file_based_router,
+)
+from app.routes.tailored_resume import (
     text_based_router as tailored_resume_text_based_router,
 )
+
 
 app.include_router(
     linkedin_router,
