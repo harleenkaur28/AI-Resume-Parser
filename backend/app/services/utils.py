@@ -4,9 +4,8 @@ import pickle
 import spacy
 import nltk
 from nltk.corpus import stopwords
-from PyPDF2 import PdfReader
-from docx import Document
-import io
+import fitz
+import pymupdf4llm
 from typing import List
 
 
@@ -64,51 +63,34 @@ tfidf_vectorizer = pickle.load(
 
 def process_document(file_bytes, file_name):
     file_extension = os.path.splitext(file_name)[1].lower()
-    raw_text = ""
     try:
-        if file_extension == ".txt" or file_extension == ".md":
-            raw_text = file_bytes.decode()
+        if file_extension in {".txt", ".md"}:
+            return file_bytes.decode()
 
-        elif file_extension == ".pdf":
-            pdf_reader = PdfReader(io.BytesIO(file_bytes))
-            for page in pdf_reader.pages:
-                raw_text += page.extract_text() or ""
+        if file_extension in {".pdf", ".doc", ".docx"}:
+            filetype = file_extension.lstrip(".")
+            return _convert_document_to_markdown(file_bytes, filetype)
 
-        elif file_extension == ".docx":
-            doc = Document(io.BytesIO(file_bytes))
-
-            for section in doc.sections:
-                header = section.header
-                for para in header.paragraphs:
-                    raw_text += para.text + "\n"
-
-            for para in doc.paragraphs:
-                raw_text += para.text + "\n"
-
-            for table in doc.tables:
-                for row in table.rows:
-                    row_text = []
-                    for cell in row.cells:
-                        cell_text = cell.text.strip().replace("\n", " ")
-                        row_text.append(cell_text)
-                    raw_text += "\t".join(row_text) + "\n"
-
-            for section in doc.sections:
-                footer = section.footer
-                for para in footer.paragraphs:
-                    raw_text += para.text + "\n"
-
-        else:
-            print(
-                f"Unsupported file type: {file_extension}. Please upload TXT, MD, PDF, or DOCX."
-            )
-            return None
+        print(
+            f"Unsupported file type: {file_extension}. Please upload TXT, MD, PDF, or DOCX."
+        )
+        return None
 
     except Exception as e:
         print(f"Error processing file {file_name}: {e}")
         return None
 
-    return raw_text
+
+def _convert_document_to_markdown(file_bytes: bytes, filetype: str) -> str:
+    """Render document bytes to Markdown using PyMuPDF for consistent parsing."""
+    with fitz.open(stream=file_bytes, filetype=filetype) as doc:
+        return pymupdf4llm.to_markdown(
+            doc,
+            force_text=True,
+            ignore_images=True,
+            ignore_graphics=True,
+            page_separators=True,
+        )
 
 
 def clean_resume(txt):

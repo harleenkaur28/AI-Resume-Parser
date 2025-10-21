@@ -12,8 +12,6 @@ dependencies = [
     "langchain-google-genai>=2.1.5",
     "motor>=3.7.1",
     "nltk>=3.9.1",
-    "pypdf2>=3.0.1",
-    "python-docx>=1.1.2",
     "python-dotenv>=1.1.0",
     "python-multipart>=0.0.20",
     "scikit-learn>=1.7.0",
@@ -29,6 +27,8 @@ dependencies = [
     "gitingest>=0.3.1",
     "langchain-tavily>=0.2.11",
     "tavily-python>=0.7.12",
+    "pymupdf>=1.26.5",
+    "pymupdf4llm>=0.0.27",
 ]
 
 [dependency-groups]
