@@ -80,8 +80,8 @@ const actionItems = [
 		description: "Generate LinkedIn content",
 	},
 	{
-		label: "Get Suggestions",
-		href: "/dashboard/tips",
+		label: "ATS Compatibility",
+		href: "/dashboard/ats",
 		icon: Lightbulb,
 		description: "Improve your job search",
 	},
