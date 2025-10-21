@@ -1,39 +1,30 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { ResumeData, PdfGenerationRequest } from "@/types/resume";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	Download,
 	FileText,
 	Upload,
-	Copy,
-	CheckCircle,
 	ArrowLeft,
 	Settings,
 	Eye,
 	Briefcase,
+	CheckCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Loader } from "@/components/ui/loader";
 import LoadingOverlay from "@/components/pdf-resume/LoadingOverlay";
+import PageLoader from "@/components/pdf-resume/PageLoader";
+import ResumeSourceSelector from "@/components/pdf-resume/ResumeSourceSelector";
+import TailoringForm from "@/components/pdf-resume/TailoringForm";
+import ConfigurationForm from "@/components/pdf-resume/ConfigurationForm";
+import ResumePreview from "@/components/pdf-resume/ResumePreview";
+import LatexOutput from "@/components/pdf-resume/LatexOutput";
 
 interface UserResume {
 	id: string;
@@ -368,22 +359,7 @@ export default function PdfResumePage() {
 
 	return (
 		<>
-			<AnimatePresence>
-				{isPageLoading && (
-					<motion.div
-						initial={{ opacity: 1 }}
-						exit={{ opacity: 0 }}
-						className="fixed inset-0 bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831] flex items-center justify-center z-50"
-					>
-						<Loader
-							variant="pulse"
-							size="xl"
-							text="Loading PDF Resume Generator..."
-						/>
-					</motion.div>
-				)}
-			</AnimatePresence>
-
+			<PageLoader isPageLoading={isPageLoading} />
 			{!isPageLoading && (
 				<div className="min-h-screen bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831]">
 					<LoadingOverlay
@@ -434,395 +410,58 @@ export default function PdfResumePage() {
 
 							{/* Responsive grid - stack on mobile */}
 							<div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
-								{/* Input Section */}
+								{/* Input Form */}
 								<motion.div
 									initial={{ opacity: 0, y: 20 }}
 									animate={{ opacity: 1, y: 0 }}
 									transition={{ duration: 0.8, delay: 0.4 }}
-									className="order-1 space-y-6"
+									className="order-1"
 								>
-									{/* Resume Input Mode Selection */}
 									<Card className="relative backdrop-blur-lg bg-white/5 border-white/10 shadow-2xl overflow-hidden">
 										<CardHeader className="pb-4">
-											<CardTitle className="text-[#EEEEEE] text-xl sm:text-2xl font-semibold flex items-center gap-2">
-												<Upload className="h-5 w-5 text-[#76ABAE]" />
-												Resume Source
+											<CardTitle className="text-[#EEEEEE] text-xl sm:text-2xl font-semibold">
+												Resume Generator Details
 											</CardTitle>
 											<p className="text-[#EEEEEE]/60 text-sm">
-												Choose how to provide your resume data
+												Provide your resume and customize the output format
 											</p>
 										</CardHeader>
-										<CardContent className="space-y-4">
-											{/* Input Mode Tabs */}
-											<div className="flex gap-2 flex-wrap">
-												<Button
-													onClick={() => setInputMode("file")}
-													variant={inputMode === "file" ? "default" : "outline"}
-													size="sm"
-													className={
-														inputMode === "file"
-															? "bg-[#76ABAE] text-white hover:bg-[#76ABAE]/90"
-															: "bg-white/5 border-white/20 text-[#EEEEEE] hover:bg-white/10"
-													}
-												>
-													Upload File
-												</Button>
-												<Button
-													onClick={() => setInputMode("resumeId")}
-													variant={
-														inputMode === "resumeId" ? "default" : "outline"
-													}
-													size="sm"
-													className={
-														inputMode === "resumeId"
-															? "bg-[#76ABAE] text-white hover:bg-[#76ABAE]/90"
-															: "bg-white/5 border-white/20 text-[#EEEEEE] hover:bg-white/10"
-													}
-												>
-													Saved Resumes
-												</Button>
-											</div>
+										<CardContent className="space-y-6">
+											{/* Resume Input Mode Selection */}
+											<ResumeSourceSelector
+												inputMode={inputMode}
+												setInputMode={setInputMode}
+												resumeFile={resumeFile}
+												handleFileUpload={handleFileUpload}
+												userResumes={userResumes}
+												selectedResumeId={selectedResumeId}
+												handleResumeSelection={handleResumeSelection}
+												isLoadingResumes={isLoadingResumes}
+											/>
 
-											{/* File Upload Mode */}
-											{inputMode === "file" && (
-												<div className="space-y-3">
-													<Label
-														htmlFor="file-upload"
-														className="text-[#EEEEEE] text-sm font-medium block"
-													>
-														Upload Resume File
-													</Label>
-													<div className="flex items-center gap-2">
-														<input
-															id="file-upload"
-															type="file"
-															accept=".pdf,.doc,.docx,.txt"
-															onChange={handleFileUpload}
-															className="hidden"
-														/>
-														<Button
-															onClick={() =>
-																document.getElementById("file-upload")?.click()
-															}
-															variant="outline"
-															size="sm"
-															className="bg-white/5 border-white/20 text-[#EEEEEE] hover:bg-white/10 hover:border-[#76ABAE]/50"
-														>
-															<Upload className="h-4 w-4 mr-2" />
-															Choose File
-														</Button>
-														{resumeFile && (
-															<span className="text-sm text-[#EEEEEE]/70">
-																{resumeFile.name}
-															</span>
-														)}
-													</div>
-													{resumeFile && (
-														<div className="flex items-center gap-2 text-green-400 bg-green-900/20 rounded-lg px-3 py-2">
-															<CheckCircle className="h-4 w-4" />
-															<span className="text-sm font-medium">
-																File uploaded successfully
-															</span>
-														</div>
-													)}
-												</div>
-											)}
+											{/* Tailored Resume Options */}
+											<TailoringForm
+												useTailoring={useTailoring}
+												setUseTailoring={setUseTailoring}
+												jobRole={jobRole}
+												setJobRole={setJobRole}
+												companyName={companyName}
+												setCompanyName={setCompanyName}
+												companyWebsite={companyWebsite}
+												setCompanyWebsite={setCompanyWebsite}
+												jobDescription={jobDescription}
+												setJobDescription={setJobDescription}
+											/>
 
-											{/* Saved Resumes Mode */}
-											{inputMode === "resumeId" && (
-												<div className="space-y-3">
-													<Label
-														htmlFor="resume-select"
-														className="text-[#EEEEEE] text-sm font-medium block"
-													>
-														Select a Saved Resume
-													</Label>
-													{isLoadingResumes ? (
-														<div className="text-[#EEEEEE]/60 text-sm py-4">
-															Loading resumes...
-														</div>
-													) : userResumes.length > 0 ? (
-														<Select
-															value={selectedResumeId}
-															onValueChange={handleResumeSelection}
-														>
-															<SelectTrigger className="bg-white/5 border-white/20 text-[#EEEEEE] focus:ring-[#76ABAE]/50">
-																<SelectValue placeholder="Select a resume" />
-															</SelectTrigger>
-															<SelectContent className="bg-[#31363F] border-white/20">
-																{userResumes.map((resume) => (
-																	<SelectItem
-																		key={resume.id}
-																		value={resume.id}
-																		className="text-[#EEEEEE] focus:bg-[#76ABAE]/20"
-																	>
-																		<div>
-																			<div className="font-medium">
-																				{resume.customName}
-																			</div>
-																			{resume.candidateName && (
-																				<div className="text-sm text-[#EEEEEE]/60">
-																					{resume.candidateName}
-																				</div>
-																			)}
-																		</div>
-																	</SelectItem>
-																))}
-															</SelectContent>
-														</Select>
-													) : (
-														<div className="text-[#EEEEEE]/60 text-sm py-4 bg-white/5 rounded-lg px-4">
-															No saved resumes found. Please upload a file
-															instead.
-														</div>
-													)}
-													{selectedResumeId && (
-														<div className="flex items-center gap-2 text-green-400 bg-green-900/20 rounded-lg px-3 py-2">
-															<CheckCircle className="h-4 w-4" />
-															<span className="text-sm font-medium">
-																Resume selected
-															</span>
-														</div>
-													)}
-												</div>
-											)}
-										</CardContent>
-									</Card>
-
-									{/* Tailored Resume Options */}
-									<Card className="relative backdrop-blur-lg bg-white/5 border-white/10 shadow-2xl overflow-hidden">
-										<CardHeader className="pb-4">
-											<CardTitle className="text-[#EEEEEE] text-xl font-semibold flex items-center gap-2">
-												<Briefcase className="h-5 w-5 text-[#76ABAE]" />
-												Tailor Resume (Optional)
-											</CardTitle>
-											<p className="text-[#EEEEEE]/60 text-sm">
-												Customize your resume for a specific job
-											</p>
-										</CardHeader>
-										<CardContent className="space-y-4">
-											<div className="flex items-center gap-2">
-												<input
-													type="checkbox"
-													id="use-tailoring"
-													checked={useTailoring}
-													onChange={(e) => setUseTailoring(e.target.checked)}
-													className="w-4 h-4 text-[#76ABAE] bg-white/5 border-white/20 rounded focus:ring-[#76ABAE]"
-												/>
-												<Label
-													htmlFor="use-tailoring"
-													className="text-[#EEEEEE] text-sm cursor-pointer"
-												>
-													Enable resume tailoring for this job
-												</Label>
-											</div>
-
-											{useTailoring && (
-												<>
-													<div>
-														<Label
-															htmlFor="job-role"
-															className="text-[#EEEEEE] text-sm font-medium"
-														>
-															Job Role *
-														</Label>
-														<input
-															id="job-role"
-															type="text"
-															value={jobRole}
-															onChange={(e) => setJobRole(e.target.value)}
-															placeholder="e.g., Senior Software Engineer"
-															className="mt-1 w-full p-2 text-sm bg-white/5 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#76ABAE]/50 text-[#EEEEEE] placeholder-[#EEEEEE]/40"
-														/>
-													</div>
-
-													<div>
-														<Label
-															htmlFor="company-name"
-															className="text-[#EEEEEE] text-sm font-medium"
-														>
-															Company Name (Optional)
-														</Label>
-														<input
-															id="company-name"
-															type="text"
-															value={companyName}
-															onChange={(e) => setCompanyName(e.target.value)}
-															placeholder="e.g., Tech Corp"
-															className="mt-1 w-full p-2 text-sm bg-white/5 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#76ABAE]/50 text-[#EEEEEE] placeholder-[#EEEEEE]/40"
-														/>
-													</div>
-
-													<div>
-														<Label
-															htmlFor="company-website"
-															className="text-[#EEEEEE] text-sm font-medium"
-														>
-															Company Website (Optional)
-														</Label>
-														<input
-															id="company-website"
-															type="text"
-															value={companyWebsite}
-															onChange={(e) =>
-																setCompanyWebsite(e.target.value)
-															}
-															placeholder="e.g., https://techcorp.com"
-															className="mt-1 w-full p-2 text-sm bg-white/5 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#76ABAE]/50 text-[#EEEEEE] placeholder-[#EEEEEE]/40"
-														/>
-													</div>
-
-													<div>
-														<Label
-															htmlFor="job-description"
-															className="text-[#EEEEEE] text-sm font-medium"
-														>
-															Job Description (Optional)
-														</Label>
-														<textarea
-															id="job-description"
-															value={jobDescription}
-															onChange={(e) =>
-																setJobDescription(e.target.value)
-															}
-															placeholder="Paste the job description here for better tailoring..."
-															className="mt-1 w-full h-32 p-2 text-sm bg-white/5 border border-white/20 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#76ABAE]/50 text-[#EEEEEE] placeholder-[#EEEEEE]/40"
-														/>
-													</div>
-												</>
-											)}
-										</CardContent>
-									</Card>
-
-									{/* Configuration Card */}
-									<Card className="relative backdrop-blur-lg bg-white/5 border-white/10 shadow-2xl overflow-hidden">
-										<CardHeader className="pb-4">
-											<CardTitle className="text-[#EEEEEE] text-xl font-semibold flex items-center gap-2">
-												<Settings className="h-5 w-5 text-[#76ABAE]" />
-												Configuration
-											</CardTitle>
-											<p className="text-[#EEEEEE]/60 text-sm">
-												Customize your resume appearance
-											</p>
-										</CardHeader>
-										<CardContent className="space-y-4">
-											{/* Template Selection */}
-											<div>
-												<Label
-													htmlFor="template"
-													className="text-[#EEEEEE] text-sm font-medium"
-												>
-													Template
-												</Label>
-												<Select
-													value={selectedTemplate}
-													onValueChange={setSelectedTemplate}
-												>
-													<SelectTrigger className="mt-1 bg-white/5 border-white/20 text-[#EEEEEE] focus:ring-[#76ABAE]/50 focus:border-[#76ABAE]/50">
-														<SelectValue placeholder="Select a template" />
-													</SelectTrigger>
-													<SelectContent className="bg-[#31363F] border-white/20">
-														<SelectItem
-															value="professional"
-															className="text-[#EEEEEE] focus:bg-[#76ABAE]/20"
-														>
-															<div>
-																<div className="font-medium">Professional</div>
-																<div className="text-sm text-[#EEEEEE]/60">
-																	Clean, ATS-friendly design
-																</div>
-															</div>
-														</SelectItem>
-														<SelectItem
-															value="modern"
-															className="text-[#EEEEEE] focus:bg-[#76ABAE]/20"
-														>
-															<div>
-																<div className="font-medium">Modern</div>
-																<div className="text-sm text-[#EEEEEE]/60">
-																	Contemporary with visual elements
-																</div>
-															</div>
-														</SelectItem>
-													</SelectContent>
-												</Select>
-											</div>
-
-											{/* Font Size */}
-											<div>
-												<Label
-													htmlFor="fontSize"
-													className="text-[#EEEEEE] text-sm font-medium"
-												>
-													Font Size: {fontSize}pt
-												</Label>
-												<input
-													type="range"
-													min="8"
-													max="12"
-													step="1"
-													value={fontSize}
-													onChange={(e) =>
-														setFontSize(parseInt(e.target.value))
-													}
-													className="mt-2 w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer slider-thumb"
-												/>
-											</div>
-
-											{/* Color Scheme */}
-											<div>
-												<Label
-													htmlFor="colorScheme"
-													className="text-[#EEEEEE] text-sm font-medium"
-												>
-													Color Scheme
-												</Label>
-												<Select
-													value={colorScheme}
-													onValueChange={setColorScheme}
-												>
-													<SelectTrigger className="mt-1 bg-white/5 border-white/20 text-[#EEEEEE] focus:ring-[#76ABAE]/50 focus:border-[#76ABAE]/50">
-														<SelectValue placeholder="Select color scheme" />
-													</SelectTrigger>
-													<SelectContent className="bg-[#31363F] border-white/20">
-														<SelectItem
-															value="default"
-															className="text-[#EEEEEE] focus:bg-[#76ABAE]/20"
-														>
-															Default (Gray)
-														</SelectItem>
-														<SelectItem
-															value="blue"
-															className="text-[#EEEEEE] focus:bg-[#76ABAE]/20"
-														>
-															Professional Blue
-														</SelectItem>
-														<SelectItem
-															value="green"
-															className="text-[#EEEEEE] focus:bg-[#76ABAE]/20"
-														>
-															Modern Green
-														</SelectItem>
-														<SelectItem
-															value="red"
-															className="text-[#EEEEEE] focus:bg-[#76ABAE]/20"
-														>
-															Bold Red
-														</SelectItem>
-													</SelectContent>
-												</Select>
-											</div>
-										</CardContent>
-									</Card>
-
-									{/* Action Buttons */}
-									<Card className="relative backdrop-blur-lg bg-white/5 border-white/10 shadow-2xl overflow-hidden">
-										<CardHeader className="pb-4">
-											<CardTitle className="text-[#EEEEEE] text-xl font-semibold">
-												Generate
-											</CardTitle>
-										</CardHeader>
-										<CardContent className="space-y-3">
+											{/* Configuration Card */}
+											<ConfigurationForm
+												selectedTemplate={selectedTemplate}
+												setSelectedTemplate={setSelectedTemplate}
+												fontSize={fontSize}
+												setFontSize={setFontSize}
+												colorScheme={colorScheme}
+												setColorScheme={setColorScheme}
+											/>
 											{/* Preview Button */}
 											<motion.div
 												whileHover={{ scale: 1.01 }}
@@ -986,354 +625,15 @@ export default function PdfResumePage() {
 									className="order-2 space-y-6"
 								>
 									{/* Resume Preview */}
-									{parsedData && (
-										<Card className="relative backdrop-blur-lg bg-white/5 border-white/10 shadow-2xl overflow-hidden">
-											<CardHeader className="pb-4">
-												<CardTitle className="text-[#EEEEEE] text-xl font-semibold flex items-center gap-2">
-													<Eye className="h-5 w-5 text-[#76ABAE]" />
-													Resume Preview
-												</CardTitle>
-												<p className="text-[#EEEEEE]/60 text-sm">
-													Preview of your resume data
-												</p>
-											</CardHeader>
-											<CardContent className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-												{/* Header */}
-												<div className="text-center border-b border-white/10 pb-4">
-													<h2 className="text-xl font-bold text-[#EEEEEE]">
-														{parsedData.name}
-													</h2>
-													<p className="text-[#EEEEEE]/70">
-														{parsedData.email} • {parsedData.contact}
-													</p>
-													{parsedData.predicted_field && (
-														<span className="inline-block mt-2 px-3 py-1 bg-[#76ABAE]/20 text-[#76ABAE] text-xs rounded-full border border-[#76ABAE]/30">
-															{parsedData.predicted_field}
-														</span>
-													)}
-												</div>
-
-												{/* Main content sections */}
-												<div className="space-y-4 text-sm">
-													{/* Education */}
-													{parsedData.education?.length > 0 && (
-														<div>
-															<h3 className="font-semibold text-[#EEEEEE] mb-2">
-																Education
-															</h3>
-															{parsedData.education.map(
-																(edu: any, index: number) => (
-																	<div
-																		key={index}
-																		className="text-[#EEEEEE]/70 mb-2"
-																	>
-																		{edu.education_detail || edu.degree}
-																	</div>
-																)
-															)}
-														</div>
-													)}
-
-													{/* Skills */}
-													{parsedData.skills_analysis?.length > 0 && (
-														<div>
-															<h3 className="font-semibold text-[#EEEEEE] mb-2">
-																Skills
-															</h3>
-															<div className="flex flex-wrap gap-2">
-																{parsedData.skills_analysis.map(
-																	(skill: any, index: number) => (
-																		<span
-																			key={index}
-																			className="px-2 py-1 bg-white/10 text-[#EEEEEE]/80 text-xs rounded border border-white/20"
-																		>
-																			{skill.skill_name}
-																		</span>
-																	)
-																)}
-															</div>
-														</div>
-													)}
-
-													{/* Languages */}
-													{parsedData.languages?.length > 0 && (
-														<div>
-															<h3 className="font-semibold text-[#EEEEEE] mb-2">
-																Languages
-															</h3>
-															<div className="flex flex-wrap gap-2">
-																{parsedData.languages.map(
-																	(lang: any, i: number) => (
-																		<span
-																			key={i}
-																			className="px-2 py-1 bg-white/10 text-[#EEEEEE]/80 text-xs rounded border border-white/20"
-																		>
-																			{lang.language || lang}
-																		</span>
-																	)
-																)}
-															</div>
-														</div>
-													)}
-
-													{/* Work Experience */}
-													{parsedData.work_experience?.length > 0 && (
-														<div>
-															<h3 className="font-semibold text-[#EEEEEE] mb-2">
-																Experience
-															</h3>
-															{parsedData.work_experience.map(
-																(exp: any, index: number) => (
-																	<div key={index} className="mb-3">
-																		<p className="font-medium text-sm text-[#EEEEEE]">
-																			{exp.role} -{" "}
-																			{exp.company_and_duration || exp.company}
-																		</p>
-																		{exp.bullet_points && (
-																			<ul className="list-disc list-inside text-[#EEEEEE]/70 text-xs mt-1 space-y-1">
-																				{exp.bullet_points.map(
-																					(bp: string, bi: number) => (
-																						<li key={bi}>{bp}</li>
-																					)
-																				)}
-																			</ul>
-																		)}
-																	</div>
-																)
-															)}
-														</div>
-													)}
-
-													{/* Projects */}
-													{parsedData.projects?.length > 0 && (
-														<div>
-															<h3 className="font-semibold text-[#EEEEEE] mb-2">
-																Projects
-															</h3>
-															{parsedData.projects.map(
-																(proj: any, i: number) => (
-																	<div
-																		key={i}
-																		className="mb-3 text-[#EEEEEE]/70"
-																	>
-																		<p className="font-medium text-sm text-[#EEEEEE]">
-																			{proj.title || proj.project_name}
-																		</p>
-																		{proj.technologies_used && (
-																			<p className="text-xs mt-1">
-																				{Array.isArray(proj.technologies_used)
-																					? proj.technologies_used.join(", ")
-																					: proj.technologies_used}
-																			</p>
-																		)}
-																		{proj.description && (
-																			<p className="text-xs mt-1">
-																				{proj.description}
-																			</p>
-																		)}
-																	</div>
-																)
-															)}
-														</div>
-													)}
-
-													{/* Publications */}
-													{parsedData.publications?.length > 0 && (
-														<div>
-															<h3 className="font-semibold text-[#EEEEEE] mb-2">
-																Publications
-															</h3>
-															{parsedData.publications.map(
-																(pub: any, i: number) => (
-																	<div
-																		key={i}
-																		className="mb-2 text-[#EEEEEE]/70"
-																	>
-																		<p className="font-medium text-sm text-[#EEEEEE]">
-																			{pub.title}
-																		</p>
-																		<p className="text-xs">
-																			{pub.authors} —{" "}
-																			{pub.journal_conference || pub.venue} (
-																			{pub.year})
-																		</p>
-																		{pub.doi && (
-																			<p className="text-xs">DOI: {pub.doi}</p>
-																		)}
-																		{pub.url && (
-																			<a
-																				href={pub.url}
-																				target="_blank"
-																				rel="noopener noreferrer"
-																				className="text-[#76ABAE] text-xs hover:underline"
-																			>
-																				Link
-																			</a>
-																		)}
-																	</div>
-																)
-															)}
-														</div>
-													)}
-
-													{/* Positions of responsibility */}
-													{parsedData.positions_of_responsibility?.length >
-														0 && (
-														<div>
-															<h3 className="font-semibold text-[#EEEEEE] mb-2">
-																Positions
-															</h3>
-															{parsedData.positions_of_responsibility.map(
-																(pos: any, i: number) => (
-																	<div
-																		key={i}
-																		className="mb-2 text-[#EEEEEE]/70"
-																	>
-																		<p className="font-medium text-sm text-[#EEEEEE]">
-																			{pos.title || pos.role} —{" "}
-																			{pos.organization}
-																		</p>
-																		{pos.duration && (
-																			<p className="text-xs">{pos.duration}</p>
-																		)}
-																		{pos.description && (
-																			<p className="text-xs mt-1">
-																				{pos.description}
-																			</p>
-																		)}
-																	</div>
-																)
-															)}
-														</div>
-													)}
-
-													{/* Certifications */}
-													{parsedData.certifications?.length > 0 && (
-														<div>
-															<h3 className="font-semibold text-[#EEEEEE] mb-2">
-																Certifications
-															</h3>
-															{parsedData.certifications.map(
-																(cert: any, i: number) => (
-																	<div
-																		key={i}
-																		className="mb-2 text-[#EEEEEE]/70"
-																	>
-																		<p className="font-medium text-sm text-[#EEEEEE]">
-																			{cert.name}
-																		</p>
-																		<p className="text-xs">
-																			{cert.issuing_organization || cert.issuer}{" "}
-																			— {cert.issue_date}
-																			{cert.expiry_date
-																				? ` to ${cert.expiry_date}`
-																				: ""}
-																		</p>
-																		{cert.credential_id && (
-																			<p className="text-xs">
-																				ID: {cert.credential_id}
-																			</p>
-																		)}
-																	</div>
-																)
-															)}
-														</div>
-													)}
-
-													{/* Achievements */}
-													{parsedData.achievements?.length > 0 && (
-														<div>
-															<h3 className="font-semibold text-[#EEEEEE] mb-2">
-																Achievements
-															</h3>
-															{parsedData.achievements.map(
-																(ach: any, i: number) => (
-																	<div
-																		key={i}
-																		className="mb-2 text-[#EEEEEE]/70"
-																	>
-																		<p className="font-medium text-sm text-[#EEEEEE]">
-																			{typeof ach === "string"
-																				? ach
-																				: ach.title}
-																			{ach.year ? ` — ${ach.year}` : ""}
-																		</p>
-																		{ach.description && (
-																			<p className="text-xs">
-																				{ach.description}
-																			</p>
-																		)}
-																	</div>
-																)
-															)}
-														</div>
-													)}
-												</div>
-											</CardContent>
-										</Card>
-									)}
+									{parsedData && <ResumePreview parsedData={parsedData} />}
 
 									{/* LaTeX Output */}
 									{showLatex && latexOutput && (
-										<Card className="relative backdrop-blur-lg bg-white/5 border-white/10 shadow-2xl overflow-hidden">
-											<CardHeader className="pb-4">
-												<CardTitle className="text-[#EEEEEE] text-xl font-semibold flex items-center gap-2">
-													<FileText className="h-5 w-5 text-[#76ABAE]" />
-													LaTeX Output
-												</CardTitle>
-												<p className="text-[#EEEEEE]/60 text-sm">
-													Generated LaTeX code for your resume
-												</p>
-											</CardHeader>
-											<CardContent className="space-y-4">
-												<div className="flex gap-2">
-													<Button
-														onClick={copyLatexToClipboard}
-														variant="outline"
-														size="sm"
-														className="bg-white/5 border-white/20 text-[#EEEEEE] hover:bg-white/10 hover:border-[#76ABAE]/50"
-													>
-														<Copy className="h-4 w-4 mr-2" />
-														Copy LaTeX
-													</Button>
-													<Button
-														onClick={openInOverleaf}
-														variant="outline"
-														size="sm"
-														className="bg-white/5 border-white/20 text-[#EEEEEE] hover:bg-white/10 hover:border-[#76ABAE]/50"
-													>
-														Open in Overleaf
-													</Button>
-												</div>
-
-												<textarea
-													value={latexOutput}
-													readOnly
-													className="w-full h-96 p-4 text-xs font-mono bg-black/20 border border-white/20 rounded-lg resize-none focus:outline-none text-[#EEEEEE] placeholder-[#EEEEEE]/40"
-												/>
-
-												<div className="text-sm text-[#EEEEEE]/60 bg-white/5 rounded-lg p-4 border border-white/10">
-													<p className="font-medium text-[#EEEEEE] mb-2">
-														To compile manually:
-													</p>
-													<ol className="list-decimal list-inside space-y-1">
-														<li>Copy the LaTeX code above</li>
-														<li>
-															Go to{" "}
-															<a
-																href="https://overleaf.com"
-																target="_blank"
-																className="text-[#76ABAE] hover:underline"
-															>
-																Overleaf.com
-															</a>
-														</li>
-														<li>Create a new document and paste the code</li>
-														<li>Click "Recompile" to generate your PDF</li>
-													</ol>
-												</div>
-											</CardContent>
-										</Card>
+										<LatexOutput
+											latexOutput={latexOutput}
+											copyLatexToClipboard={copyLatexToClipboard}
+											openInOverleaf={openInOverleaf}
+										/>
 									)}
 								</motion.div>
 							</div>
