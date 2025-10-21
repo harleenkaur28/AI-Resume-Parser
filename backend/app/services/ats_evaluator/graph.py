@@ -1,17 +1,18 @@
 from __future__ import annotations
 
 import json
-import os
-import typing as t
+import re
 from dataclasses import dataclass
-
-import requests
 from dotenv import load_dotenv
+from fastapi import HTTPException
 from langchain_core.messages import HumanMessage
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import MessagesState, START, END, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
+
+from app.agents.web_content_agent import return_markdown
+from app.data.ai.jd_evaluator import jd_evaluator_prompt_template as ATS_PROMPT
+from app.core.llm import MODEL_NAME
 
 try:
     from app.core.llm import llm as default_llm
@@ -20,15 +21,7 @@ except Exception:
     default_llm = None
 
 
-from app.core.llm import MODEL_NAME
-
 load_dotenv()
-
-
-from app.agents.web_content_agent import return_markdown
-
-
-from app.data.ai.jd_evaluator import jd_evaluator_prompt_template as ATS_PROMPT
 
 
 def _try_init_tavily() -> list:
@@ -131,7 +124,7 @@ def evaluate_ats(
     jd_text: str,
     company_name: str | None = None,
     company_website: str | None = None,
-) -> tuple[dict, str]:
+) -> dict:
     """Run ATS evaluation and return (structured_json, narrative_text).
 
     The model is prompted to return JSON first and then a narrative. We parse the JSON
@@ -148,9 +141,7 @@ def evaluate_ats(
         {
             "messages": [
                 HumanMessage(
-                    content=(
-                        "Return JSON first (no preamble), then a blank line, then the narrative titled 'Analysis Narrative'."
-                    )
+                    content=("Return JSON first (no preamble)."),
                 )
             ]
         }
@@ -159,49 +150,60 @@ def evaluate_ats(
     if not isinstance(content, str):
         content = str(content)
 
-    # Try to parse top-level JSON
+    code_fence_pattern = re.compile(r"^```(json)?\n", re.IGNORECASE)
+
     content_str = content.strip()
-    json_obj: dict = {}
-    narrative = ""
-    try:
-        # If content starts with JSON, parse until the matching brace
-        if content_str.startswith("{"):
-            # naive brace matching
-            brace = 0
-            end_idx = -1
-            for i, ch in enumerate(content_str):
-                if ch == "{":
-                    brace += 1
-                elif ch == "}":
-                    brace -= 1
-                    if brace == 0:
-                        end_idx = i
-                        break
+    content_str = code_fence_pattern.sub("", content_str)
 
-            if end_idx != -1:
-                json_part = content_str[: end_idx + 1]
-                json_obj = json.loads(json_part)
-                narrative = content_str[end_idx + 1 :].lstrip("\n\r ")
+    if content_str.endswith("```"):
+        content_str = content_str[: content_str.rfind("```")]
 
-    except Exception:
-        # Fallback: try to find JSON region
-        start = content_str.find("{")
-        end = content_str.rfind("}")
+    content_str = content_str.strip()
 
-        if start != -1 and end != -1 and end > start:
+    if content_str.startswith("{"):
+        try:
+            json_obj = json.loads(content_str)
+
+        except json.JSONDecodeError:
+            end_pos = content_str.rfind("}")
             try:
-                json_obj = json.loads(content_str[start : end + 1])
-                narrative = content_str[end + 1 :].lstrip("\n\r ")
+                if end_pos == -1:
+                    raise json.JSONDecodeError(
+                        "Closing brace not found",
+                        content_str,
+                        0,
+                    )
+                json_obj = json.loads(content_str[: end_pos + 1])
 
-            except Exception:
+            except json.JSONDecodeError:
                 json_obj = {}
-                narrative = content_str
+                raise HTTPException(
+                    status_code=500,
+                    detail="Failed to parse ATS evaluation JSON output.",
+                )
+    else:
+        start = content_str.find("{")
+        end_pos = content_str.rfind("}")
 
-        else:
+        if start == -1 or end_pos == -1 or end_pos < start:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to parse ATS evaluation JSON output.",
+            )
+
+        end = end_pos + 1
+        try:
+            json_slice = content_str[start:end] if end > start else content_str[start:]
+            json_obj = json.loads(json_slice)
+
+        except json.JSONDecodeError:
             json_obj = {}
-            narrative = content_str
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to parse ATS evaluation JSON output.",
+            )
 
-    return json_obj, narrative
+    return json_obj
 
 
 __all__ = [
