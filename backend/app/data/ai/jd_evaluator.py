@@ -149,7 +149,7 @@ Handling missing/implicit info:
 - Explained gaps are acceptable; unexplained gaps trigger Stability deductions and possibly penalties.
 
 Output JSON schema (must be valid JSON; only these keys):
-{
+{{
   "score": int,
   "reasons_for_the_score": [
     "string"
@@ -157,7 +157,7 @@ Output JSON schema (must be valid JSON; only these keys):
   "suggestions": [
     "string"
   ]
-}
+}}
 
 Examples for reasons_for_the_score:
 - "Technical Skills – Hard Skills (16/20): Matched Python, SQL, REST, AWS; missing Docker listed as JD secondary; counted Azure as partial for AWS."
