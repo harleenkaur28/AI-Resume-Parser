@@ -1,4 +1,5 @@
 from typing import Optional
+import logging
 
 from fastapi import APIRouter
 from pydantic import BaseModel, Field, model_validator
@@ -8,6 +9,7 @@ from app.services.ats import ats_evaluate_service
 
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 class ATSEvaluationPayload(BaseModel):
@@ -44,10 +46,22 @@ class ATSEvaluationPayload(BaseModel):
     summary="Evaluate resume against a job description.",
 )
 async def evaluate_ats(payload: ATSEvaluationPayload) -> JDEvaluatorResponse:
-    return await ats_evaluate_service(
-        resume_text=payload.resume_text,
-        jd_text=payload.jd_text,
-        jd_link=payload.jd_link,
-        company_name=payload.company_name,
-        company_website=payload.company_website,
-    )
+    try:
+        return await ats_evaluate_service(
+            resume_text=payload.resume_text,
+            jd_text=payload.jd_text,
+            jd_link=payload.jd_link,
+            company_name=payload.company_name,
+            company_website=payload.company_website,
+        )
+
+    except Exception:
+        logger.exception(
+            "ATS evaluation request failed",
+            extra={
+                "company_name": payload.company_name,
+                "has_jd_text": bool(payload.jd_text),
+                "has_jd_link": bool(payload.jd_link),
+            },
+        )
+        raise
