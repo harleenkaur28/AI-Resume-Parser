@@ -1,4 +1,4 @@
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 from app.core.llm import llm
 
 ats_analysis_prompt_template_str = """

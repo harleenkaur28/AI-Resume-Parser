@@ -1,5 +1,5 @@
 from app.core.llm import llm
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 
 
 tips_generator_prompt_template_str = """

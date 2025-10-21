@@ -1,7 +1,5 @@
-import os
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAI
-from langchain.prompts import PromptTemplate
-from langchain.output_parsers import StructuredOutputParser, ResponseSchema
+from langchain_google_genai import ChatGoogleGenerativeAI
+
 from app.core.config import google_api_key
 
 llm = None
