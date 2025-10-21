@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
       const filename = `${resumeData.name.replace(/[^a-zA-Z0-9]/g, '_')}_Resume.pdf`;
       
       // Return PDF with appropriate headers
-      return new NextResponse(pdfBuffer, {
+      return new NextResponse(pdfBuffer as any, {
         status: 200,
         headers: {
           'Content-Type': 'application/pdf',
