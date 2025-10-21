@@ -11,11 +11,10 @@ from langchain_core.prompts import ChatPromptTemplate
 from langgraph.prebuilt import ToolNode, tools_condition
 from langchain_tavily import TavilySearch
 
-import requests
 import json
 import re
 
-# from app.core.llm import llm
+from app.core.llm import llm
 from app.core.llm import MODEL_NAME
 
 
