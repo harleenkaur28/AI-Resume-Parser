@@ -1,5 +1,4 @@
 from __future__ import annotations
-from __future__ import annotations
 
 from typing import Optional, List
 
@@ -17,8 +16,11 @@ import re
 from app.core.llm import llm
 from app.core.llm import MODEL_NAME
 
-
+from app.services.ats import ats_evaluate_service
 from app.agents.web_content_agent import return_markdown
+
+
+load_dotenv()
 
 
 class GraphBuilder:
@@ -35,9 +37,14 @@ class GraphBuilder:
             tools: list of tool instances to expose to the model
             model_name: model identifier for ChatGoogleGenerativeAI
         """
-        self.llm = ChatGoogleGenerativeAI(model=model_name)
+        if llm:
+            self.llm = llm
+        else:
+            self.llm = ChatGoogleGenerativeAI(model=model_name)
         self.tools = tools or []
-        self.llm_with_tools = self.llm.bind_tools(tools=self.tools)
+        self.llm_with_tools = self.llm.bind_tools(
+            tools=self.tools,
+        )
         self.graph = None
         self.system_prompt = system_prompt_messages
 
@@ -62,7 +69,7 @@ class GraphBuilder:
         return self.build_graph()
 
 
-def run_resume_pipeline(
+async def run_resume_pipeline(
     resume: str,
     job: str,
     company_name: Optional[str] = None,
@@ -75,8 +82,35 @@ def run_resume_pipeline(
 
     The function centralizes all side-effects and avoids executing work at import time.
     """
-    # load environment (if needed for credentials)
-    load_dotenv()
+
+    try:
+        ats_result = await ats_evaluate_service(
+            resume_text=resume,
+            jd_text=jd,
+            jd_link=None,
+            company_name=company_name,
+            company_website=company_website,
+        )
+
+        ats_summary = json.dumps(
+            {
+                "score": int(getattr(ats_result, "score", 0)),
+                "message": getattr(ats_result, "message", "") or "",
+                "reasons_for_the_score": getattr(
+                    ats_result, "reasons_for_the_score", []
+                ),
+                "suggestions": getattr(ats_result, "suggestions", []),
+            },
+            indent=2,
+        )
+
+    except Exception as e:
+        ats_summary = json.dumps(
+            {
+                "error": "ATS evaluation failed",
+                "detail": str(e),
+            }
+        )
 
     # Fetch company website content if provided
     company_website_content = (
@@ -87,7 +121,7 @@ def run_resume_pipeline(
     prompt = ChatPromptTemplate.from_template(
         """
         You are a resume expert. The ML model predicted the job of {job} at {company_name}.
-        Given the resume below, the company's website content, and the job description, highlight and improve the resume's impact and tailor it for this role.
+        Given the resume below, the company's website content, the job description, and the ATS evaluation summary, highlight and improve the resume's impact and tailor it for this role.
         Use the given tools to search for relevant details and to align the resume with the company's products, tech stack, and values.
 
         Company: {company_name}
@@ -98,15 +132,20 @@ def run_resume_pipeline(
         Job description:
         {jd}
 
+        ATS evaluation (score, reasons, suggestions, and message):
+        {ats_summary}
+
         Resume:
         {resume}
 
-        just give the new generated resume without any explanation or additional information.
+        Use the ATS "suggestions" and "reasons_for_the_score" to modify the resume where relevant.
+        At the end, return only a single JSON object strictly matching the ComprehensiveAnalysisData schema.
         """,
     ).partial(
         company_name=company_name or "",
         company_website_content=company_website_content,
         jd=jd or "",
+        ats_summary=ats_summary,
     )
 
     # Prepare tools
