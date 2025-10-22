@@ -4,8 +4,8 @@ from typing import Optional
 import requests
 from fastapi import HTTPException, UploadFile
 from app.models.schemas import HiringAssistantResponse, ErrorResponse
-from app.services.utils import process_document, is_valid_resume
-from backend.app.services.data_processor import format_resume_text_with_llm
+from app.services.process_resume import process_document, is_valid_resume
+from app.services.data_processor import format_resume_text_with_llm
 from app.data.prompt.hirring_assistant import hiring_assistant_chain
 from app.core.llm import llm
 

@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from backend.app.services import resume_analysis
+from app.services import resume_analysis
 from app.models.schemas import (
     ResumeListResponse,
     ResumeCategoryResponse,

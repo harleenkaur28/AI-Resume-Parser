@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from app.models.schemas import JDEvaluatorResponse
 from app.services.ats import ats_evaluate_service
-from app.services.utils import process_document
+from app.services.process_resume import process_document
 
 file_based_router = APIRouter()
 text_based_router = APIRouter()

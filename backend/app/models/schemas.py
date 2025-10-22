@@ -13,6 +13,8 @@ class WorkExperienceEntry(BaseModel):
 class ProjectEntry(BaseModel):
     title: Optional[str] = None
     technologies_used: Optional[List[str]] = Field(default_factory=list)
+    live_link: Optional[str] = None
+    repo_link: Optional[str] = None
     description: Optional[str] = None
 
 
@@ -64,6 +66,8 @@ class UIDetailedWorkExperienceEntry(BaseModel):
 class UIProjectEntry(BaseModel):
     title: str
     technologies_used: List[str] = Field(default_factory=list)
+    live_link: Optional[str] = None
+    repo_link: Optional[str] = None
     description: str
 
 
@@ -123,6 +127,10 @@ class ComprehensiveAnalysisData(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
     contact: Optional[str] = None
+    linkedin: Optional[str] = None
+    github: Optional[str] = None
+    blog: Optional[str] = None
+    portfolio: Optional[str] = None
     predicted_field: Optional[str] = None
 
 
@@ -152,6 +160,10 @@ class TipsResponse(BaseModel):
 class ResumeAnalysis(BaseModel):
     name: str
     email: str
+    linkedin: Optional[str] = None
+    github: Optional[str] = None
+    blog: Optional[str] = None
+    portfolio: Optional[str] = Field(..., alias="personal_website, or any other link")
     contact: Optional[str] = None
     predicted_field: str
     college: Optional[str] = None

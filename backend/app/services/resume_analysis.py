@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timezone
+from pprint import pprint
 from fastapi import HTTPException, UploadFile, File
 from pydantic import ValidationError
 from app.models.schemas import (
@@ -10,21 +10,12 @@ from app.models.schemas import (
     ComprehensiveAnalysisResponse,
     ComprehensiveAnalysisData,
 )
-from app.services.utils import (
+from app.services.process_resume import (
     process_document,
-    clean_resume,
-    extract_name_and_email,
-    extract_contact_number_from_resume,
-    extract_college_name,
-    extract_work_experience,
-    extract_skills_from_resume,
-    extract_projects,
-    predict_category,
     is_valid_resume,
 )
-from app.data.skills import skills_list
 
-from backend.app.services.data_processor import (
+from app.services.data_processor import (
     format_resume_text_with_llm,
     format_resume_json_with_llm,
     comprehensive_analysis_llm,
@@ -80,30 +71,8 @@ async def analyze_resume_service(file: UploadFile = File(...)):
                 detail="Invalid resume format",
             )
 
-        name, email = extract_name_and_email(resume_text)
-        contact = extract_contact_number_from_resume(resume_text)
-        work_experience = extract_work_experience(resume_text)
-        extracted_skills = extract_skills_from_resume(resume_text, skills_list)
-        college = extract_college_name(resume_text)
-        projects = extract_projects(resume_text)
-        cleaned_resume_for_prediction = clean_resume(resume_text)
-        predicted_category = predict_category(cleaned_resume_for_prediction)
-
-        initial_resume_data = {
-            "name": name,
-            "email": email,
-            "contact": contact,
-            "predicted_field": predicted_category,
-            "college": college,
-            "work_experience": work_experience,
-            "skills": extracted_skills,
-            "projects": projects,
-            "upload_date": datetime.now(timezone.utc).isoformat(),
-        }
-
         try:
             resume_data = format_resume_json_with_llm(
-                resume_json=initial_resume_data,
                 extracted_resume_text=resume_text,
             )
             if not resume_data:
@@ -112,9 +81,6 @@ async def analyze_resume_service(file: UploadFile = File(...)):
                 )
             cleaned_data_dict = resume_data
             analysis_data = ResumeAnalysis(**resume_data)
-
-        except LLMNotFoundError:
-            analysis_data = ResumeAnalysis(**initial_resume_data)
 
         except ValidationError as e:
             raise HTTPException(
@@ -212,9 +178,6 @@ async def comprehensive_resume_analysis_service(file: UploadFile):
                 detail=f"Unsupported file type or error processing file: {file.filename}",
             )
 
-        if resume_text.strip():
-            resume_text = format_resume_text_with_llm(resume_text)
-
         os.remove(temp_file_path)
 
         if not is_valid_resume(resume_text):
@@ -223,22 +186,7 @@ async def comprehensive_resume_analysis_service(file: UploadFile):
                 detail="Invalid resume format or content.",
             )
 
-        name, email = extract_name_and_email(resume_text)
-        contact = extract_contact_number_from_resume(resume_text)
-        cleaned_resume_for_prediction = clean_resume(resume_text)
-        predicted_category = predict_category(cleaned_resume_for_prediction)
-
-        basic_info = {
-            "name": name,
-            "email": email,
-            "contact": contact,
-        }
-
-        analysis_dict = comprehensive_analysis_llm(
-            resume_text,
-            predicted_category,
-            basic_info,
-        )
+        analysis_dict = comprehensive_analysis_llm(resume_text)
         if not isinstance(analysis_dict, dict):
             raise HTTPException(
                 status_code=500,
@@ -248,6 +196,8 @@ async def comprehensive_resume_analysis_service(file: UploadFile):
                 ).model_dump(),
             )
         analysis_dict = {str(k): v for k, v in analysis_dict.items()}
+
+        pprint(analysis_dict)
         comprehensive_data = ComprehensiveAnalysisData(**analysis_dict)
 
         return ComprehensiveAnalysisResponse(
@@ -299,17 +249,8 @@ async def format_and_analyze_resume_service(file: UploadFile):
                 detail=f"Unsupported file type or error processing file: {file.filename}",
             )
 
-        name, email = extract_name_and_email(raw_resume_text)
-        contact = extract_contact_number_from_resume(raw_resume_text)
-        basic_info = {
-            "name": name,
-            "email": email,
-            "contact": contact,
-        }
-
         analysis_dict = format_and_analyse_resumes(
             raw_text=raw_resume_text,
-            basic_info=basic_info,
         )
 
         analysis = ComprehensiveAnalysisData(**analysis_dict)
@@ -342,23 +283,8 @@ async def analyze_resume_v2_service(formated_resume: str):
 
         formated_resume = formated_resume.strip()
 
-        name, email = extract_name_and_email(formated_resume)
-        contact = extract_contact_number_from_resume(formated_resume)
-
-        cleaned_resume_for_prediction = clean_resume(formated_resume)
-
-        predicted_category = predict_category(cleaned_resume_for_prediction)
-
-        basic_info = {
-            "name": name,
-            "email": email,
-            "contact": contact,
-        }
-
         analysis_dict = comprehensive_analysis_llm(
             resume_text=formated_resume,
-            predicted_category=predicted_category,
-            basic_info=basic_info,
         )
 
         if not isinstance(analysis_dict, dict):

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, File, UploadFile, Form
-from backend.app.services import resume_analysis
+from app.services import resume_analysis
 from app.models.schemas import (
     ResumeUploadResponse,
     ComprehensiveAnalysisResponse,
@@ -17,7 +17,7 @@ file_based_router = APIRouter()
     response_model=ResumeUploadResponse,
 )
 async def analyze_resume(file: UploadFile = File(...)):
-    return await resume_analysis.analyze_resume_service(file)
+    return resume_analysis.analyze_resume_service(file)
 
 
 @file_based_router.post(

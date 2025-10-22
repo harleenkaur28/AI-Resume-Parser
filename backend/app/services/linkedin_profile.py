@@ -289,7 +289,7 @@ Theme: {theme}
                 )
 
                 # Generate individual post
-                from backend.app.services.linkedin_post import generate_single_post
+                from app.services.linkedin_post import generate_single_post
 
                 post = await generate_single_post(post_request, i + 1, post_context)
                 posts.append(post)

@@ -6,7 +6,7 @@ from app.models.schemas import (
 from app.services import (
     linkedin_profile,
 )
-from backend.app.services import linkedin_post
+from app.services import linkedin_post
 
 router = APIRouter()
 

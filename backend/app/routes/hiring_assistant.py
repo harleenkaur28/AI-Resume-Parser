@@ -1,7 +1,7 @@
 from fastapi import APIRouter, File, UploadFile, Form
 from typing import Optional
 from app.models.schemas import HiringAssistantResponse
-from backend.app.services import hiring_assiatnat
+from app.services import hiring_assiatnat
 
 
 file_based_router = APIRouter()

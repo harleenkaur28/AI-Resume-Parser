@@ -53,18 +53,13 @@ def format_resume_text_with_llm(
 
 
 def format_resume_json_with_llm(
-    resume_json: dict,
     extracted_resume_text: str,
 ) -> dict | None:
     """Formats the extracted resume JSON using an LLM."""
 
-    if not resume_json or not extracted_resume_text.strip():
-        return {}
-
     try:
         result = josn_formatter_chain.invoke(
             {
-                "resume_json": resume_json,
                 "extracted_resume_text": extracted_resume_text,
             }
         )
@@ -123,22 +118,17 @@ def format_resume_json_with_llm(
 
 def comprehensive_analysis_llm(
     resume_text: str,
-    predicted_category: str,
-    basic_info: dict,
 ) -> dict | None:
     """Performs a comprehensive analysis of the resume using LLM."""
 
     if not resume_text:
         return {}
 
-    basic_info_json_str = json.dumps(basic_info)
     # print("hello")
 
     result = comprensive_analysis_chain.invoke(
         {
             "extracted_resume_text": resume_text,
-            "basic_info_json": basic_info_json_str,
-            "predicted_category": predicted_category,
         }
     )
     if isinstance(result, dict):
@@ -203,7 +193,6 @@ def comprehensive_analysis_llm(
 
 def format_and_analyse_resumes(
     raw_text: str,
-    basic_info: dict,
 ) -> dict:
     """Formats and analyses the resume text and JSON using LLM."""
 
@@ -213,7 +202,6 @@ def format_and_analyse_resumes(
     result = format_analyse_chain.invoke(
         {
             "extracted_resume_text": raw_text,
-            "basic_info_json": json.dumps(basic_info),
         }
     )
     if isinstance(result, dict):

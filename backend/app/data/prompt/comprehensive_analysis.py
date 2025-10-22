@@ -23,6 +23,8 @@ class UIDetailedWorkExperienceEntry(BaseModel):
 class UIProjectEntry(BaseModel):
     title: str
     technologies_used: List[str] = Field(default_factory=list)
+    live_link: Optional[str] = None
+    repo_link: Optional[str] = None
     description: str
 
 class UIPublicationEntry(BaseModel):
@@ -73,6 +75,10 @@ class ComprehensiveAnalysisData(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
     contact: Optional[str] = None
+    linkedin: Optional[str] = None
+    github: Optional[str] = None
+    blog: Optional[str] = None
+    portfolio: Optional[str] = Field(None, alias="personal_website, or any other link")
     predicted_field: Optional[str] = None
 ```
 
@@ -81,17 +87,17 @@ Input:
 ```text
 {extracted_resume_text}
 ```
-- Predicted Job Category (from previous analysis, if available, otherwise derive one):
-```text
-{predicted_category}
-```
-- Basic Extracted Info (Name, Email, Contact - use these if provided, otherwise extract):
-```json
-{basic_info_json}
-```
 
 Instructions:
-1.  **Name, Email, Contact, Predicted Field**: Populate these from `basic_info_json` and `predicted_category`. If `basic_info_json` is minimal, extract name and email from `extracted_resume_text`. `predicted_field` should be derived if not provided.
+1.  Extarct these fields accurately:
+    - name
+    - email
+    - contact
+    - linkedin
+    - github
+    - blog - (optional) if present else null
+    - portfolio (personal_website, or any other link)
+    - predicted_field: Based on the resume content, predict the most suitable job role or field for the candidate (e.g., "Data Scientist", "Frontend Developer", "Marketing Manager", etc.).
 2.  **Skills Analysis**:
     *   Identify the top 5-7 key technical and soft skills from the resume.
     *   For each skill, assign a proficiency `percentage` (0-100). Base this on frequency, context, project descriptions, and associated experience.
@@ -112,6 +118,7 @@ Instructions:
 7.  **Projects**:
     *   For each project mentioned in the resume:
         *   Extract project `title`.
+        *   Extract `live_link` and `repo_link` if available.
         *   Identify `technologies_used` as a list of technologies, frameworks, or tools used.
         *   Extract project `description` with key details about what was built/accomplished.
     *   If no projects are explicitly mentioned, infer 1-2 typical projects for the `predicted_category` and append `'(inferred)'` to the `title`.
@@ -155,8 +162,6 @@ Return ONLY a single JSON object that would successfully instantiate `Comprehens
 comprehensive_analysis_prompt = PromptTemplate(
     input_variables=[
         "extracted_resume_text",
-        "predicted_category",
-        "basic_info_json",
     ],
     template=comprehensive_analysis_prompt_template_str,
 )

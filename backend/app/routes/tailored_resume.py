@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 from app.models.schemas import ComprehensiveAnalysisResponse
 from app.services.tailored_resume import tailor_resume
-from app.services.utils import process_document
+from app.services.process_resume import process_document
 
 
 file_based_router = APIRouter()
