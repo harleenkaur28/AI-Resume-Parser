@@ -38,7 +38,8 @@ async def tailor_resume(
     if not job_role or not job_role.strip():
         job_role = "Software Engineer"
 
-    raw_result = generate_tailored_resume(
+    # run_resume_pipeline is async (per generator implementation) so await it
+    raw_result = await generate_tailored_resume(
         resume=normalized_resume,
         job=job_role,
         company_name=company_name,
