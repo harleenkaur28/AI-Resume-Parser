@@ -6,6 +6,11 @@ export default withAuth(
     const token = req.nextauth.token;
     const { pathname } = req.nextUrl;
 
+    // If the request is for PostHog proxy or other public metrics, skip auth logic
+    if (pathname.startsWith('/ph')) {
+      return NextResponse.next();
+    }
+
     // If user is authenticated but has no role, redirect to role selection
     if (
       token && 
@@ -32,7 +37,7 @@ export default withAuth(
       authorized: ({ token, req }) => {
         const { pathname } = req.nextUrl;
         
-        // Allow access to public pages
+        // Allow access to public pages (including PostHog proxy)
         if (
           pathname === "/" || 
           pathname === "/about" ||
@@ -43,6 +48,7 @@ export default withAuth(
           pathname.startsWith("/auth/reset-password") ||
           pathname.startsWith("/api/") ||
           pathname.startsWith("/_next/") ||
+          pathname.startsWith("/ph") ||
           pathname.includes(".")
         ) {
           return true;
@@ -62,6 +68,7 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    "/((?!api/auth|_next/static|_next/image|favicon.ico).*)",
+    // Exclude API, next internals, static assets, favicon and PostHog proxy paths
+    "/((?!api/auth|_next/static|_next/image|favicon.ico|ph).*)",
   ],
 };
