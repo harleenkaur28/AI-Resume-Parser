@@ -96,7 +96,7 @@ Instructions:
     - linkedin
     - github
     - blog - (optional) if present else null
-    - portfolio (personal_website, or any other link)
+    - portfolio - (personal_website, or any other link)
     - predicted_field: Based on the resume content, predict the most suitable job role or field for the candidate (e.g., "Data Scientist", "Frontend Developer", "Marketing Manager", etc.).
 2.  **Skills Analysis**:
     *   Identify the top 5-7 key technical and soft skills from the resume.
