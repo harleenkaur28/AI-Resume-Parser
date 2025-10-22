@@ -5,7 +5,7 @@ if (typeof window !== 'undefined') {
   const apiHost = '/ph'
   const uiHost = "https://eu.posthog.com"
 
-  console.log('[PH] init', { hasKey: !!key, key, apiHost, uiHost })
+  console.log('[PH] init', { hasKey: !!key, apiHost, uiHost })
 
   posthog.init(key as string, {
     api_host: apiHost,

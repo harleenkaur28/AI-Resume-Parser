@@ -6,6 +6,17 @@ WORKDIR /app
 # Set NODE_ENV for Next.js build optimizations
 ENV NODE_ENV=production
 
+# Build-time args for embedding NEXT_PUBLIC_ variables into the Next.js build
+ARG NEXT_PUBLIC_POSTHOG_KEY
+ARG NEXT_PUBLIC_POSTHOG_UI_HOST
+ARG NEXT_PUBLIC_POSTHOG_HOST
+
+# Make build args available as environment variables during build so Next.js can bake them into the
+# client bundle. These are safe for public NEXT_PUBLIC_ variables (do not use for private secrets).
+ENV NEXT_PUBLIC_POSTHOG_KEY=$NEXT_PUBLIC_POSTHOG_KEY
+ENV NEXT_PUBLIC_POSTHOG_UI_HOST=$NEXT_PUBLIC_POSTHOG_UI_HOST
+ENV NEXT_PUBLIC_POSTHOG_HOST=$NEXT_PUBLIC_POSTHOG_HOST
+
 # Switch to root to install packages and set permissions
 USER root
 RUN apt-get update -y && \
