@@ -11,7 +11,7 @@ from langgraph.graph import MessagesState, START, END, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from app.agents.web_content_agent import return_markdown
-from app.data.ai.jd_evaluator import jd_evaluator_prompt_template as ATS_PROMPT
+from app.data.prompt.jd_evaluator import jd_evaluator_prompt_template as ATS_PROMPT
 from app.core.llm import MODEL_NAME
 
 try:

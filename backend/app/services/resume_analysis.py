@@ -24,7 +24,7 @@ from app.services.utils import (
 )
 from app.data.skills import skills_list
 
-from app.services.llm import (
+from backend.app.services.data_processor import (
     format_resume_text_with_llm,
     format_resume_json_with_llm,
     comprehensive_analysis_llm,

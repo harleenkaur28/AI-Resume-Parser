@@ -87,9 +87,9 @@ def _convert_document_to_markdown(file_bytes: bytes, filetype: str) -> str:
         return pymupdf4llm.to_markdown(
             doc,
             force_text=True,
-            ignore_images=True,
-            ignore_graphics=True,
-            page_separators=True,
+            ignore_images=False,
+            ignore_graphics=False,
+            page_separators=False,
         )
 
 
@@ -276,3 +276,15 @@ def is_valid_resume(text):
         return True
 
     return False
+
+
+if __name__ == "__main__":
+    file_path = "/Users/taf/Projects/TalentSync/TalentSync-Normies/backend/app/services/Tashif Ahmad Khan Resume.pdf"
+    with open(file_path, "rb") as f:
+        file_bytes = f.read()
+        text = process_document(file_bytes, "Offcampus 16.09.25.pdf")
+
+        safe_text = "" if text is None else text
+
+        with open("output.txt", "w") as out_f:
+            out_f.write(safe_text)

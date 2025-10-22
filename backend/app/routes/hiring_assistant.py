@@ -1,7 +1,7 @@
 from fastapi import APIRouter, File, UploadFile, Form
 from typing import Optional
 from app.models.schemas import HiringAssistantResponse
-from app.services import hiring
+from backend.app.services import hiring_assiatnat
 
 
 file_based_router = APIRouter()
@@ -21,7 +21,7 @@ async def hiring_assistant(
     company_url: Optional[str] = Form(None),
     word_limit: Optional[int] = Form(150),
 ):
-    return hiring.hiring_assistant_service(
+    return hiring_assiatnat.hiring_assistant_service(
         file,
         role,
         questions,
@@ -49,7 +49,7 @@ async def hiring_assistant2(
     company_url: Optional[str] = Form(None),
     word_limit: Optional[int] = Form(150),
 ):
-    return await hiring.hiring_assistant_v2_service(
+    return await hiring_assiatnat.hiring_assistant_v2_service(
         resume_text,
         role,
         questions,

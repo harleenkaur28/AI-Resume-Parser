@@ -1,5 +1,5 @@
 from fastapi import APIRouter, File, UploadFile, Form
-from app.services import resume
+from backend.app.services import resume_analysis
 from app.models.schemas import (
     ResumeUploadResponse,
     ComprehensiveAnalysisResponse,
@@ -17,7 +17,7 @@ file_based_router = APIRouter()
     response_model=ResumeUploadResponse,
 )
 async def analyze_resume(file: UploadFile = File(...)):
-    return await resume.analyze_resume_service(file)
+    return await resume_analysis.analyze_resume_service(file)
 
 
 @file_based_router.post(
@@ -26,7 +26,7 @@ async def analyze_resume(file: UploadFile = File(...)):
     description="Performs a comprehensive analysis of the uploaded resume using LLM.",
 )
 async def comprehensive_resume_analysis(file: UploadFile = File(...)):
-    return await resume.comprehensive_resume_analysis_service(file)
+    return await resume_analysis.comprehensive_resume_analysis_service(file)
 
 
 text_based_router = APIRouter()
@@ -38,7 +38,7 @@ text_based_router = APIRouter()
     response_model=FormattedAndAnalyzedResumeResponse,
 )
 async def format_and_analyze_resume_v2(file: UploadFile = File(...)):
-    return await resume.format_and_analyze_resume_service(file)
+    return await resume_analysis.format_and_analyze_resume_service(file)
 
 
 @text_based_router.post(
@@ -52,4 +52,4 @@ async def analyze_resume_v2(
         description="Formatted resume text",
     ),
 ):
-    return await resume.analyze_resume_v2_service(formated_resume)
+    return await resume_analysis.analyze_resume_v2_service(formated_resume)

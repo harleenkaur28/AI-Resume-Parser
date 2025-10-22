@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.services import resume
+from backend.app.services import resume_analysis
 from app.models.schemas import (
     ResumeListResponse,
     ResumeCategoryResponse,
@@ -14,7 +14,7 @@ router = APIRouter()
     description="Fetch all resumes from the database.",
 )
 async def get_resumes():
-    return resume.get_resumes_service()
+    return resume_analysis.get_resumes_service()
 
 
 @router.get(
@@ -23,4 +23,4 @@ async def get_resumes():
     description="Fetch resumes by category. The category is the predicted field from the resume analysis.",
 )
 async def get_resumes_by_category(category: str):
-    return resume.get_resumes_by_category_service(category)
+    return resume_analysis.get_resumes_by_category_service(category)

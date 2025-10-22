@@ -1,12 +1,8 @@
-from time import process_time_ns
-from nltk import pr
-from app.core.config import google_api_key
-from app.core.llm import llm
-from app.data.ai.txt_processor import text_formater_chain
-from app.data.ai.json_extractor import josn_formatter_chain
-from app.data.ai.comprehensive_analysis import comprensive_analysis_chain
-from app.data.ai.format_analyse import format_analyse_chain
-from app.data.ai.ats_analysis import ats_analysis_chain
+from app.data.prompt.txt_processor import text_formater_chain
+from app.data.prompt.json_extractor import josn_formatter_chain
+from app.data.prompt.comprehensive_analysis import comprensive_analysis_chain
+from app.data.prompt.format_analyse import format_analyse_chain
+from app.data.prompt.ats_analysis import ats_analysis_chain
 import json
 
 

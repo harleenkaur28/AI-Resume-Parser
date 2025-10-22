@@ -4,9 +4,9 @@ from app.models.schemas import (
     PostGenerationResponse,
 )
 from app.services import (
-    linkedin,
     linkedin_profile,
 )
+from backend.app.services import linkedin_post
 
 router = APIRouter()
 
@@ -23,7 +23,7 @@ async def generate_linkedin_posts(request: PostGenerationRequest):
 
     Returns a structured response with generated posts, hashtags, and CTA suggestions.
     """
-    return await linkedin.generate_linkedin_posts_service(request)
+    return await linkedin_post.generate_linkedin_posts_service(request)
 
 
 @router.post(
@@ -38,7 +38,7 @@ async def edit_linkedin_post(payload: dict):
     Expected payload: {"post": {...}, "instruction": "Make it shorter"}
     Returns the updated post.
     """
-    return await linkedin.edit_post_llm_service(payload)
+    return await linkedin_post.edit_post_llm_service(payload)
 
 
 @router.post(
