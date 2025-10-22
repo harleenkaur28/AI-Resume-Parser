@@ -1,5 +1,4 @@
 import os
-import json
 from datetime import datetime, timezone
 from fastapi import HTTPException, UploadFile, File
 from pydantic import ValidationError
@@ -23,7 +22,6 @@ from app.services.utils import (
     predict_category,
     is_valid_resume,
 )
-from app.core.llm import llm
 from app.data.skills import skills_list
 
 from app.services.llm import (
