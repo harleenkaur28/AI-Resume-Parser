@@ -1,7 +1,14 @@
 import posthog from 'posthog-js'
 
-posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
-  api_host: "/ph",
-  ui_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
-  defaults: '2025-05-24'
-});
+if (typeof window !== 'undefined') {
+  const key = process.env.NEXT_PUBLIC_POSTHOG_KEY
+  const apiHost = '/ph'
+  const uiHost = "https://eu.posthog.com"
+
+  console.log('[PH] init', { hasKey: !!key, key, apiHost, uiHost })
+
+  posthog.init(key as string, {
+    api_host: apiHost,
+    ui_host: uiHost,
+  })
+}
