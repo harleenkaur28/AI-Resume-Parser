@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   db:
     image: postgres:16
@@ -64,4 +63,4 @@ networks:
     driver: bridge
   nginxproxyman_network: 
     external: true
-    name: nginxproxyman
+    name: nginx-proxy-manager_nginxproxyman
