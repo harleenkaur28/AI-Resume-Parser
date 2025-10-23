@@ -71,23 +71,27 @@ model Resume {
 }
 
 model Analysis {
-    id               String   @id @default(uuid())
-    resumeId         String   @unique
-    name             String?
-    email            String?
-    contact          String?
-    predictedField   String?
-    skillsAnalysis   Json?
-    recommendedRoles String[] @default([])
-    languages        Json?
-    education        Json?
-    workExperience   Json?
-    projects         Json?
-    publications     Json?
+    id                        String   @id @default(uuid())
+    resumeId                  String   @unique
+    name                      String?
+    email                     String?
+    contact                   String?
+    linkedin                  String?
+    github                    String?
+    blog                      String?
+    portfolio                 String?
+    predictedField            String?
+    skillsAnalysis            Json?
+    recommendedRoles          String[] @default([])
+    languages                 Json?
+    education                 Json?
+    workExperience            Json?
+    projects                  Json?
+    publications              Json?
     positionsOfResponsibility Json?
-    certifications   Json?
-    achievements     Json?
-    uploadedAt       DateTime @default(now())
+    certifications            Json?
+    achievements              Json?
+    uploadedAt                DateTime @default(now())
 
     resume Resume @relation(fields: [resumeId], references: [id])
 }
