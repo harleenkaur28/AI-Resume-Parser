@@ -21,6 +21,8 @@ export interface Project {
   title: string;
   technologies_used: string[];
   description: string;
+  live_link?: string;
+  repo_link?: string;
 }
 
 export interface Publication {
@@ -69,6 +71,10 @@ export interface ResumeData {
   name: string;
   email: string;
   contact: string;
+  linkedin?: string;
+  github?: string;
+  blog?: string | null;
+  portfolio?: string;
   predicted_field: string;
 }
 
