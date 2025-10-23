@@ -23,8 +23,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Map incoming roleId to actual Role.name in database
-    const roleName = roleId === 'user' ? 'User' : 'Recruiter';
+  // Map incoming roleId to actual Role.name in database
+  // UI sends "user" or "admin"; in DB we store roles as "User" and "Admin"
+  const roleName = roleId === "user" ? "User" : "Admin";
     const role = await prisma.role.findUnique({
       where: { name: roleName }
     });
