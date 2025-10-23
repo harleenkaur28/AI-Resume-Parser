@@ -1,6 +1,8 @@
 import { Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ResumeData } from "@/types/resume";
+import Link from "next/link";
+import { renderMarkdown } from "@/lib/markdown-renderer";
 
 interface ResumePreviewProps {
 	parsedData: ResumeData | null;
@@ -27,7 +29,16 @@ export default function ResumePreview({ parsedData }: ResumePreviewProps) {
 						{parsedData.name}
 					</h2>
 					<p className="text-[#EEEEEE]/70">
-						{parsedData.email} • {parsedData.contact}
+						{[
+							parsedData.email,
+							parsedData.contact,
+							parsedData.linkedin,
+							parsedData.github,
+							parsedData.blog,
+							parsedData.portfolio,
+						]
+							.filter(Boolean)
+							.join(" • ")}
 					</p>
 					{parsedData.predicted_field && (
 						<span className="inline-block mt-2 px-3 py-1 bg-[#76ABAE]/20 text-[#76ABAE] text-xs rounded-full border border-[#76ABAE]/30">
@@ -44,7 +55,10 @@ export default function ResumePreview({ parsedData }: ResumePreviewProps) {
 							<h3 className="font-semibold text-[#EEEEEE] mb-2">Education</h3>
 							{parsedData.education.map((edu: any, index: number) => (
 								<div key={index} className="text-[#EEEEEE]/70 mb-2">
-									{edu.education_detail || edu.degree}
+									<span className="inline">
+										{renderMarkdown(edu.education_detail) ||
+											renderMarkdown(edu.degree)}
+									</span>
 								</div>
 							))}
 						</div>
@@ -96,7 +110,9 @@ export default function ResumePreview({ parsedData }: ResumePreviewProps) {
 									{exp.bullet_points && (
 										<ul className="list-disc list-inside text-[#EEEEEE]/70 text-xs mt-1 space-y-1">
 											{exp.bullet_points.map((bp: string, bi: number) => (
-												<li key={bi}>{bp}</li>
+												<li key={bi} className="text-[#EEEEEE]/70">
+													<span className="inline">{renderMarkdown(bp)}</span>
+												</li>
 											))}
 										</ul>
 									)}
@@ -122,7 +138,35 @@ export default function ResumePreview({ parsedData }: ResumePreviewProps) {
 										</p>
 									)}
 									{proj.description && (
-										<p className="text-xs mt-1">{proj.description}</p>
+										<p className="text-xs mt-1">
+											<span className="inline">
+												{renderMarkdown(proj.description)}
+											</span>
+										</p>
+									)}
+									{(proj.live_link || proj.repo_link) && (
+										<p className="text-xs mt-1 flex flex-wrap gap-3">
+											{proj.live_link && (
+												<Link
+													href={proj.live_link}
+													target="_blank"
+													rel="noopener noreferrer"
+													className="text-[#76ABAE] text-xs hover:underline"
+												>
+													Live
+												</Link>
+											)}
+											{proj.repo_link && (
+												<Link
+													href={proj.repo_link}
+													target="_blank"
+													rel="noopener noreferrer"
+													className="text-[#76ABAE] text-xs hover:underline"
+												>
+													Repo
+												</Link>
+											)}
+										</p>
 									)}
 								</div>
 							))}
@@ -146,14 +190,14 @@ export default function ResumePreview({ parsedData }: ResumePreviewProps) {
 									</p>
 									{pub.doi && <p className="text-xs">DOI: {pub.doi}</p>}
 									{pub.url && (
-										<a
+										<Link
 											href={pub.url}
 											target="_blank"
 											rel="noopener noreferrer"
 											className="text-[#76ABAE] text-xs hover:underline"
 										>
 											Link
-										</a>
+										</Link>
 									)}
 								</div>
 							))}
@@ -172,7 +216,9 @@ export default function ResumePreview({ parsedData }: ResumePreviewProps) {
 										</p>
 										{pos.duration && <p className="text-xs">{pos.duration}</p>}
 										{pos.description && (
-											<p className="text-xs mt-1">{pos.description}</p>
+											<p className="text-xs mt-1">
+												{renderMarkdown(pos.description)}
+											</p>
 										)}
 									</div>
 								)
@@ -217,7 +263,7 @@ export default function ResumePreview({ parsedData }: ResumePreviewProps) {
 										{ach.year ? ` — ${ach.year}` : ""}
 									</p>
 									{ach.description && (
-										<p className="text-xs">{ach.description}</p>
+										<p className="text-xs">{renderMarkdown(ach.description)}</p>
 									)}
 								</div>
 							))}

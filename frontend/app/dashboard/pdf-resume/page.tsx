@@ -5,18 +5,10 @@ import { motion } from "framer-motion";
 import { ResumeData, PdfGenerationRequest } from "@/types/resume";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-	Download,
-	FileText,
-	Upload,
-	ArrowLeft,
-	Settings,
-	Eye,
-	Briefcase,
-	CheckCircle,
-} from "lucide-react";
+import { Download, FileText, ArrowLeft, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 import { Loader } from "@/components/ui/loader";
 import LoadingOverlay from "@/components/pdf-resume/LoadingOverlay";
 import PageLoader from "@/components/pdf-resume/PageLoader";
@@ -399,9 +391,14 @@ export default function PdfResumePage() {
 								<div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-[#76ABAE]/10 rounded-2xl mb-4 sm:mb-6">
 									<FileText className="h-8 w-8 sm:h-10 sm:w-10 text-[#76ABAE]" />
 								</div>
-								<h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#EEEEEE] mb-3 sm:mb-4 leading-tight">
-									PDF Resume Generator
-								</h1>
+								<div className="flex items-center justify-center gap-2 mb-3 sm:mb-4">
+									<h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#EEEEEE] leading-tight">
+										PDF Resume Generator
+									</h1>
+									<Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30 text-xs sm:text-sm font-semibold">
+										BETA
+									</Badge>
+								</div>
 								<p className="text-[#EEEEEE]/70 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed px-4">
 									Transform your resume JSON data into a professional PDF or
 									LaTeX document with customizable templates.
