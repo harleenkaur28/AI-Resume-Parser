@@ -82,6 +82,67 @@ export default function ResumeAnalysisPage() {
 														"Not specified"}
 												</p>
 											</div>
+
+											{/* Links */}
+											{(analysisResult.data.analysis.linkedin ||
+												analysisResult.data.analysis.github ||
+												analysisResult.data.analysis.blog ||
+												analysisResult.data.analysis.portfolio) && (
+												<div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+													{analysisResult.data.analysis.linkedin && (
+														<div>
+															<p className="text-sm text-gray-600">LinkedIn</p>
+															<a
+																href={analysisResult.data.analysis.linkedin}
+																target="_blank"
+																rel="noopener noreferrer"
+																className="font-medium text-blue-600 hover:underline break-all"
+															>
+																{analysisResult.data.analysis.linkedin}
+															</a>
+														</div>
+													)}
+													{analysisResult.data.analysis.github && (
+														<div>
+															<p className="text-sm text-gray-600">GitHub</p>
+															<a
+																href={analysisResult.data.analysis.github}
+																target="_blank"
+																rel="noopener noreferrer"
+																className="font-medium text-blue-600 hover:underline break-all"
+															>
+																{analysisResult.data.analysis.github}
+															</a>
+														</div>
+													)}
+													{analysisResult.data.analysis.blog && (
+														<div>
+															<p className="text-sm text-gray-600">Blog</p>
+															<a
+																href={analysisResult.data.analysis.blog}
+																target="_blank"
+																rel="noopener noreferrer"
+																className="font-medium text-blue-600 hover:underline break-all"
+															>
+																{analysisResult.data.analysis.blog}
+															</a>
+														</div>
+													)}
+													{analysisResult.data.analysis.portfolio && (
+														<div>
+															<p className="text-sm text-gray-600">Portfolio</p>
+															<a
+																href={analysisResult.data.analysis.portfolio}
+																target="_blank"
+																rel="noopener noreferrer"
+																className="font-medium text-blue-600 hover:underline break-all"
+															>
+																{analysisResult.data.analysis.portfolio}
+															</a>
+														</div>
+													)}
+												</div>
+											)}
 										</div>
 									</div>
 
@@ -188,6 +249,31 @@ export default function ResumeAnalysisPage() {
 																<p className="text-sm text-gray-700 mb-2">
 																	{project.description}
 																</p>
+																{/* Project Links */}
+																{(project.live_link || project.repo_link) && (
+																	<div className="flex flex-wrap gap-3 mb-2">
+																		{project.live_link && (
+																			<a
+																				href={project.live_link}
+																				target="_blank"
+																				rel="noopener noreferrer"
+																				className="inline-flex items-center px-3 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700"
+																			>
+																				Live Demo
+																			</a>
+																		)}
+																		{project.repo_link && (
+																			<a
+																				href={project.repo_link}
+																				target="_blank"
+																				rel="noopener noreferrer"
+																				className="inline-flex items-center px-3 py-1 text-xs font-medium text-white bg-gray-800 rounded hover:bg-gray-900"
+																			>
+																				Source Code
+																			</a>
+																		)}
+																	</div>
+																)}
 																{project.technologies_used &&
 																	project.technologies_used.length > 0 && (
 																		<div className="flex flex-wrap gap-1">
@@ -214,7 +300,9 @@ export default function ResumeAnalysisPage() {
 									{analysisResult.data.analysis.publications &&
 										analysisResult.data.analysis.publications.length > 0 && (
 											<div>
-												<h3 className="text-lg font-semibold mb-3">Publications</h3>
+												<h3 className="text-lg font-semibold mb-3">
+													Publications
+												</h3>
 												<div className="space-y-4">
 													{analysisResult.data.analysis.publications.map(
 														(publication: any, index: number) => (
@@ -227,16 +315,26 @@ export default function ResumeAnalysisPage() {
 																</h4>
 																<div className="text-sm text-gray-600 space-y-1">
 																	{publication.authors && (
-																		<p><strong>Authors:</strong> {publication.authors}</p>
+																		<p>
+																			<strong>Authors:</strong>{" "}
+																			{publication.authors}
+																		</p>
 																	)}
 																	{publication.journal_conference && (
-																		<p><strong>Journal/Conference:</strong> {publication.journal_conference}</p>
+																		<p>
+																			<strong>Journal/Conference:</strong>{" "}
+																			{publication.journal_conference}
+																		</p>
 																	)}
 																	{publication.year && (
-																		<p><strong>Year:</strong> {publication.year}</p>
+																		<p>
+																			<strong>Year:</strong> {publication.year}
+																		</p>
 																	)}
 																	{publication.doi && (
-																		<p><strong>DOI:</strong> {publication.doi}</p>
+																		<p>
+																			<strong>DOI:</strong> {publication.doi}
+																		</p>
 																	)}
 																	{publication.url && (
 																		<a
@@ -258,9 +356,12 @@ export default function ResumeAnalysisPage() {
 
 									{/* Positions of Responsibility */}
 									{analysisResult.data.analysis.positionsOfResponsibility &&
-										analysisResult.data.analysis.positionsOfResponsibility.length > 0 && (
+										analysisResult.data.analysis.positionsOfResponsibility
+											.length > 0 && (
 											<div>
-												<h3 className="text-lg font-semibold mb-3">Positions of Responsibility</h3>
+												<h3 className="text-lg font-semibold mb-3">
+													Positions of Responsibility
+												</h3>
 												<div className="space-y-4">
 													{analysisResult.data.analysis.positionsOfResponsibility.map(
 														(position: any, index: number) => (
@@ -272,12 +373,21 @@ export default function ResumeAnalysisPage() {
 																	{position.title}
 																</h4>
 																<div className="text-sm text-gray-600 space-y-1">
-																	<p><strong>Organization:</strong> {position.organization}</p>
+																	<p>
+																		<strong>Organization:</strong>{" "}
+																		{position.organization}
+																	</p>
 																	{position.duration && (
-																		<p><strong>Duration:</strong> {position.duration}</p>
+																		<p>
+																			<strong>Duration:</strong>{" "}
+																			{position.duration}
+																		</p>
 																	)}
 																	{position.description && (
-																		<p><strong>Description:</strong> {position.description}</p>
+																		<p>
+																			<strong>Description:</strong>{" "}
+																			{position.description}
+																		</p>
 																	)}
 																</div>
 															</div>
@@ -291,7 +401,9 @@ export default function ResumeAnalysisPage() {
 									{analysisResult.data.analysis.certifications &&
 										analysisResult.data.analysis.certifications.length > 0 && (
 											<div>
-												<h3 className="text-lg font-semibold mb-3">Certifications</h3>
+												<h3 className="text-lg font-semibold mb-3">
+													Certifications
+												</h3>
 												<div className="space-y-4">
 													{analysisResult.data.analysis.certifications.map(
 														(certification: any, index: number) => (
@@ -303,15 +415,27 @@ export default function ResumeAnalysisPage() {
 																	{certification.name}
 																</h4>
 																<div className="text-sm text-gray-600 space-y-1">
-																	<p><strong>Issuing Organization:</strong> {certification.issuing_organization}</p>
+																	<p>
+																		<strong>Issuing Organization:</strong>{" "}
+																		{certification.issuing_organization}
+																	</p>
 																	{certification.issue_date && (
-																		<p><strong>Issue Date:</strong> {certification.issue_date}</p>
+																		<p>
+																			<strong>Issue Date:</strong>{" "}
+																			{certification.issue_date}
+																		</p>
 																	)}
 																	{certification.expiry_date && (
-																		<p><strong>Expiry Date:</strong> {certification.expiry_date}</p>
+																		<p>
+																			<strong>Expiry Date:</strong>{" "}
+																			{certification.expiry_date}
+																		</p>
 																	)}
 																	{certification.credential_id && (
-																		<p><strong>Credential ID:</strong> {certification.credential_id}</p>
+																		<p>
+																			<strong>Credential ID:</strong>{" "}
+																			{certification.credential_id}
+																		</p>
 																	)}
 																	{certification.url && (
 																		<a
@@ -335,7 +459,9 @@ export default function ResumeAnalysisPage() {
 									{analysisResult.data.analysis.achievements &&
 										analysisResult.data.analysis.achievements.length > 0 && (
 											<div>
-												<h3 className="text-lg font-semibold mb-3">Achievements</h3>
+												<h3 className="text-lg font-semibold mb-3">
+													Achievements
+												</h3>
 												<div className="space-y-4">
 													{analysisResult.data.analysis.achievements.map(
 														(achievement: any, index: number) => (
@@ -353,10 +479,15 @@ export default function ResumeAnalysisPage() {
 																		</span>
 																	)}
 																	{achievement.year && (
-																		<p><strong>Year:</strong> {achievement.year}</p>
+																		<p>
+																			<strong>Year:</strong> {achievement.year}
+																		</p>
 																	)}
 																	{achievement.description && (
-																		<p><strong>Description:</strong> {achievement.description}</p>
+																		<p>
+																			<strong>Description:</strong>{" "}
+																			{achievement.description}
+																		</p>
 																	)}
 																</div>
 															</div>
