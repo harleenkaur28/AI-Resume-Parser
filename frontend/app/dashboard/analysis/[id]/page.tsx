@@ -23,6 +23,7 @@ import {
 	LinkedinIcon,
 	GithubIcon,
 	PenBox,
+	ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -328,33 +329,37 @@ export default function AnalysisPage() {
 												key={index}
 												className="border-l-2 border-[#76ABAE] pl-4"
 											>
-												<h3 className="text-[#EEEEEE] font-semibold mb-2">
-													{project.title}
-												</h3>
-												{(project.live_link || project.repo_link) && (
-													<div className="mb-3 flex gap-3 flex-wrap">
-														{project.live_link && (
-															<a
-																href={project.live_link}
-																target="_blank"
-																rel="noopener noreferrer"
-																className="inline-flex items-center px-3 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700"
-															>
-																Live Demo
-															</a>
-														)}
-														{project.repo_link && (
-															<a
-																href={project.repo_link}
-																target="_blank"
-																rel="noopener noreferrer"
-																className="inline-flex items-center px-3 py-1 text-xs font-medium text-white bg-gray-800 rounded hover:bg-gray-900"
-															>
-																Source Code
-															</a>
+												<div className="flex justify-between">
+													<h3 className="text-[#EEEEEE] font-semibold mb-2">
+														{project.title}
+													</h3>
+													<div>
+														{(project.live_link || project.repo_link) && (
+															<div className="mb-3 flex gap-3 flex-wrap">
+																{project.live_link && (
+																	<Link
+																		href={project.live_link}
+																		target="_blank"
+																		rel="noopener noreferrer"
+																		className="inline-flex items-center py-1 text-md font-medium text-[#76ABAE] hover:text-white hover:scale-120"
+																	>
+																		<ExternalLink className="mr-1 h-4 w-4" />
+																	</Link>
+																)}
+																{project.repo_link && (
+																	<Link
+																		href={project.repo_link}
+																		target="_blank"
+																		rel="noopener noreferrer"
+																		className="inline-flex items-center py-1 text-md font-medium text-[#76ABAE] hover:text-white hover:scale-120"
+																	>
+																		<GithubIcon className="h-4 w-4" />
+																	</Link>
+																)}
+															</div>
 														)}
 													</div>
-												)}
+												</div>
 												{project.technologies_used &&
 													project.technologies_used.length > 0 && (
 														<div className="mb-3">
