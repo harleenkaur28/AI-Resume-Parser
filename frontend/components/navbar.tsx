@@ -85,6 +85,12 @@ const actionItems = [
 		icon: Lightbulb,
 		description: "Improve your job search",
 	},
+	{
+		label: "AI Mock Interviews",
+		href: "/dashboard/ai-mock-interviews",
+		icon: Users,
+		description: "Practice with AI interviews",
+	},
 ];
 
 export function Navbar() {

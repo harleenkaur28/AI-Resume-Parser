@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { Mail, MessageSquare, Plus, X, FileText, Hash } from "lucide-react";
+import {
+	Mail,
+	MessageSquare,
+	Plus,
+	X,
+	FileText,
+	Hash,
+	Users,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -18,7 +26,12 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
 	};
 
 	const handleAction = (
-		action: "cold-mail" | "interview" | "pdf-resume" | "linkedin"
+		action:
+			| "cold-mail"
+			| "interview"
+			| "pdf-resume"
+			| "linkedin"
+			| "ai-mock-interview"
 	) => {
 		setIsOpen(false);
 		if (action === "cold-mail") {
@@ -29,6 +42,8 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
 			router.push("/dashboard/pdf-resume");
 		} else if (action === "linkedin") {
 			router.push("/dashboard/linkedin-posts");
+		} else if (action === "ai-mock-interview") {
+			router.push("/dashboard/ai-mock-interviews");
 		}
 	};
 
@@ -60,6 +75,13 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
 			icon: Hash,
 			color: "hsl(188 39% 48%)",
 			action: () => handleAction("linkedin"),
+		},
+		{
+			id: "ai-mock-interview",
+			label: "AI Mock Interview",
+			icon: Users,
+			color: "hsl(340 82% 52%)",
+			action: () => handleAction("ai-mock-interview"),
 		},
 	];
 
