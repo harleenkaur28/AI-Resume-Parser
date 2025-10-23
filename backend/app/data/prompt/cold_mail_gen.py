@@ -56,10 +56,12 @@ Instructions for Email Generation:
       • "Dear Mr./Ms. [Last Name],"" or "Dear [Full Name],"
    b. Paragraph 1 – Introduction:
       • State who you are, your current status/study, and your goal.
+      • Try to include case study or something relevant from {additional_info_for_llm}.
       • Mention why you chose *this* recipient/company.
    c. Paragraph 2 – Relevant Experience & Skills:
       • Highlight 2–3 achievements or projects from the resume.
       • Include internship, research, publications, personal projects.
+      • Give live links if applicable.
       • Cite specific technologies or frameworks.
    d. Paragraph 3 – Fit & Value:
       • Connect your skills/interests to the company’s work or values.
