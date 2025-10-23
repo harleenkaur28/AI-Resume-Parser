@@ -23,6 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Copy, Download, Hash, Github } from "lucide-react";
+import { renderMarkdown } from "@/lib/markdown-renderer";
 
 interface GeneratedPost {
 	text: string;
@@ -136,67 +137,6 @@ export default function LinkedInPostsGenerator() {
 			text: cleanedText.trim(),
 			hashtags: updatedHashtags,
 		};
-	};
-
-	const renderMarkdown = (text: string) => {
-		// Simple markdown parser for CTA suggestions
-		const lines = text.split("\n");
-		const result: JSX.Element[] = [];
-		let currentList: string[] = [];
-		let key = 0;
-
-		const flushList = () => {
-			if (currentList.length > 0) {
-				result.push(
-					<ul key={`ul-${key++}`} className="list-disc ml-4 space-y-1 mb-2">
-						{currentList.map((item, i) => (
-							<li
-								key={i}
-								dangerouslySetInnerHTML={{
-									__html: item.replace(
-										/\*\*(.*?)\*\*/g,
-										'<strong class="text-[#76ABAE] font-bold">$1</strong>'
-									),
-								}}
-							/>
-						))}
-					</ul>
-				);
-				currentList = [];
-			}
-		};
-
-		lines.forEach((line, i) => {
-			const trimmed = line.trim();
-
-			if (trimmed.startsWith("* ")) {
-				currentList.push(trimmed.substring(2));
-			} else if (trimmed.startsWith("**") && trimmed.endsWith("**")) {
-				flushList();
-				result.push(
-					<p key={`heading-${key++}`} className="font-bold text-[#76ABAE] mb-2">
-						{trimmed.replace(/\*\*/g, "")}
-					</p>
-				);
-			} else if (trimmed) {
-				flushList();
-				result.push(
-					<p
-						key={`p-${key++}`}
-						className="mb-2"
-						dangerouslySetInnerHTML={{
-							__html: trimmed.replace(
-								/\*\*(.*?)\*\*/g,
-								'<strong class="text-[#76ABAE] font-bold">$1</strong>'
-							),
-						}}
-					/>
-				);
-			}
-		});
-
-		flushList();
-		return result;
 	};
 
 	const copyPost = async (p: GeneratedPost) => {

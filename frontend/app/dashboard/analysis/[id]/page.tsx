@@ -28,6 +28,7 @@ import {
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { renderMarkdown } from "@/lib/markdown-renderer";
 
 interface AnalysisData {
 	resume: {
@@ -293,13 +294,15 @@ export default function AnalysisPage() {
 												</p>
 												{work.bullet_points &&
 													work.bullet_points.length > 0 && (
-														<ul className="mt-2 space-y-1">
+														<ul className="mt-2 space-y-2 list-disc ml-4">
 															{work.bullet_points.map((point, i) => (
 																<li
 																	key={i}
-																	className="text-[#EEEEEE]/60 text-sm"
+																	className="text-[#EEEEEE]/80 text-sm"
 																>
-																	• {point}
+																	<span className="inline">
+																		{renderMarkdown(point)}
+																	</span>
 																</li>
 															))}
 														</ul>
@@ -375,9 +378,9 @@ export default function AnalysisPage() {
 															</div>
 														</div>
 													)}
-												<p className="text-[#EEEEEE]/60 text-sm leading-relaxed">
-													{project.description}
-												</p>
+												<div className="text-[#EEEEEE]/80 text-sm leading-relaxed space-y-2">
+													{renderMarkdown(project.description)}
+												</div>
 											</div>
 										))
 									) : (
@@ -474,9 +477,9 @@ export default function AnalysisPage() {
 																</p>
 															)}
 															{position.description && (
-																<p className="text-[#EEEEEE]/60 leading-relaxed">
-																	{position.description}
-																</p>
+																<div className="text-[#EEEEEE]/80 text-sm leading-relaxed space-y-2 mt-2">
+																	{renderMarkdown(position.description)}
+																</div>
 															)}
 														</div>
 													</div>
@@ -569,9 +572,9 @@ export default function AnalysisPage() {
 														<p className="text-[#76ABAE]">{achievement.year}</p>
 													)}
 													{achievement.description && (
-														<p className="text-[#EEEEEE]/60 leading-relaxed">
-															{achievement.description}
-														</p>
+														<div className="text-[#EEEEEE]/80 text-sm leading-relaxed space-y-2 mt-2">
+															{renderMarkdown(achievement.description)}
+														</div>
 													)}
 												</div>
 											</div>
