@@ -20,6 +20,9 @@ import {
 	Users,
 	Award,
 	Trophy,
+	LinkedinIcon,
+	GithubIcon,
+	PenBox,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -620,44 +623,114 @@ export default function AnalysisPage() {
 											<span className="text-[#76ABAE] text-sm">Links:</span>
 											<div className="flex flex-col gap-1">
 												{analysis.linkedin && (
-													<a
+													<Link
 														href={analysis.linkedin}
 														target="_blank"
 														rel="noopener noreferrer"
 														className="text-[#76ABAE] hover:underline break-all"
 													>
-														LinkedIn
-													</a>
+														<LinkedinIcon className="inline-block mr-1 h-4 w-4" />
+														<span>
+															{(() => {
+																const link = analysis.linkedin!;
+																try {
+																	const url = new URL(link);
+																	// show everything after hostname (strip leading '/')
+																	return (
+																		url.pathname.replace(/^\/+/, "") ||
+																		url.search.replace(/^\?/, "") ||
+																		url.hash.replace(/^#/, "")
+																	);
+																} catch {
+																	const idx = link.indexOf("linkedin.com/");
+																	return idx !== -1
+																		? link.slice(idx + "linkedin.com/".length)
+																		: link;
+																}
+															})()}
+														</span>
+													</Link>
 												)}
 												{analysis.github && (
-													<a
+													<Link
 														href={analysis.github}
 														target="_blank"
 														rel="noopener noreferrer"
 														className="text-[#76ABAE] hover:underline break-all"
 													>
-														GitHub
-													</a>
+														<GithubIcon className="inline-block mr-1 h-4 w-4" />
+														<span>
+															{(() => {
+																const link = analysis.github!;
+																try {
+																	const url = new URL(link);
+																	// show everything after hostname (strip leading '/')
+																	return (
+																		url.pathname.replace(/^\/+/, "") ||
+																		url.search.replace(/^\?/, "") ||
+																		url.hash.replace(/^#/, "")
+																	);
+																} catch {
+																	const idx = link.indexOf("github.com/");
+																	return idx !== -1
+																		? link.slice(idx + "github.com/".length)
+																		: link;
+																}
+															})()}
+														</span>
+													</Link>
 												)}
 												{analysis.blog && (
-													<a
+													<Link
 														href={analysis.blog}
 														target="_blank"
 														rel="noopener noreferrer"
 														className="text-[#76ABAE] hover:underline break-all"
 													>
-														Blog
-													</a>
+														<PenBox className="inline-block mr-1 h-4 w-4" />
+														{(() => {
+															const link = analysis.blog!;
+															try {
+																const url = new URL(link);
+																const display =
+																	`${url.host}${url.pathname}${url.search}${url.hash}`.replace(
+																		/\/$/,
+																		""
+																	);
+																return display;
+															} catch {
+																return link
+																	.replace(/^https?:\/\//, "")
+																	.replace(/\/$/, "");
+															}
+														})()}
+													</Link>
 												)}
 												{analysis.portfolio && (
-													<a
+													<Link
 														href={analysis.portfolio}
 														target="_blank"
 														rel="noopener noreferrer"
 														className="text-[#76ABAE] hover:underline break-all"
 													>
-														Portfolio
-													</a>
+														<FolderOpen className="inline-block mr-1 h-4 w-4" />
+														{(() => {
+															const link = analysis.portfolio!;
+															try {
+																const url = new URL(link);
+																const display =
+																	`${url.host}${url.pathname}${url.search}${url.hash}`.replace(
+																		/\/$/,
+																		""
+																	);
+																return display;
+															} catch {
+																return link
+																	.replace(/^https?:\/\//, "")
+																	.replace(/\/$/, "");
+															}
+														})()}
+													</Link>
 												)}
 											</div>
 										</div>
