@@ -82,6 +82,15 @@ async def analyze_resume_service(file: UploadFile = File(...)):
             cleaned_data_dict = resume_data
             analysis_data = ResumeAnalysis(**resume_data)
 
+            if alias := cleaned_data_dict.get("personal_website, or any other link"):
+                analysis_data.portfolio = alias
+            elif alias := cleaned_data_dict.get("personal_website"):
+                analysis_data.portfolio = alias
+            elif alias := cleaned_data_dict.get("any other link"):
+                analysis_data.portfolio = alias
+            elif alias := cleaned_data_dict.get("website"):
+                analysis_data.portfolio = alias
+
         except ValidationError as e:
             raise HTTPException(
                 status_code=400,
@@ -200,6 +209,15 @@ async def comprehensive_resume_analysis_service(file: UploadFile):
         pprint(analysis_dict)
         comprehensive_data = ComprehensiveAnalysisData(**analysis_dict)
 
+        if alias := analysis_dict.get("personal_website, or any other link"):
+            comprehensive_data.portfolio = alias
+        elif alias := analysis_dict.get("personal_website"):
+            comprehensive_data.portfolio = alias
+        elif alias := analysis_dict.get("any other link"):
+            comprehensive_data.portfolio = alias
+        elif alias := analysis_dict.get("website"):
+            comprehensive_data.portfolio = alias
+
         return ComprehensiveAnalysisResponse(
             data=comprehensive_data,
             cleaned_text=resume_text,
@@ -254,6 +272,15 @@ async def format_and_analyze_resume_service(file: UploadFile):
         )
 
         analysis = ComprehensiveAnalysisData(**analysis_dict)
+
+        if alias := analysis_dict.get("personal_website, or any other link"):
+            analysis.portfolio = alias
+        elif alias := analysis_dict.get("personal_website"):
+            analysis.portfolio = alias
+        elif alias := analysis_dict.get("any other link"):
+            analysis.portfolio = alias
+        elif alias := analysis_dict.get("website"):
+            analysis.portfolio = alias
 
         return FormattedAndAnalyzedResumeResponse(
             cleaned_text=raw_resume_text,
