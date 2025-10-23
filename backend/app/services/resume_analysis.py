@@ -1,5 +1,4 @@
 import os
-from pprint import pprint
 from fastapi import HTTPException, UploadFile, File
 from pydantic import ValidationError
 from app.models.schemas import (
@@ -206,7 +205,6 @@ async def comprehensive_resume_analysis_service(file: UploadFile):
             )
         analysis_dict = {str(k): v for k, v in analysis_dict.items()}
 
-        pprint(analysis_dict)
         comprehensive_data = ComprehensiveAnalysisData(**analysis_dict)
 
         if alias := analysis_dict.get("personal_website, or any other link"):
