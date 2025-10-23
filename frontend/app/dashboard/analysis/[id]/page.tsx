@@ -43,6 +43,10 @@ interface AnalysisData {
 		name: string | null;
 		email: string | null;
 		contact: string | null;
+		linkedin?: string | null;
+		github?: string | null;
+		blog?: string | null;
+		portfolio?: string | null;
 		predictedField: string | null;
 		skillsAnalysis: Array<{
 			skill_name: string;
@@ -64,6 +68,8 @@ interface AnalysisData {
 			title: string;
 			technologies_used: string[];
 			description: string;
+			live_link?: string;
+			repo_link?: string;
 		}>;
 		publications: Array<{
 			title: string;
@@ -322,6 +328,30 @@ export default function AnalysisPage() {
 												<h3 className="text-[#EEEEEE] font-semibold mb-2">
 													{project.title}
 												</h3>
+												{(project.live_link || project.repo_link) && (
+													<div className="mb-3 flex gap-3 flex-wrap">
+														{project.live_link && (
+															<a
+																href={project.live_link}
+																target="_blank"
+																rel="noopener noreferrer"
+																className="inline-flex items-center px-3 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700"
+															>
+																Live Demo
+															</a>
+														)}
+														{project.repo_link && (
+															<a
+																href={project.repo_link}
+																target="_blank"
+																rel="noopener noreferrer"
+																className="inline-flex items-center px-3 py-1 text-xs font-medium text-white bg-gray-800 rounded hover:bg-gray-900"
+															>
+																Source Code
+															</a>
+														)}
+													</div>
+												)}
 												{project.technologies_used &&
 													project.technologies_used.length > 0 && (
 														<div className="mb-3">
@@ -580,6 +610,56 @@ export default function AnalysisPage() {
 											<p className="text-[#EEEEEE]">
 												{analysis.predictedField}
 											</p>
+										</div>
+									)}
+									{(analysis.linkedin ||
+										analysis.github ||
+										analysis.blog ||
+										analysis.portfolio) && (
+										<div className="pt-2 space-y-2">
+											<span className="text-[#76ABAE] text-sm">Links:</span>
+											<div className="flex flex-col gap-1">
+												{analysis.linkedin && (
+													<a
+														href={analysis.linkedin}
+														target="_blank"
+														rel="noopener noreferrer"
+														className="text-[#76ABAE] hover:underline break-all"
+													>
+														LinkedIn
+													</a>
+												)}
+												{analysis.github && (
+													<a
+														href={analysis.github}
+														target="_blank"
+														rel="noopener noreferrer"
+														className="text-[#76ABAE] hover:underline break-all"
+													>
+														GitHub
+													</a>
+												)}
+												{analysis.blog && (
+													<a
+														href={analysis.blog}
+														target="_blank"
+														rel="noopener noreferrer"
+														className="text-[#76ABAE] hover:underline break-all"
+													>
+														Blog
+													</a>
+												)}
+												{analysis.portfolio && (
+													<a
+														href={analysis.portfolio}
+														target="_blank"
+														rel="noopener noreferrer"
+														className="text-[#76ABAE] hover:underline break-all"
+													>
+														Portfolio
+													</a>
+												)}
+											</div>
 										</div>
 									)}
 								</CardContent>
