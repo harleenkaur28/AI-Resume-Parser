@@ -88,13 +88,13 @@ export default function UploadResume({
 					<input
 						id="resume-file"
 						type="file"
-						accept=".pdf,.doc,.docx"
+						accept=".pdf,.doc,.docx,.txt,.md"
 						onChange={handleFileChange}
 						className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
 						disabled={isUploading}
 					/>
 					<p className="mt-1 text-xs text-gray-500">
-						Supported formats: PDF, DOC, DOCX
+						Supported formats: PDF, DOC, DOCX, TXT, MD
 					</p>
 				</div>
 
