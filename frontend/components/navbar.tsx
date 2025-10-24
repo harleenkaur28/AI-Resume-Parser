@@ -7,91 +7,23 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import {
-	FileText,
-	Users,
 	LayoutDashboard,
 	LogIn,
 	Menu,
 	X,
-	Info,
 	LogOut,
 	ChevronLeft,
 	ChevronRight,
 	Plus,
-	Mail,
-	MessageSquare,
-	Lightbulb,
-	Hash,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import MobileBottomNav from "./mobile-bottom-nav";
 import { useSidebar } from "./sidebar-provider";
+import { navItems, actionItems } from "@/lib/navigation";
 
 import banner from "@/public/banner-dark.svg";
-
-const navItems = [
-	{
-		label: "Home",
-		href: "/",
-		icon: LayoutDashboard,
-	},
-	{
-		label: "About",
-		href: "/about",
-		icon: Info,
-	},
-	{
-		label: "Job Seekers",
-		href: "/dashboard/seeker",
-		icon: FileText,
-	},
-	{
-		label: "Recruiters",
-		href: "/dashboard/recruiter",
-		icon: Users,
-	},
-];
-
-const actionItems = [
-	{
-		label: "Create Resume",
-		href: "/dashboard/pdf-resume",
-		icon: Plus,
-		description: "Build a professional resume",
-	},
-	{
-		label: "Generate Cold Mails",
-		href: "/dashboard/cold-mail",
-		icon: Mail,
-		description: "Create personalized cold emails",
-	},
-	{
-		label: "Interview Answers",
-		href: "/dashboard/hiring-assistant",
-		icon: MessageSquare,
-		description: "Get AI-powered interview prep",
-	},
-	{
-		label: "LinkedIn Posts",
-		href: "/dashboard/linkedin-posts",
-		icon: Hash,
-		description: "Generate LinkedIn content",
-	},
-	{
-		label: "ATS Compatibility",
-		href: "/dashboard/ats",
-		icon: Lightbulb,
-		description: "Improve your job search",
-	},
-	{
-		label: "AI Mock Interviews",
-		href: "/dashboard/ai-mock-interviews",
-		icon: Users,
-		description: "Practice with AI interviews",
-	},
-];
 
 export function Navbar() {
 	const pathname = usePathname();
