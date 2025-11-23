@@ -2,10 +2,16 @@
 
 import { LandingHero } from "@/components/landing-hero";
 import { MobileFeatures } from "@/components/features";
+import {
+	ValueProps,
+	HowItWorks,
+	Testimonials,
+	FinalCTA,
+} from "@/components/landing";
 import { KnowButton } from "@/components/know-more-button";
 import { ColdMailButton } from "@/components/cold-mail-button";
 import { HiringAssistantButton } from "@/components/hiring-assistant-button";
-import { PdfResumeButton } from "@/components/pdf-resume-button";
+import { LinkedInPostsButton } from "@/components/linkedin-posts-button";
 import { useEffect, useState } from "react";
 
 function useIsMobile() {
@@ -29,17 +35,26 @@ function ConditionalButtons() {
 			<KnowButton />
 			<ColdMailButton />
 			<HiringAssistantButton />
-			<PdfResumeButton />
+			<LinkedInPostsButton />
 		</>
 	);
 }
 
 export default function Home() {
 	return (
-		<main className="min-h-screen bg-gradient-to-br from-[#222831] via-[#31363F] to-[#222831]">
+		<main className="min-h-screen flex flex-col bg-[#1d2228] relative overflow-hidden">
+			{/* Ambient background effects */}
+			<div className="pointer-events-none absolute inset-0">
+				<div className="absolute inset-0 opacity-[0.15] [background:radial-gradient(circle_at_20%_25%,#76ABAE22,transparent_60%),radial-gradient(circle_at_80%_70%,#76ABAE22,transparent_55%)]" />
+				<div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[size:60px_60px] mix-blend-overlay opacity-20" />
+			</div>
 			<LandingHero />
+			<ValueProps />
+			<HowItWorks />
+			<Testimonials />
 			<MobileFeatures />
-			{ConditionalButtons()}
+			<FinalCTA />
+			{/* {ConditionalButtons()} */}
 		</main>
 	);
 }

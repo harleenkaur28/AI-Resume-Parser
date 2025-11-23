@@ -1,7 +1,7 @@
 import json
 from fastapi import HTTPException
 from app.models.schemas import TipsResponse, TipsData, Tip
-from app.data.ai.tips_generator import tips_generator_chain
+from app.data.prompt.tips_generator import tips_generator_chain
 
 
 def tips_llm(

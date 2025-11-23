@@ -21,6 +21,40 @@ export interface Project {
   title: string;
   technologies_used: string[];
   description: string;
+  live_link?: string;
+  repo_link?: string;
+}
+
+export interface Publication {
+  title: string;
+  authors?: string;
+  journal_conference?: string;
+  year?: string;
+  doi?: string;
+  url?: string;
+}
+
+export interface PositionOfResponsibility {
+  title: string;
+  organization: string;
+  duration?: string;
+  description?: string;
+}
+
+export interface Certification {
+  name: string;
+  issuing_organization: string;
+  issue_date?: string;
+  expiry_date?: string;
+  credential_id?: string;
+  url?: string;
+}
+
+export interface Achievement {
+  title: string;
+  description?: string;
+  year?: string;
+  category?: string;
 }
 
 export interface ResumeData {
@@ -30,9 +64,17 @@ export interface ResumeData {
   education: Education[];
   work_experience: WorkExperience[];
   projects: Project[];
+  publications: Publication[];
+  positions_of_responsibility: PositionOfResponsibility[];
+  certifications: Certification[];
+  achievements: Achievement[];
   name: string;
   email: string;
   contact: string;
+  linkedin?: string;
+  github?: string;
+  blog?: string | null;
+  portfolio?: string;
   predicted_field: string;
 }
 

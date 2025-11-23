@@ -1,13 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1.endpoints import router as v1_router
-from app.api.v2.endpoints import router as v2_router
-
 app = FastAPI(
-    title="Resume Analysis API",
+    title="TalentSync Normies API",
     description="API for analyzing resumes, extracting structured data, and providing tips for improvement.",
-    version="1.4.3",
+    version="1.5.8",
 )
 
 app.add_middleware(
@@ -18,14 +15,134 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(
-    v1_router,
-    prefix="/api/v1",
+
+from app.routes.linkedin import router as linkedin_router
+from app.routes.postgres import router as postgres_router
+from app.routes.tips import router as tips_router
+from app.routes.cold_mail import file_based_router as cold_mail_file_based_router
+from app.routes.cold_mail import text_based_router as cold_mail_text_based_router
+from app.routes.hiring_assistant import file_based_router as hiring_file_based_router
+from app.routes.hiring_assistant import text_based_router as hiring_text_based_router
+from app.routes.resume_analysis import file_based_router as resume_file_based_router
+from app.routes.resume_analysis import text_based_router as resume_text_based_router
+from app.routes.ats import file_based_router as ats_file_based_router
+from app.routes.ats import text_based_router as ats_text_based_router
+from app.routes.tailored_resume import (
+    file_based_router as tailored_resume_file_based_router,
 )
+from app.routes.tailored_resume import (
+    text_based_router as tailored_resume_text_based_router,
+)
+
+
 app.include_router(
-    v2_router,
+    linkedin_router,
+    prefix="/api/v1",
+    tags=[
+        "LinkedIn",
+    ],
+)
+
+app.include_router(
+    postgres_router,
+    prefix="/api/v1",
+    tags=[
+        "Database",
+    ],
+)
+
+app.include_router(
+    tips_router,
+    prefix="/api/v1",
+    tags=[
+        "Tips",
+    ],
+)
+
+app.include_router(
+    cold_mail_file_based_router,
+    prefix="/api/v1",
+    tags=[
+        "Cold Mail",
+    ],
+)
+
+app.include_router(
+    cold_mail_text_based_router,
+    prefix="/api/v1",
+    tags=[
+        "Cold Mail",
+    ],
+)
+
+app.include_router(
+    cold_mail_text_based_router,
     prefix="/api/v2",
     tags=[
-        "V2",
+        "Cold Mail",
+    ],
+)
+
+app.include_router(
+    hiring_file_based_router,
+    prefix="/api/v1",
+    tags=[
+        "Hiring Assistant",
+    ],
+)
+
+app.include_router(
+    hiring_text_based_router,
+    prefix="/api/v2",
+    tags=[
+        "Hiring Assistant",
+    ],
+)
+
+app.include_router(
+    resume_file_based_router,
+    prefix="/api/v1",
+    tags=[
+        "Resume Analysis",
+    ],
+)
+
+app.include_router(
+    resume_text_based_router,
+    prefix="/api/v2",
+    tags=[
+        "Resume Analysis",
+    ],
+)
+
+app.include_router(
+    ats_file_based_router,
+    prefix="/api/v1",
+    tags=[
+        "ATS Evaluation",
+    ],
+)
+
+app.include_router(
+    ats_text_based_router,
+    prefix="/api/v2",
+    tags=[
+        "ATS Evaluation",
+    ],
+)
+
+app.include_router(
+    tailored_resume_file_based_router,
+    prefix="/api/v1",
+    tags=[
+        "Tailored Resume",
+    ],
+)
+
+app.include_router(
+    tailored_resume_text_based_router,
+    prefix="/api/v2",
+    tags=[
+        "Tailored Resume",
     ],
 )

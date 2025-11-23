@@ -3,12 +3,12 @@ import json
 from typing import Optional
 from fastapi import HTTPException, UploadFile
 from app.models.schemas import ColdMailResponse, ErrorResponse
-from app.services.utils import process_document, is_valid_resume
-from app.services.hiring import get_company_research
+from app.services.process_resume import process_document, is_valid_resume
+from app.services.hiring_assiatnat import get_company_research
 from app.core.llm import llm
-from app.services.llm import format_resume_text_with_llm
-from app.data.ai.cold_mail_gen import cold_main_generator_chain
-from app.data.ai.cold_mail_editor import cold_mail_edit_chain
+from app.services.data_processor import format_resume_text_with_llm
+from app.data.prompt.cold_mail_gen import cold_main_generator_chain
+from app.data.prompt.cold_mail_editor import cold_mail_edit_chain
 
 
 def generate_cold_mail_content(

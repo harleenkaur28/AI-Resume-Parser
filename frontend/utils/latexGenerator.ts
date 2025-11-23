@@ -73,6 +73,14 @@ ${generateExperienceSection(data.work_experience)}
 
 ${generateProjectsSection(data.projects)}
 
+${generatePublicationsSection(data.publications)}
+
+${generatePositionsOfResponsibilitySection(data.positions_of_responsibility)}
+
+${generateCertificationsSection(data.certifications)}
+
+${generateAchievementsSection(data.achievements)}
+
 ${data.recommended_roles.length > 0 ? generateRecommendedRolesSection(data.recommended_roles) : ''}
 
 \\end{document}`;
@@ -128,6 +136,14 @@ ${generateSkillsSection(data.skills_analysis, data.languages, true)}
 ${generateExperienceSection(data.work_experience, true)}
 
 ${generateProjectsSection(data.projects, true)}
+
+${generatePublicationsSection(data.publications)}
+
+${generatePositionsOfResponsibilitySection(data.positions_of_responsibility)}
+
+${generateCertificationsSection(data.certifications)}
+
+${generateAchievementsSection(data.achievements)}
 
 \\end{document}`;
   }
@@ -231,6 +247,74 @@ function generateProjectsSection(projects: any[], modern = false): string {
 ${projects.map(project => `\\item \\textbf{${escapeLatex(project.title)}}
 \\justifying \\textit{Technologies: ${formatLatexList(project.technologies_used)}}
 \\justifying ${escapeLatex(project.description)}`).join('\n')}
+\\end{itemize}
+
+`;
+}
+
+function generatePublicationsSection(publications: any[]): string {
+  if (!publications || publications.length === 0) return '';
+
+  return `\\sectionheader{Publications}
+\\begin{itemize}[leftmargin=*,noitemsep,topsep=0pt,parsep=0pt]
+${publications.map(pub => {
+  let result = `\\item \\textbf{${escapeLatex(pub.title)}}`;
+  if (pub.authors) result += ` - ${escapeLatex(pub.authors)}`;
+  if (pub.journal_conference) result += `, ${escapeLatex(pub.journal_conference)}`;
+  if (pub.year) result += ` (${escapeLatex(pub.year)})`;
+  if (pub.doi) result += `, DOI: ${escapeLatex(pub.doi)}`;
+  return result;
+}).join('\n')}
+\\end{itemize}
+
+`;
+}
+
+function generatePositionsOfResponsibilitySection(positions: any[]): string {
+  if (!positions || positions.length === 0) return '';
+
+  return `\\sectionheader{Positions of Responsibility}
+\\begin{itemize}[leftmargin=*,noitemsep,topsep=0pt,parsep=0pt]
+${positions.map(pos => {
+  let result = `\\item \\textbf{${escapeLatex(pos.title)}} - ${escapeLatex(pos.organization)}`;
+  if (pos.duration) result += ` (${escapeLatex(pos.duration)})`;
+  if (pos.description) result += `\n  \\textit{${escapeLatex(pos.description)}}`;
+  return result;
+}).join('\n')}
+\\end{itemize}
+
+`;
+}
+
+function generateCertificationsSection(certifications: any[]): string {
+  if (!certifications || certifications.length === 0) return '';
+
+  return `\\sectionheader{Certifications}
+\\begin{itemize}[leftmargin=*,noitemsep,topsep=0pt,parsep=0pt]
+${certifications.map(cert => {
+  let result = `\\item \\textbf{${escapeLatex(cert.name)}} - ${escapeLatex(cert.issuing_organization)}`;
+  if (cert.issue_date) result += ` (Issued: ${escapeLatex(cert.issue_date)})`;
+  if (cert.expiry_date) result += ` (Expires: ${escapeLatex(cert.expiry_date)})`;
+  if (cert.credential_id) result += `, ID: ${escapeLatex(cert.credential_id)}`;
+  return result;
+}).join('\n')}
+\\end{itemize}
+
+`;
+}
+
+function generateAchievementsSection(achievements: any[]): string {
+  if (!achievements || achievements.length === 0) return '';
+
+  return `\\sectionheader{Achievements}
+\\begin{itemize}[leftmargin=*,noitemsep,topsep=0pt,parsep=0pt]
+${achievements.map(ach => {
+  let result = `\\item \\textbf{${escapeLatex(ach.title)}}`;
+  if (ach.category) result += ` (${escapeLatex(ach.category)})`;
+  if (ach.year) result += ` - ${escapeLatex(ach.year)}`;
+  if (ach.description) result += `\n  \\textit{${escapeLatex(ach.description)}}`;
+  return result;
+}).join('\n')}
 \\end{itemize}
 
 `;

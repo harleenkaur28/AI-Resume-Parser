@@ -6,13 +6,30 @@ import { Loader } from "@/components/ui/loader";
 interface LoadingOverlayProps {
 	isGenerating: boolean;
 	isEditing: boolean;
+	generateTitle?: string;
+	generateDescription?: string;
+	editTitle?: string;
+	editDescription?: string;
 }
 
 export default function LoadingOverlay({
 	isGenerating,
 	isEditing,
+	generateTitle,
+	generateDescription,
+	editTitle,
+	editDescription,
 }: LoadingOverlayProps) {
 	if (!isGenerating && !isEditing) return null;
+
+	const title = isEditing
+		? editTitle || "Editing Your Email"
+		: generateTitle || "Crafting Your Email";
+
+	const description = isEditing
+		? editDescription || "AI is applying your edits and improving the email..."
+		: generateDescription ||
+		  "AI is analyzing your resume and generating a personalized cold email...";
 
 	return (
 		<motion.div
@@ -30,13 +47,9 @@ export default function LoadingOverlay({
 				<div className="relative mb-6">
 					<Loader variant="pulse" size="xl" className="text-[#76ABAE]" />
 				</div>
-				<h3 className="text-[#EEEEEE] font-semibold text-xl mb-3">
-					{isEditing ? "Editing Your Email" : "Crafting Your Email"}
-				</h3>
+				<h3 className="text-[#EEEEEE] font-semibold text-xl mb-3">{title}</h3>
 				<p className="text-[#EEEEEE]/70 text-sm leading-relaxed">
-					{isEditing
-						? "AI is applying your edits and improving the email..."
-						: "AI is analyzing your resume and generating a personalized cold email..."}
+					{description}
 				</p>
 				<div className="mt-6 flex justify-center space-x-2">
 					<div className="w-2 h-2 bg-[#76ABAE] rounded-full animate-pulse"></div>

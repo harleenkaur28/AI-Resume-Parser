@@ -1,29 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-	ArrowLeft,
-	Users,
-	Send,
-	Copy,
-	Download,
-	Plus,
-	Trash2,
-	FileText,
-	Briefcase,
-	Building,
-	HelpCircle,
-	Upload,
-	CheckCircle,
-	ChevronDown,
-	Calendar,
-	User,
-} from "lucide-react";
+import { ArrowLeft, Users, Send } from "lucide-react";
 import Link from "next/link";
 import { Loader } from "@/components/ui/loader";
 import { useToast } from "@/hooks/use-toast";
@@ -107,7 +88,7 @@ export default function HiringAssistant() {
 	const fetchUserResumes = async () => {
 		setIsLoadingResumes(true);
 		try {
-			const response = await fetch("/api/backend-interface/gen-answer", {
+			const response = await fetch("/api/gen-answer", {
 				method: "GET",
 			});
 
@@ -318,7 +299,7 @@ export default function HiringAssistant() {
 				formDataToSend.append("company_url", formData.company_url);
 			}
 
-			const response = await fetch("/api/backend-interface/gen-answer", {
+			const response = await fetch("/api/gen-answer", {
 				method: "POST",
 				body: formDataToSend,
 			});

@@ -1,7 +1,6 @@
-# All Pydantic models for the backend
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Literal
 from datetime import datetime, timezone
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 
 
 class WorkExperienceEntry(BaseModel):
@@ -14,7 +13,43 @@ class WorkExperienceEntry(BaseModel):
 class ProjectEntry(BaseModel):
     title: Optional[str] = None
     technologies_used: Optional[List[str]] = Field(default_factory=list)
+    live_link: Optional[str] = None
+    repo_link: Optional[str] = None
     description: Optional[str] = None
+
+
+class PublicationEntry(BaseModel):
+    title: str
+    authors: Optional[str] = None
+    journal_conference: Optional[str] = None
+    year: Optional[str] = None
+    doi: Optional[str] = None
+    url: Optional[str] = None
+
+
+class PositionOfResponsibilityEntry(BaseModel):
+    title: str
+    organization: str
+    duration: Optional[str] = None
+    description: Optional[str] = None
+
+
+class CertificationEntry(BaseModel):
+    name: str
+    issuing_organization: str
+    issue_date: Optional[str] = None
+    expiry_date: Optional[str] = None
+    credential_id: Optional[str] = None
+    url: Optional[str] = None
+
+
+class AchievementEntry(BaseModel):
+    title: str
+    description: Optional[str] = None
+    year: Optional[str] = None
+    category: Optional[str] = (
+        None  # e.g., "Academic", "Professional", "Competition", "Award"
+    )
 
 
 class SkillProficiency(BaseModel):
@@ -31,7 +66,41 @@ class UIDetailedWorkExperienceEntry(BaseModel):
 class UIProjectEntry(BaseModel):
     title: str
     technologies_used: List[str] = Field(default_factory=list)
+    live_link: Optional[str] = None
+    repo_link: Optional[str] = None
     description: str
+
+
+class UIPublicationEntry(BaseModel):
+    title: str
+    authors: Optional[str] = None
+    journal_conference: Optional[str] = None
+    year: Optional[str] = None
+    doi: Optional[str] = None
+    url: Optional[str] = None
+
+
+class UIPositionOfResponsibilityEntry(BaseModel):
+    title: str
+    organization: str
+    duration: Optional[str] = None
+    description: Optional[str] = None
+
+
+class UICertificationEntry(BaseModel):
+    name: str
+    issuing_organization: str
+    issue_date: Optional[str] = None
+    expiry_date: Optional[str] = None
+    credential_id: Optional[str] = None
+    url: Optional[str] = None
+
+
+class UIAchievementEntry(BaseModel):
+    title: str
+    description: Optional[str] = None
+    year: Optional[str] = None
+    category: Optional[str] = None
 
 
 class LanguageEntry(BaseModel):
@@ -49,9 +118,19 @@ class ComprehensiveAnalysisData(BaseModel):
     education: List[EducationEntry] = Field(default_factory=list)
     work_experience: List[UIDetailedWorkExperienceEntry] = Field(default_factory=list)
     projects: List[UIProjectEntry] = Field(default_factory=list)
+    publications: List[UIPublicationEntry] = Field(default_factory=list)
+    positions_of_responsibility: List[UIPositionOfResponsibilityEntry] = Field(
+        default_factory=list
+    )
+    certifications: List[UICertificationEntry] = Field(default_factory=list)
+    achievements: List[UIAchievementEntry] = Field(default_factory=list)
     name: Optional[str] = None
     email: Optional[str] = None
     contact: Optional[str] = None
+    linkedin: Optional[str] = None
+    github: Optional[str] = None
+    blog: Optional[str] = None
+    portfolio: Optional[str] = None
     predicted_field: Optional[str] = None
 
 
@@ -81,6 +160,10 @@ class TipsResponse(BaseModel):
 class ResumeAnalysis(BaseModel):
     name: str
     email: str
+    linkedin: Optional[str] = None
+    github: Optional[str] = None
+    blog: Optional[str] = None
+    portfolio: Optional[str] = Field(..., alias="personal_website, or any other link")
     contact: Optional[str] = None
     predicted_field: str
     college: Optional[str] = None
@@ -251,3 +334,165 @@ class ScoreResponse(BaseModel):
     career_level: str
     overall_score: float
     results: List[ResumeResult]
+
+
+class ResumeAnalyzerResponse(BaseModel):
+    success: bool = True
+    message: str
+    analysis: Dict[str, Any]
+    suggestions: Dict[str, Any]
+
+
+class CompareToJDResponse(BaseModel):
+    success: bool = True
+    message: str = "Comparison complete"
+    match_score: float
+    summary: str
+    strengths: List[str]
+    gaps: List[str]
+    missing_keywords: List[str]
+    top_fixes: List[str]
+    keyword_additions: List[str]
+    improved_summary: str
+
+
+# LinkedIn Post Generation Models
+class PostGenerationRequest(BaseModel):
+    topic: str
+    tone: Optional[str] = None
+    audience: Optional[List[str]] = None
+    length: Optional[Literal["Short", "Medium", "Long", "Any"]] = "Medium"
+    hashtags_option: Optional[str] = "suggest"
+    cta_text: Optional[str] = None
+    mimic_examples: Optional[str] = None
+    language: Optional[str] = None
+    post_count: int = Field(default=3, ge=1, le=5)
+    emoji_level: int = Field(default=1, ge=0, le=3)
+    github_project_url: Optional[HttpUrl] = None
+    enable_research: bool = Field(
+        default=True, description="Enable web research for topic insights"
+    )
+
+
+class Source(BaseModel):
+    title: str
+    link: str
+
+
+class GeneratedPost(BaseModel):
+    text: str
+    hashtags: Optional[List[str]] = None
+    cta_suggestion: Optional[str] = None
+    token_info: Optional[Dict[str, Any]] = None
+    sources: Optional[List[Source]] = None
+    github_project_name: Optional[str] = None
+
+
+class StreamingEvent(BaseModel):
+    type: str
+    message: Optional[str] = None
+    payload: Optional[Any] = None
+    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+
+class PostGenerationResponse(BaseModel):
+    success: bool = True
+    message: str = "Posts generated successfully"
+    posts: List[GeneratedPost]
+    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+
+# Research and Agent Models
+class WebSearchRequest(BaseModel):
+    query: str
+    max_results: int = Field(default=5, ge=1, le=10)
+
+
+class WebSearchResult(BaseModel):
+    title: str
+    url: str
+    snippet: str
+
+
+class WebSearchResponse(BaseModel):
+    success: bool = True
+    query: str
+    results: List[WebSearchResult]
+    research_summary: Optional[str] = None
+
+
+class GitHubAnalysisRequest(BaseModel):
+    github_url: HttpUrl
+
+
+class GitHubInsights(BaseModel):
+    key_achievement: str
+    technical_highlights: str
+    impact_statement: str
+    linkedin_hooks: List[str]
+    suggested_hashtags: List[str]
+    project_stats: Dict[str, Any]
+
+
+class GitHubAnalysisResponse(BaseModel):
+    success: bool = True
+    repository_info: Dict[str, Any]
+    linkedin_insights: GitHubInsights
+    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+
+# Tailored Resume Generation Models
+class TailoredResumeRequest(BaseModel):
+    resume_text: str
+    job: str
+    company_name: Optional[str] = None
+    company_website: Optional[str] = None
+    job_description: Optional[str] = None
+
+
+class TailoredResumeResponse(BaseModel):
+    success: bool = True
+    message: str = "Tailored resume generated successfully"
+    tailored_resume: str
+
+
+# ATS Evaluation Models
+class ATSEvaluationRequest(BaseModel):
+    resume_text: str
+    jd_text: str
+    company_name: Optional[str] = None
+    company_website: Optional[str] = None
+
+
+class ATSEvaluationResponse(BaseModel):
+    success: bool = True
+    message: str = "ATS evaluation completed successfully"
+    analysis: Dict[str, Any]
+    narrative: str
+
+
+# JD Evaluator specific models
+class JDEvaluatorRequest(BaseModel):
+    """Input model for the JD evaluator agent.
+
+    Fields mirror the prompt inputs used by the JD evaluator.
+    """
+
+    company_name: Optional[str] = None
+    company_website_content: Optional[str] = None
+    jd: Optional[str] = Field(..., min_length=1)
+    jd_link: Optional[str] = None
+    resume: str = Field(..., min_length=1)
+
+
+class JDEvaluatorResponse(BaseModel):
+    """Structured response expected from the JD evaluator.
+
+    Matches the strict JSON schema required by the JD evaluator prompt.
+    """
+
+    success: bool = True
+    message: str = "JD evaluation completed"
+    score: int
+    reasons_for_the_score: List[str] = Field(default_factory=list)
+    suggestions: List[str] = Field(default_factory=list)

@@ -1,8 +1,9 @@
 import React from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { InteractiveMenu, InteractiveMenuItem } from "./ui/modern-mobile-menu";
-import { Home, FileText, Users, LayoutDashboard, User } from "lucide-react";
+import { InteractiveMenuItem } from "./ui/modern-mobile-menu";
+import { User } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { mobileNavItems } from "@/lib/navigation";
 import FloatingActionButton from "./floating-action-button";
 import "./ui/modern-mobile-menu.css";
 
@@ -25,37 +26,7 @@ const MobileBottomNav: React.FC = () => {
 	const { data: session } = useSession();
 
 	// Define navigation items based on auth status
-	const getNavItems = (): NavMenuItem[] => {
-		const baseItems: NavMenuItem[] = [
-			{ label: "Home", icon: Home, href: "/" },
-			{ label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-		];
-
-		if (session) {
-			const user = session.user as ExtendedUser;
-			return [
-				...baseItems,
-				{ label: "Account", icon: User, href: "/account" },
-				{
-					label: user?.role === "Admin" ? "Recruiter" : "Seeker",
-					icon: user?.role === "Admin" ? Users : FileText,
-					href:
-						user?.role === "Admin"
-							? "/dashboard/recruiter"
-							: "/dashboard/seeker",
-				},
-			];
-		}
-
-		return [
-			...baseItems,
-			{ label: "Account", icon: User, href: "/account" },
-			{ label: "Seekers", icon: FileText, href: "/dashboard/seeker" },
-		];
-	};
-
-	const navItems = getNavItems();
-
+	const navItems: NavMenuItem[] = mobileNavItems;
 	// Find active index based on current pathname
 	const getActiveIndex = () => {
 		const index = navItems.findIndex((item: NavMenuItem) => {

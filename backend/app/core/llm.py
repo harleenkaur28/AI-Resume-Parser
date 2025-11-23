@@ -1,10 +1,15 @@
-import os
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAI
-from langchain.prompts import PromptTemplate
-from langchain.output_parsers import StructuredOutputParser, ResponseSchema
+from langchain_google_genai import ChatGoogleGenerativeAI
 from app.core.config import google_api_key
 
+MODEL_PROVIDER = "google"
+
 llm = None
+MODEL_NAME = "gemini-2.0-flash"
+
+faster_llm = None
+FASTER_MODEL_NAME = "gemini-2.0-flash-lite"
+
+
 try:
     if not google_api_key:
         print(
@@ -12,7 +17,12 @@ try:
         )
     else:
         llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
+            model=MODEL_NAME,
+            google_api_key=google_api_key,
+            temperature=0.1,
+        )
+        faster_llm = ChatGoogleGenerativeAI(
+            model=FASTER_MODEL_NAME,
             google_api_key=google_api_key,
             temperature=0.1,
         )

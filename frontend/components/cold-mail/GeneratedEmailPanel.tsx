@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Loader } from "@/components/ui/loader";
+import { renderMarkdown } from "@/lib/markdown-renderer";
 
 interface GeneratedEmailPanelProps {
 	generatedEmail: {
@@ -168,7 +169,7 @@ export default function GeneratedEmailPanel({
 							</Label>
 							<div className="p-4 bg-white/5 border border-white/20 rounded-xl max-h-[500px] overflow-y-auto">
 								<pre className="text-[#EEEEEE] whitespace-pre-wrap font-sans text-sm leading-relaxed">
-									{generatedEmail.body}
+									{renderMarkdown(generatedEmail.body)}
 								</pre>
 							</div>
 						</div>
